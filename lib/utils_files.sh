@@ -155,47 +155,43 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
             return "${_FAIL}"
         fi
 
-        # Check if destination directory exists
-        local dest_dir
-        dest_dir=$(dirname "${dest}")
+        local dest_dir final base
+        if [[ -d "${dest}" || "${dest}" == */ ]]; then
+            dest_dir="${dest%/}"
+            base="$(basename "${src}")"
+            final="${dest_dir}/${prefix}${base}${suffix}"
+        else
+            dest_dir="$(dirname "${dest}")"
+            final="${dest}"
+        fi
+
         if [[ ! -d "${dest_dir}" ]]; then
             fail "Destination directory does not exist: ${dest_dir}"
             return "${_FAIL}"
         fi
 
-        local base dest ts bak
-        base="$(basename "${src}")"
-        dest="${dest_dir}/${prefix}${base}${suffix}"
-
-        # Handle existing destination file with .old-<num> backups
-        if [[ -e "${dest}" ]]; then
-            local backup_num=0
-            local backup_file
-
+        if [[ -e "${final}" ]]; then
+            local n=0 backup
             while :; do
-                backup_file="${dest}.old-${backup_num}"
-                if [[ ! -f "${backup_file}" ]]; then
-                    if mv "${dest}" "${backup_file}"; then
-                        pass "Moved existing file to ${backup_file}"
-                    else
-                        # Handle the failure
-                        fail "Failed to move ${dest} to ${backup_file}"
-                        return "${_FAIL}"
-                    fi
-                    break
-                fi
-                ((backup_num++))
+                backup="${final}.old-${n}"
+                [[ -e "${backup}" ]] || break
+                ((n++))
             done
+            if mv -- "${final}" "${backup}"; then
+                pass "Moved existing file to ${backup}"
+            else
+                fail "Failed to move ${final} to ${backup}"
+                return "${_FAIL}"
+            fi
         fi
 
-        # Copy the source file to the destination
-        if cp "${src}" "${dest}"; then
-            pass "Copied ${src} to ${dest}"
+        if cp -- "${src}" "${final}"; then
+            pass "Copied ${src} to ${final}"
         else
-            # Handle the failure
-            fail "Failed to copy ${src} to ${dest}"
+            fail "Failed to copy ${src} to ${final}"
             return "${_FAIL}"
         fi
+
     }
 
     # Copy a list (by ARRAY NAME) into a destination directory with exact names
