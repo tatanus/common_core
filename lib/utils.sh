@@ -36,7 +36,7 @@ if [[ -z "${UTILS_SH_LOADED:-}" ]]; then
     # Dynamically source all `utils_*.sh` files from the lib directory
 
     UTIL_LIB_PATH="$(realpath "${BASH_SOURCE[0]}")"
-    UTIL_LIB_DIR="$(dirname "${SCRIPT_PATH}")"
+    UTIL_LIB_DIR="$(dirname "${UTIL_LIB_PATH}")"
 
     if [[ -d "${UTIL_LIB_DIR}" ]]; then
         sourced_any=false
