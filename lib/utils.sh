@@ -38,6 +38,8 @@ if [[ -z "${UTILS_SH_LOADED:-}" ]]; then
     UTIL_LIB_PATH="$(realpath "${BASH_SOURCE[0]}")"
     UTIL_LIB_DIR="$(dirname "${UTIL_LIB_PATH}")"
 
+    info "Utils lib directory determined: ${UTIL_LIB_DIR}"
+
     if [[ -d "${UTIL_LIB_DIR}" ]]; then
         sourced_any=false
         for utils_file in "${UTIL_LIB_DIR}"/utils_*.sh; do
