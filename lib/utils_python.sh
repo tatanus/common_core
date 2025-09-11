@@ -56,8 +56,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
             export PYTHON="python${PYTHON_VERSION}"
             pass "Defaulting PYTHON to version from PYTHON_VERSIONS list: ${PYTHON}"
         else
-            fail "No Python versions configured. Exiting."
-            exit 1
+            warn "No Python versions configured. This may cause an error later."
         fi
     fi
 
