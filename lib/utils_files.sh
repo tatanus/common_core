@@ -145,7 +145,7 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
     # Usage: copy_with_backup "src" "dest"
     function copy_file() {
         local src="${1:-}"
-        local dest_dir="${2:-}"
+        local dest="${2:-}"
         local prefix="${3:-}"
         local suffix="${4:-}"
 
