@@ -1,12 +1,13 @@
-# bash-common-core
+# common_core
 # Project Badges
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Build Status](https://github.com/tatanus/common_core/actions/workflows/main.yml/badge.svg)](https://github.com/tatanus/common_core/actions/workflows/main.yml)
 [![Last Commit](https://img.shields.io/github/last-commit/tatanus/BASH)](https://github.com/tatanus/common_core/commits/main)
 
+![Bash >=4.0](https://img.shields.io/badge/Bash-%3E%3D4.0-4EAA25?logo=gnu-bash&logoColor=white)
 
-**bash-common-core** is the single, shared Bash **core** for these related projects:
+**common_core** is the single, shared Bash **core** for these related projects:
 
 - **BASH_SETUP* – “ sets up a Bash environment (standalone)
 - **PENTEST_SETUP** – “ installs pentest tooling (standalone or paired with BASH_SETUP)
