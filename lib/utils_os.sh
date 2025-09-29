@@ -92,7 +92,7 @@ if [[ -z "${UTILS_OS_SH_LOADED:-}" ]]; then
     # -----------------------------------------------------------------------------
 
     # Determine the operating system and version
-    OS_NAME="$(uname -s)" # Get the OS name using `uname`
+    OS_NAME="$(uname -s)" # Get the OS name
     OS_NAME="${OS_NAME:-unknown}"
     export OS_NAME
 
