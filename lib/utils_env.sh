@@ -25,16 +25,16 @@ if [[ -z "${UTILS_ENV_SH_LOADED:-}" ]]; then
 
         if [[ -z "${var_name}" ]]; then
             fail "No variable name provided."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         # Use indirect expansion to check if the variable is set and retrieve its value
         if [[ -n "${!var_name+x}" ]]; then
             pass "Environment variable ${var_name} exists and is set."
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "Environment variable ${var_name} is not set."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
@@ -45,7 +45,7 @@ if [[ -z "${UTILS_ENV_SH_LOADED:-}" ]]; then
         # Check if the path_to_remove is provided
         if [[ -z "${path_to_remove}" ]]; then
             fail "No path provided to remove from \$PATH."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Remove the specified path from $PATH

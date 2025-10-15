@@ -28,7 +28,7 @@ if [[ -z "${UTILS_GOLANG_SH_LOADED:-}" ]]; then
             info "Successfully changed directory to /tmp."
         else
             fail "Failed to change directory to /tmp."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Check if Golang is already installed and purge it if present
@@ -36,7 +36,7 @@ if [[ -z "${UTILS_GOLANG_SH_LOADED:-}" ]]; then
             if ! sudo apt purge -y golang; then
                 fail "Failed to purge existing Golang installation."
                 _popd
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
         fi
 
@@ -49,14 +49,14 @@ if [[ -z "${UTILS_GOLANG_SH_LOADED:-}" ]]; then
         if [[ -z "${go_version_url}" ]]; then
             fail "Failed to determine the latest Golang version."
             _popd
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Download the Golang tarball
         if ! ${PROXY} wget --no-check-certificate "https://golang.org/dl/${go_version_url}"; then
             fail "Failed to download Golang tarball."
             _popd
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Remove any existing Golang installation from /usr/local
@@ -67,7 +67,7 @@ if [[ -z "${UTILS_GOLANG_SH_LOADED:-}" ]]; then
             fail "Failed to install Golang."
             rm -f "${go_version_url}"  # Cleanup tarball if extraction fails
             _popd
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Clean up the downloaded tarball
@@ -85,12 +85,12 @@ if [[ -z "${UTILS_GOLANG_SH_LOADED:-}" ]]; then
         else
             fail "Golang installation failed. The 'go' command is not available."
             _popd
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Return to the previous directory
         _popd
-        return "${_PASS}"
+        return "${PASS}"
     }
 
     # Function to install Go packages from the list or provided parameter
@@ -101,7 +101,7 @@ if [[ -z "${UTILS_GOLANG_SH_LOADED:-}" ]]; then
         if [[ ${#tools[@]} -eq 0 ]]; then
             if [[ -z "${GO_TOOLS+x}" ]]; then
                 fail "go_tools array is not defined."
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
             tools=("${GO_TOOLS[@]}")
         fi
@@ -115,7 +115,7 @@ if [[ -z "${UTILS_GOLANG_SH_LOADED:-}" ]]; then
                 pass "Successfully installed ${tool}."
             else
                 fail "Failed to install ${tool}."
-                #return "$_FAIL"
+                #return "$FAIL"
             fi
 
             # Verify installation
@@ -128,6 +128,6 @@ if [[ -z "${UTILS_GOLANG_SH_LOADED:-}" ]]; then
             fi
         done
 
-        return "${_PASS}"
+        return "${PASS}"
     }
 fi

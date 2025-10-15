@@ -22,7 +22,7 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
     function generate_filename() {
         if [[ -z "$1" ]]; then
             fail "Error: Toolname argument is required."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         local toolname="$1"
@@ -33,7 +33,7 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
 
         date_time=$(date --utc +"%Y-%m-%d_%H-%M-%S") || {
             fail "Failed to get date."
-            return "${_FAIL}"
+            return "${FAIL}"
         }
 
         sanitized_toolname=$(echo "${toolname}" | tr -c '[:alnum:]' '_')
@@ -53,15 +53,15 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
 
         if [[ -z "${file_path}" ]]; then
             fail "No file path provided."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         if [[ -f "${file_path}" ]]; then
             pass "File ${file_path} exists."
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "File ${file_path} does not exist."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
@@ -72,15 +72,15 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
 
         if [[ -z "${file_path}" ]]; then
             fail "No file path provided."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         if [[ -f "${file_path}" && -r "${file_path}" ]]; then
             pass "File ${file_path} is readable."
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "File ${file_path} is not readable."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
@@ -91,15 +91,15 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
 
         if [[ -z "${file_path}" ]]; then
             fail "No file path provided."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         if [[ -s "${file_path}" ]]; then
             pass "File ${file_path} exists and is not empty."
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "File ${file_path} does not exist or is empty."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
@@ -110,15 +110,15 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
 
         if [[ -z "${file_path}" ]]; then
             fail "No file path provided."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         if [[ -f "${file_path}" && -w "${file_path}" ]]; then
             pass "File ${file_path} is writable."
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "File ${file_path} is not writable."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
@@ -129,15 +129,15 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
 
         if [[ -z "${file_path}" ]]; then
             fail "No file path provided."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         if [[ -f "${file_path}" && -x "${file_path}" ]]; then
             pass "File ${file_path} is executable."
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "File ${file_path} is not executable."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
@@ -152,7 +152,7 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
         # Check if source file exists
         if [[ ! -f "${src}" ]]; then
             fail "Source file does not exist: ${src}"
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         local dest_dir final base
@@ -167,7 +167,7 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
 
         if [[ ! -d "${dest_dir}" ]]; then
             fail "Destination directory does not exist: ${dest_dir}"
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         if [[ -e "${final}" ]]; then
@@ -181,7 +181,7 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
                 pass "Moved existing file to ${backup}"
             else
                 fail "Failed to move ${final} to ${backup}"
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
         fi
 
@@ -189,7 +189,7 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
             pass "Copied ${src} to ${final}"
         else
             fail "Failed to copy ${src} to ${final}"
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
     }
@@ -230,7 +230,7 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
         # Ensure the filename argument is provided
         if [[ -z "${filename}" ]]; then
             fail "No filename provided."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Find all backup files matching <filename>.old-<num>
@@ -240,7 +240,7 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
         # Check if there are any backups
         if [[ ${#backups[@]} -eq 0 ]]; then
             info "No backups found for ${filename}. Nothing to restore."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         # Find the highest numbered backup
@@ -250,10 +250,10 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
         # Restore the highest numbered backup
         if mv "${highest_backup}" "${filename}"; then
             pass "Restored ${highest_backup} to ${filename}"
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "Failed to restore ${highest_backup} to ${filename}"
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
@@ -266,19 +266,19 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
         # Ensure file is provided
         if [[ -z "${file_path}" ]]; then
             fail "Error: No file path provided."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Ensure file is readable
         check_file_readable "${file_path}"
-        if [[ $? -eq "${_FAIL}" ]]; then
-            return "${_FAIL}"
+        if [[ $? -eq "${FAIL}" ]]; then
+            return "${FAIL}"
         fi
 
         # Ensure file is writable
         check_file_writable "${file_path}"
-        if [[ $? -eq "${_FAIL}" ]]; then
-            return "${_FAIL}"
+        if [[ $? -eq "${FAIL}" ]]; then
+            return "${FAIL}"
         fi
 
         # Extract all placeholders (formatted as --VAR_NAME--)
@@ -288,14 +288,14 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
         # If no placeholders are found, return
         if [[ -z "${placeholders}" ]]; then
             pass "No placeholders found in '${file_path}'."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         # Create a temporary file to prevent corruption in case of failure
         temp_file=$(mktemp)
         if [[ $? -ne 0 ]]; then
             fail "Error: Failed to create temp file."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         cp "${file_path}" "${temp_file}"  # Backup the original file before modification
@@ -306,7 +306,7 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
 
             # Check if the environment variable exists using check_env_var
             check_env_var "${var_name}"
-            if [[ $? -eq "${_FAIL}" ]]; then
+            if [[ $? -eq "${FAIL}" ]]; then
                 fail "Skipping replacement for '${placeholder}' because '${var_name}' is not set."
                 continue
             fi
@@ -320,6 +320,6 @@ if [[ -z "${UTILS_FILES_SH_LOADED:-}" ]]; then
         mv "${temp_file}" "${file_path}"
 
         pass "File successfully updated: ${file_path}"
-        return "${_PASS}"
+        return "${PASS}"
     }
 fi

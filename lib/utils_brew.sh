@@ -28,29 +28,29 @@ if [[ -z "${UTILS_BREW_SH_LOADED:-}" ]]; then
         # Verify that package name is provide
         if [[ -z "${package}" ]]; then
             fail "Package name cannot be empty."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Check if Homebrew is installed
         if ! command -v brew > /dev/null 2>&1; then
             fail "Homebrew is not installed. Please install Homebrew and try again."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Check if the package is already installed
         if brew list --formula | grep -q "^${package}\$"; then
             pass "${package} is already installed via Homebrew."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         # Attempt to install the package
         info "Installing ${package} using Homebrew..."
         if ${PROXY} brew install "${package}"; then
             pass "Successfully installed ${package} using Homebrew."
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "Failed to install ${package} using Homebrew."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 

@@ -21,18 +21,18 @@ if [[ -z "${UTILS_DIRS_SH_LOADED:-}" ]]; then
     function _pushd() {
         mkdir -p "$1"
         if pushd "$1" > /dev/null 2>&1; then
-            return "${_PASS}"
+            return "${PASS}"
         else
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
     # Pop directory from the stack
     function _popd() {
         if popd > /dev/null 2>&1; then
-            return "${_PASS}"
+            return "${PASS}"
         else
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
@@ -43,15 +43,15 @@ if [[ -z "${UTILS_DIRS_SH_LOADED:-}" ]]; then
 
         if [[ -z "${dir_path}" ]]; then
             fail "No directory path provided."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         if [[ -d "${dir_path}" ]]; then
             pass "Directory ${dir_path} exists."
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "Directory ${dir_path} does not exist."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
@@ -62,15 +62,15 @@ if [[ -z "${UTILS_DIRS_SH_LOADED:-}" ]]; then
 
         if [[ -z "${dir_path}" ]]; then
             fail "No directory path provided."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         if [[ -d "${dir_path}" && -r "${dir_path}" ]]; then
             pass "Directory ${dir_path} is readable."
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "Directory ${dir_path} is not readable."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
@@ -81,15 +81,15 @@ if [[ -z "${UTILS_DIRS_SH_LOADED:-}" ]]; then
 
         if [[ -z "${dir_path}" ]]; then
             fail "No directory path provided."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         if [[ -d "${dir_path}" && -w "${dir_path}" ]]; then
             pass "Directory ${dir_path} is writable."
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "Directory ${dir_path} is not writable."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 

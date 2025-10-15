@@ -44,12 +44,12 @@ if [[ -z "${UTILS_MISC_SH_LOADED:-}" ]]; then
         if [[ -z "${file_path}" || -z "${replacement}" ]]; then
             fail "Error: Missing required arguments."
             fail "Usage: replace_in_file <file_path> <replacement_value> [search_value]"
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         if [[ ! -f "${file_path}" ]]; then
             fail "Error: File '${file_path}' does not exist."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Escape special characters in replacement and search values
@@ -61,7 +61,7 @@ if [[ -z "${UTILS_MISC_SH_LOADED:-}" ]]; then
         # Check if the search value exists in the file
         if ! grep -q "${escaped_search_value}" "${file_path}"; then
             warn "Warning: Search value '${search_value}' not found in file '${file_path}'."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Perform in-place replacement using sed
@@ -71,7 +71,7 @@ if [[ -z "${UTILS_MISC_SH_LOADED:-}" ]]; then
             rm -f "${file_path}.bak"
         else
             fail "Error: Failed to modify the file '${file_path}'."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
@@ -144,7 +144,7 @@ if [[ -z "${UTILS_MISC_SH_LOADED:-}" ]]; then
         if curl -s --connect-timeout "${timeout}" "${test_url}" > /dev/null; then
             PROXY=""
             pass "Direct Internet access available. No proxy needed."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         # Test connectivity via proxychains4
@@ -152,7 +152,7 @@ if [[ -z "${UTILS_MISC_SH_LOADED:-}" ]]; then
             if proxychains4 -q curl -s --connect-timeout "${timeout}" "${test_url}" > /dev/null; then
                 PROXY="proxychains4 -q "
                 pass "Proxy required. Using proxychains4."
-                return "${_PASS}"
+                return "${PASS}"
             else
                 fail "Proxychains4 is available but cannot connect to ${test_url}."
             fi
@@ -162,7 +162,7 @@ if [[ -z "${UTILS_MISC_SH_LOADED:-}" ]]; then
 
         PROXY=""
         fail "No Internet access available."
-        return "${_FAIL}"
+        return "${FAIL}"
     }
 
     # Function to check if a variable is in a list
@@ -173,10 +173,10 @@ if [[ -z "${UTILS_MISC_SH_LOADED:-}" ]]; then
 
         for item in "${command_list[@]}"; do
             if [[ "${select}" == "${item}" ]]; then
-                return "${_PASS}"  # Item found
+                return "${PASS}"  # Item found
             fi
         done
 
-        return "${_FAIL}"  # Item not found
+        return "${FAIL}"  # Item not found
     }
 fi

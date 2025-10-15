@@ -29,16 +29,16 @@ if [[ -z "${UTILS_CURL_SH_LOADED:-}" ]]; then
         # Validate input parameters
         if [[ -z "${url}" ]] || [[ -z "${filename}" ]]; then
             fail "Usage: _Curl <url> <filename>"
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Attempt to download the file
         if ${PROXY} curl -sSL "${url}" -o "${filename}" > /dev/null 2>&1; then
             pass "Downloaded ${url} to ${filename}."
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "Failed to download ${url} to ${filename}."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 fi

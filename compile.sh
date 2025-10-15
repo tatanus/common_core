@@ -8,7 +8,7 @@
 #                             auto-increment VERSION (patch), commit & push
 ###############################################################################
 
-set -Eeuo pipefail
+set -uo pipefail
 IFS=$'\n\t'
 
 # ----------------------------- Logging helpers ------------------------------ #

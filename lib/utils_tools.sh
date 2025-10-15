@@ -41,9 +41,9 @@ if ! declare -f pass   > /dev/null 2>&1; then function pass()  { printf '[ + PAS
 if ! declare -f fail   > /dev/null 2>&1; then function fail()  { printf '[ ! FAIL  ] %s\n'  "${1-}" >&2; }; fi
 
 # Provide sane defaults if not defined elsewhere
-_PASS="${_PASS:-0}"
-_FAIL="${_FAIL:-1}"
-readonly _PASS _FAIL
+PASS="${PASS:-0}"
+FAIL="${FAIL:-1}"
+readonly PASS FAIL
 
 # Provide fallback for _popd and _pushd
 if ! declare -f _pushd > /dev/null 2>&1; then
@@ -179,7 +179,7 @@ function ensure_tool() {
 #   $2 - tool_path under ${TOOLS_DIR}
 #
 # Returns:
-#   ${_PASS} on success; ${_FAIL} on failure.
+#   ${PASS} on success; ${FAIL} on failure.
 ###############################################################################
 function _add_tool_function() {
     local function_name="${1:-}"
@@ -187,21 +187,21 @@ function _add_tool_function() {
 
     if [[ -z "${PENTEST_ALIAS_FILE:-}" ]]; then
         fail "PENTEST_ALIAS_FILE is not set. Cannot add alias."
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
     if [[ ! -w "${PENTEST_ALIAS_FILE}" ]]; then
         fail "ALIAS_FILE (${PENTEST_ALIAS_FILE}) is not writable."
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
     if [[ -z "${function_name}" || -z "${tool_path}" ]]; then
         fail "Usage: _add_tool_function <function_name> <tool_path>"
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
 
     # Avoid duplicate function definitions.
     if grep -qE "^function[[:space:]]+${function_name}[[:space:]]*\(\)[[:space:]]*\{" "${PENTEST_ALIAS_FILE}"; then
         fail "Function '${function_name}' already exists in ${PENTEST_ALIAS_FILE}."
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
 
     {
@@ -212,10 +212,10 @@ function _add_tool_function() {
 
     if grep -qE "^function[[:space:]]+${function_name}[[:space:]]*\(\)[[:space:]]*\{" "${PENTEST_ALIAS_FILE}"; then
         pass "Added alias: ${function_name}"
-        return "${_PASS}"
+        return "${PASS}"
     fi
     fail "Failed to add alias: ${function_name}"
-    return "${_FAIL}"
+    return "${FAIL}"
 }
 
 ###############################################################################
@@ -227,26 +227,26 @@ function _add_tool_function() {
 #   $1 - function_name to remove.
 #
 # Returns:
-#   ${_PASS} on success; ${_FAIL} on failure.
+#   ${PASS} on success; ${FAIL} on failure.
 ###############################################################################
 function _del_tool_function() {
     local function_name="${1:-}"
 
     if [[ -z "${function_name}" ]]; then
         fail "Usage: _del_tool_function <function_name>"
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
     if [[ -z "${PENTEST_ALIAS_FILE:-}" ]]; then
         fail "PENTEST_ALIAS_FILE is not set. Cannot remove alias."
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
     if [[ ! -w "${PENTEST_ALIAS_FILE}" ]]; then
         fail "ALIAS_FILE (${PENTEST_ALIAS_FILE}) is not writable."
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
     if ! grep -qE "^function[[:space:]]+${function_name}[[:space:]]*\(\)[[:space:]]*\{" "${PENTEST_ALIAS_FILE}"; then
         fail "Function '${function_name}' not found in '${PENTEST_ALIAS_FILE}'."
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
 
     # Remove the function block (from its "function name() {" line to the matching "}")
@@ -260,11 +260,11 @@ function _del_tool_function() {
 
     if grep -qE "^function[[:space:]]+${function_name}[[:space:]]*\(\)[[:space:]]*\{" "${PENTEST_ALIAS_FILE}"; then
         fail "Failed to remove function '${function_name}' from '${PENTEST_ALIAS_FILE}'."
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
 
     info "Function '${function_name}' successfully removed from '${PENTEST_ALIAS_FILE}'."
-    return "${_PASS}"
+    return "${PASS}"
 }
 
 ###############################################################################
@@ -281,7 +281,7 @@ function _del_tool_function() {
 #   $@ - additional pip install targets
 #
 # Returns:
-#   ${_PASS} on success; ${_FAIL} on failure.
+#   ${PASS} on success; ${FAIL} on failure.
 ###############################################################################
 function _install_git_python_tool() {
     local tool_name="${1:-}"
@@ -293,15 +293,15 @@ function _install_git_python_tool() {
 
     if [[ -z "${tool_name}" || -z "${git_url}" ]]; then
         fail "_install_git_python_tool: need <tool_name> <git_url>"
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
     if [[ -z "${TOOLS_DIR:-}" ]]; then
         fail "TOOLS_DIR is not set."
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
     if [[ -z "${PYTHON:-}" ]]; then
         fail "PYTHON is not set (path to python interpreter)."
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
 
     local directory_name="${git_url}"
@@ -310,20 +310,20 @@ function _install_git_python_tool() {
 
     if ! command -v _git_clone > /dev/null 2>&1; then
         fail "_git_clone helper is missing (lib/utils_git.sh)."
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
     if ! _git_clone "${git_url}"; then
         fail "Failed to clone repository from ${git_url}."
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
     pass "git cloned"
 
-    __pushd "${TOOLS_DIR}/${directory_name}" || return "${_FAIL}"
+    __pushd "${TOOLS_DIR}/${directory_name}" || return "${FAIL}"
 
     if ! "${PYTHON}" -m venv ./venv; then
         fail "Failed to create virtual environment."
         __popd || true
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
     pass "Created virtual env"
 
@@ -336,7 +336,7 @@ function _install_git_python_tool() {
                 fail "Failed to install Impacket."
                 deactivate || true
                 __popd || true
-                return "${_FAIL}"
+                return "${FAIL}"
             }
         else
             warn "Install_Impacket helper not available; skipping Impacket install."
@@ -348,7 +348,7 @@ function _install_git_python_tool() {
             fail "Failed to install requirements from ${requirements_file}."
             deactivate || true
             __popd || true
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     fi
 
@@ -361,7 +361,7 @@ function _install_git_python_tool() {
                     deactivate || true
                     __popd || true
                     fail "Failed to install ${directory_name}"
-                    return "${_FAIL}"
+                    return "${FAIL}"
                 fi
             else
                 if ! _pip_install "${package}" ""; then
@@ -369,7 +369,7 @@ function _install_git_python_tool() {
                     deactivate || true
                     __popd || true
                     fail "Failed to install ${directory_name}"
-                    return "${_FAIL}"
+                    return "${FAIL}"
                 fi
             fi
             info "Installed package ${package}"
@@ -381,7 +381,7 @@ function _install_git_python_tool() {
             fail "setup.py install failed."
             deactivate || true
             __popd || true
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
         pass "setup.py install completed"
     fi
@@ -390,7 +390,7 @@ function _install_git_python_tool() {
     _add_tool_function "${tool_name}" "${directory_name}/${tool_name}"
     __popd || true
     pass "${directory_name} installed and virtual environment set up successfully."
-    return "${_PASS}"
+    return "${PASS}"
 }
 
 ###############################################################################
@@ -526,14 +526,14 @@ function _test_tool_installs() {
 #   $1 - package name (string)
 #
 # Returns:
-#   ${_PASS} on success; ${_FAIL} on failure.
+#   ${PASS} on success; ${FAIL} on failure.
 ###############################################################################
 function _install_package() {
     local package_name="${1:-}"
 
     if [[ -z "${package_name}" ]]; then
         fail "Package name is required for installation."
-        return "${_FAIL}"
+        return "${FAIL}"
     fi
 
     info "Installing ${package_name} for ${OS_NAME:-unknown OS}..."
@@ -546,11 +546,11 @@ function _install_package() {
                     return $?
                 else
                     fail "_apt_install helper missing (lib/utils_apt.sh)."
-                    return "${_FAIL}"
+                    return "${FAIL}"
                 fi
             else
                 fail "Unsupported Linux distribution. Please install ${package_name} manually."
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
             ;;
         Darwin)
@@ -559,16 +559,16 @@ function _install_package() {
                 return $?
             else
                 fail "_brew_install helper missing (lib/utils_brew.sh)."
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
             ;;
         CYGWIN* | MINGW* | MSYS* | Windows_NT)
             fail "Automatic installation for ${package_name} on Windows is not supported. Please install it manually."
-            return "${_FAIL}"
+            return "${FAIL}"
             ;;
         *)
             fail "Unsupported operating system: ${OS_NAME:-unknown}. Please install ${package_name} manually."
-            return "${_FAIL}"
+            return "${FAIL}"
             ;;
     esac
 }

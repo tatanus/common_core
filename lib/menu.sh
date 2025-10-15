@@ -127,9 +127,9 @@ if [[ -z "${MENU_SH_LOADED:-}" ]]; then
 
             # Handle choice
             if [[ -z "${choice}" ]]; then
-                return "${_PASS}"
+                return "${PASS}"
             elif [[ "${choice}" == "Back/Exit" ]]; then
-                return "${_PASS}"
+                return "${PASS}"
             else
                 # Update menu item timestamp persistently
                 _update_menu_timestamp "${title}" "${choice}"
@@ -163,7 +163,7 @@ if [[ -z "${MENU_SH_LOADED:-}" ]]; then
 
         if [[ -z "${input}" ]]; then
             warn "Usage: execute_command_or_script '<command or script>'"
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Check if the input is a script
@@ -197,7 +197,7 @@ if [[ -z "${MENU_SH_LOADED:-}" ]]; then
         # Check if the process ID is valid (non-empty and numeric)
         if [[ -z "${process_id}" || ! "${process_id}" =~ ^[0-9]+$ ]]; then
             #fail "Invalid process ID."
-            return "${_FAIL}"  # Return an error code
+            return "${FAIL}"  # Return an error code
         fi
 
         # Wait for the process with the captured PID to complete
@@ -207,7 +207,7 @@ if [[ -z "${MENU_SH_LOADED:-}" ]]; then
         # Check if the wait command was successful
         if [[ ${wait_status} -ne 0 ]]; then
             fail "Process with PID ${process_id} did not complete successfully."
-            return "${_FAIL}"  # Return an error code
+            return "${FAIL}"  # Return an error code
         fi
 
         # Get the sleep duration from the argument, default to 0.5 second if not provided
@@ -216,7 +216,7 @@ if [[ -z "${MENU_SH_LOADED:-}" ]]; then
         # Introduce the specified delay after the process completes
         sleep "${sleep_duration}"
 
-        return "${_PASS}"  # Return success
+        return "${PASS}"  # Return success
     }
 
     function _exec_function() {
@@ -227,7 +227,7 @@ if [[ -z "${MENU_SH_LOADED:-}" ]]; then
         # Check if a function name was provided
         if [[ -z "${function_name}" ]]; then
             warn "Usage: _Exec_Function '<function_name>' [arguments...]"
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Check if the function is defined
@@ -236,18 +236,18 @@ if [[ -z "${MENU_SH_LOADED:-}" ]]; then
                 info "Calling function: ${function_name} with no arguments"
                 "${function_name}" || {
                     fail "Execution of function ${function_name} failed."
-                    return "${_FAIL}"
+                    return "${FAIL}"
                 }
             else
                 info "Calling function: ${function_name} with arguments: ${args[*]}"
                 "${function_name}" "${args[@]}" || {
                     fail "Execution of function ${function_name} failed with arguments: ${args[*]}."
-                    return "${_FAIL}"
+                    return "${FAIL}"
                 }
             fi
         else
             fail "Function ${function_name} not found."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 fi

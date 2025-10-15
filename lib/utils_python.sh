@@ -92,10 +92,10 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
             's/raise ImportError("Could not import keysym for local pythonversion", x)/raise ImportError("Could not import keysym for local pythonversion")/g' \
             {} \;; then
             pass "Successfully fixed pyreadline issue."
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "Failed to fix pyreadline issue."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
@@ -115,7 +115,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
             # Ensure version variable is set
             if [[ -z "${PYTHON}" ]]; then
                 fail "Python version (${PYTHON_VERSION}) is not specified."
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
 
             # Install Python 3
@@ -123,7 +123,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
                 pass "Python ${PYTHON_VERSION} installed successfully."
             else
                 fail "Failed to install Python ${PYTHON_VERSION}."
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
             _wait_pid
 
@@ -133,7 +133,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
             else
                 fail "Failed to install pip."
                 ERROR_FLAG=true
-                #return "$_FAIL"
+                #return "$FAIL"
             fi
             _wait_pid
 
@@ -157,7 +157,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
             pass "Set PYTHON to newest installed version: ${PYTHON}"
         else
             fail "No installed Python versions found after install."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Ensure pipx installed once
@@ -173,11 +173,11 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
 
         if [[ "${ERROR_FLAG}" = true ]]; then
             fail "Failed to install Python, pip, and/or pipx."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         info "Final Python version in use: ${PYTHON}"
-        return "${_PASS}"
+        return "${PASS}"
     }
 
     # -----------------------------------------------------------------------------
@@ -186,7 +186,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
     function _install_python3() {
         _pushd "${TOOLS_DIR}" || {
             fail "Failed to change directory to ${TOOLS_DIR}."
-            return "${_FAIL}"
+            return "${FAIL}"
         }
 
         UBUNTU_VER=$(_get_ubuntu_version)
@@ -198,7 +198,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
                     if _apt_install "${PYTHON}"; then
                         pass "Python ${PYTHON_VERSION} installed successfully."
                         _popd
-                        return "${_PASS}"
+                        return "${PASS}"
                     else
                         fail "Failed to install Python ${PYTHON_VERSION} via apt install."
                     fi
@@ -229,59 +229,59 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
             if [[ -z "${LATEST_VER}" ]]; then
                 fail "Failed to determine the latest Python version."
                 _popd
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
 
             # Download, extract, and install Python
             if ! ${PROXY} wget --no-check-certificate "https://www.python.org/ftp/python/${LATEST_VER}/Python-${LATEST_VER}.tgz"; then
                 fail "Failed to download Python ${LATEST_VER}."
                 _popd
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
 
             if ! tar -xvf "Python-${LATEST_VER}.tgz"; then
                 fail "Failed to extract Python ${LATEST_VER}."
                 rm "Python-${LATEST_VER}.tgz"
                 _popd
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
 
             cd "Python-${LATEST_VER}" || {
                 fail "Failed to change directory to Python-${LATEST_VER}."
                 _popd
-                return "${_FAIL}"
+                return "${FAIL}"
             }
             if ! ./configure --enable-optimizations; then
                 fail "Configuration of Python ${LATEST_VER} failed."
-                cd "${TOOLS_DIR}" || return "${_FAIL}"
+                cd "${TOOLS_DIR}" || return "${FAIL}"
                 rm -rf "Python-${LATEST_VER}" "Python-${LATEST_VER}.tgz"
                 _popd
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
 
             if ! make -j "$(nproc)"; then
                 fail "Build of Python ${LATEST_VER} failed."
-                cd "${TOOLS_DIR}" || return "${_FAIL}"
+                cd "${TOOLS_DIR}" || return "${FAIL}"
                 rm -rf "Python-${LATEST_VER}" "Python-${LATEST_VER}.tgz"
                 _popd
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
 
             if ! make altinstall; then
                 fail "Installation of Python ${LATEST_VER} failed."
-                cd "${TOOLS_DIR}" || return "${_FAIL}"
+                cd "${TOOLS_DIR}" || return "${FAIL}"
                 rm -rf "Python-${LATEST_VER}" "Python-${LATEST_VER}.tgz"
                 _popd
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
 
-            cd "${TOOLS_DIR}" || return "${_FAIL}"
+            cd "${TOOLS_DIR}" || return "${FAIL}"
             rm -rf "Python-${LATEST_VER}" "Python-${LATEST_VER}.tgz"
             pass "Python ${LATEST_VER} installed successfully."
         fi
 
         _popd
-        return "${_PASS}"
+        return "${PASS}"
     }
 
     # -----------------------------------------------------------------------------
@@ -294,20 +294,20 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         # Check if the specified Python command is available
         if ! command -v "${python_cmd}" > /dev/null 2>&1; then
             fail "Python command '${python_cmd}' is not found. Ensure that the specified Python version is installed."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Determine Python version
         python_version=$("${python_cmd}" -c "import sys; print('{}.{}'.format(*sys.version_info[:2]))" 2> /dev/null)
         if [[ -z "${python_version}" ]]; then
             fail "Failed to determine Python version for '${python_cmd}'."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Check if pip is already installed
         if "${python_cmd}" -m pip --version > /dev/null 2>&1; then
             pass "pip is already installed for Python ${python_version}."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         info "Installing pip for Python ${python_version} using apt..."
@@ -328,7 +328,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         # Verify pip installation
         if "${python_cmd}" -m pip --version > /dev/null 2>&1; then
             pass "pip installed successfully for Python ${python_version} using apt."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         warn "Falling back to get-pip.py..."
@@ -340,7 +340,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         # Download get-pip.py
         if ! ${PROXY} _CURL "${get_pip_url}" "${get_pip_file}"; then
             fail "Failed to download get-pip.py for Python ${python_version}."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
         pass "Downloaded get-pip.py for Python ${python_version}."
 
@@ -348,7 +348,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         if ! ${PROXY} "${python_cmd}" "${get_pip_file}"; then
             rm -f "${get_pip_file}"
             fail "Failed to install pip for Python ${python_version} using get-pip.py."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Cleanup and final verification
@@ -357,10 +357,10 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
 
         if "${python_cmd}" -m pip --version > /dev/null 2>&1; then
             pass "pip installed successfully for Python ${python_version}."
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "pip installation for Python ${python_version} failed after using get-pip.py."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
@@ -372,12 +372,12 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
 
         if ! command -v "${python_cmd}" > /dev/null 2>&1; then
             fail "Python command '${python_cmd}' not found."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         if command -v pipx > /dev/null 2>&1; then
             pass "pipx is already installed."
-            return "${_PASS}"
+            return "${PASS}"
         fi
 
         info "Installing pipx..."
@@ -385,18 +385,18 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         if _apt_install "pipx"; then
             pipx ensurepath --force || {
                 fail "Failed to ensure pipx path."
-                return "${_FAIL}"
+                return "${FAIL}"
             }
         else
             info "apt install failed, trying pip install of pipx..."
             if ! "${python_cmd}" -m pip install --user pipx; then
                 fail "Failed to install pipx using pip."
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
 
             pipx ensurepath --force || {
                 fail "Failed to ensure pipx path after pip install."
-                return "${_FAIL}"
+                return "${FAIL}"
             }
         fi
 
@@ -410,10 +410,10 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
 
         if command -v pipx > /dev/null 2>&1; then
             pass "pipx installed successfully."
-            return "${_PASS}"
+            return "${PASS}"
         else
             fail "pipx installation failed."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
     }
 
@@ -434,7 +434,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         # Verify that the library name is provided
         if [[ -z "${lib}" ]]; then
             fail "Library name must be provided."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Call _PipInstallVer with the global python version
@@ -451,7 +451,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         # Verify that both parameters are provided
         if [[ -z "${python_version}" ]] || [[ -z "${lib}" ]]; then
             fail "Both python_version and library name must be provided."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         info "Installing ${lib} using python${python_version}..."
@@ -460,11 +460,11 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         # shellcheck disable=SC2086 # this breaks if you put quotes around ${local_PIP_ARGS}
         if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip ${local_PIP_ARGS} "${lib}" > /dev/null 2>&1; then
             fail "Failed to install ${lib} using python${python_version} -m pip."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         pass "Successfully installed ${lib} using python${python_version}."
-        return "${_PASS}"
+        return "${PASS}"
     }
 
     # Function to install Python libraries from a requirements file
@@ -481,13 +481,13 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         # Verify that a file name is provided
         if [[ -z "${file}" ]]; then
             fail "Filename name must be provided."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Call _PipInstallRequirementsVer with the global python version
         # shellcheck disable=SC2086 # this breaks if you put quotes around ${tmp_PIP_ARGS}
         _pip_install_requirements_ver "${PYTHON_VERSION}" "${file}" ${tmp_PIP_ARGS}
-        return "${_PASS}"
+        return "${PASS}"
     }
 
     # Function to install Python libraries from a requirements file for a particular version of python
@@ -499,7 +499,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         # Verify that both parameters are provided
         if [[ -z "${python_version}" ]] || [[ -z "${file}" ]]; then
             fail "Both python_version and filename must be provided."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         info "Installing Python packages from ${file} using python${python_version}..."
@@ -507,7 +507,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         # Attempt to install the libraries using pip
         if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip "${local_PIP_ARGS}" -r "${file}" > /dev/null 2>&1; then
             fail "Failed to install packages from ${file} using python${python_version} -m pip."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         # Verify installation of each package listed in the requirements file
@@ -522,12 +522,12 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
             # Check if the package is installed
             if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip show "${package_name}" > /dev/null 2>&1; then
                 fail "${package_name} from ${file} is not installed for python${python_version}. Verification failed."
-                return "${_FAIL}"
+                return "${FAIL}"
             fi
         done < "${file}"
 
         pass "Successfully installed packages from ${file} using python${python_version}."
-        return "${_PASS}"
+        return "${PASS}"
     }
 
     # -----------------------------------------------------------------------------
@@ -586,10 +586,10 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
 
         if [[ "${ERROR_FLAG}" = true ]]; then
             fail "Failed to install all Python Libraries."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
         pass "Successfully installed all Python libraries."
-        return "${_PASS}"
+        return "${PASS}"
     }
 
     # -----------------------------------------------------------------------------
@@ -602,17 +602,17 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         # Ensure package name is provided
         if [[ -z "${package}" ]]; then
             fail "Package name is required for pipx install."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         info "Installing ${package} using pipx with Python ${python_cmd}..."
         if ! show_spinner "${PROXY} pipx install ${package} --force --python ${python_cmd} > /dev/null 2>&1"; then
             fail "Failed to install ${package} with pipx."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         pass "Successfully installed ${package} with pipx."
-        return "${_PASS}"
+        return "${PASS}"
     }
 
     function _install_pipx_tools() {
@@ -620,7 +620,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
 
         if [[ ${#packages[@]} -eq 0 ]]; then
             fail "No pipx packages provided for installation."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         local ERROR_FLAG=false
@@ -652,10 +652,10 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
 
         if [[ "${ERROR_FLAG}" == "true" ]]; then
             fail "Failed to install all pipx tools."
-            return "${_FAIL}"
+            return "${FAIL}"
         fi
 
         pass "Successfully installed all pipx tools."
-        return "${_PASS}"
+        return "${PASS}"
     }
 fi
