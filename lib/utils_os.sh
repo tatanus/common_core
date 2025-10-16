@@ -104,9 +104,9 @@ if [[ -z "${UTILS_OS_SH_LOADED:-}" ]]; then
     # Case statement to handle different operating systems
     case "${OS_NAME}" in
         Linux)
-            # Check if the _Get_Ubuntu_Version function is available
+            # Check if the _get_ubuntu_version function is available
             if ! command -v _get_ubuntu_version &> /dev/null; then
-                fail "Function _Get_Ubuntu_Version is not defined."
+                fail "Function _get_ubuntu_version is not defined."
                 exit "${_FAIL}"
             fi
 
@@ -119,9 +119,9 @@ if [[ -z "${UTILS_OS_SH_LOADED:-}" ]]; then
             info "Detected Ubuntu version: ${UBUNTU_VER}"
             ;;
         Darwin)
-            # Check if the _Get_MacOS_Version function is available
+            # Check if the _get_macos_version function is available
             if ! command -v _get_macos_version &> /dev/null; then
-                fail "Function _Get_MacOS_Version is not defined."
+                fail "Function _get_macos_version is not defined."
                 exit "${_FAIL}"
             fi
 
@@ -135,9 +135,9 @@ if [[ -z "${UTILS_OS_SH_LOADED:-}" ]]; then
             ;;
         CYGWIN* | MINGW* | MSYS* | Windows_NT)
             # Handle Windows platforms
-            # Check if the _Get_Windows_Version function is available
+            # Check if the _get_windows_version function is available
             if ! command -v _get_windows_version &> /dev/null; then
-                fail "Function _Get_Windows_Version is not defined."
+                fail "Function _get_windows_version is not defined."
                 exit "${_FAIL}"
             fi
 

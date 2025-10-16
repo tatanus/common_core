@@ -154,7 +154,7 @@ if [[ -z "${LOGGER_SH_LOADED:-}" ]]; then
             return 1
         }
 
-        # Set properties using _Logger_set_property
+        # Set properties using _logger_set_property
         _logger_set_property "${instance_name}" "log_file" "${log_file}"
         _logger_set_property "${instance_name}" "log_level" "${log_level}"
         _logger_set_property "${instance_name}" "log_to_screen" "${log_to_screen}"

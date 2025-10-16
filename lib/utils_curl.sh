@@ -28,7 +28,7 @@ if [[ -z "${UTILS_CURL_SH_LOADED:-}" ]]; then
 
         # Validate input parameters
         if [[ -z "${url}" ]] || [[ -z "${filename}" ]]; then
-            fail "Usage: _Curl <url> <filename>"
+            fail "Usage: _curl <url> <filename>"
             return "${FAIL}"
         fi
 

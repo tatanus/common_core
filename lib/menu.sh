@@ -226,7 +226,7 @@ if [[ -z "${MENU_SH_LOADED:-}" ]]; then
 
         # Check if a function name was provided
         if [[ -z "${function_name}" ]]; then
-            warn "Usage: _Exec_Function '<function_name>' [arguments...]"
+            warn "Usage: _exec_function '<function_name>' [arguments...]"
             return "${FAIL}"
         fi
 

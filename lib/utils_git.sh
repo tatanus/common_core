@@ -60,7 +60,7 @@ if [[ -z "${UTILS_GIT_SH_LOADED:-}" ]]; then
 
         # Validate input parameters
         if [[ -z "${full_repo_name}" ]] || [[ -z "${release_name}" ]] || [[ -z "${path}" ]]; then
-            fail "Usage: _Git_Release <full_repo_name> <release_name> <path>"
+            fail "Usage: _git_release <full_repo_name> <release_name> <path>"
             return "${FAIL}"
         fi
 

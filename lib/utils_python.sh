@@ -19,13 +19,13 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
     declare -g UTILS_PYTHON_SH_LOADED=true
 
     ###############################################################################
-    # _Find_Latest_Python
+    # _find_latest_python
     #==============================
     # Determines the latest Python version from the PYTHON_VERSIONS list.
     # This does NOT scan binaries on disk.
     #
     # Usage:
-    #   latest=$(_Find_Latest_Python)
+    #   latest=$(_find_latest_python)
     #
     # Returns:
     #   Prints the highest version string (e.g. "3.13")
@@ -338,7 +338,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         local get_pip_file="get-pip.py"
 
         # Download get-pip.py
-        if ! ${PROXY} _CURL "${get_pip_url}" "${get_pip_file}"; then
+        if ! ${PROXY} _curl "${get_pip_url}" "${get_pip_file}"; then
             fail "Failed to download get-pip.py for Python ${python_version}."
             return "${FAIL}"
         fi
