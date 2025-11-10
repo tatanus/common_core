@@ -460,7 +460,8 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         # Attempt to install the library using pip
         # shellcheck disable=SC2086 # this breaks if you put quotes around ${local_PIP_ARGS}
         echo "PIP_ROOT_USER_ACTION=ignore ${PROXY} python${python_version} -m pip ${local_PIP_ARGS[@]} ${lib}"
-        if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip "${local_PIP_ARGS[@]}" "${lib}" > /dev/null 2>&1; then
+        if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip "${local_PIP_ARGS[@]}" "${lib}"; then
+            #        if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip "${local_PIP_ARGS[@]}" "${lib}" > /dev/null 2>&1; then
             fail "Failed to install ${lib} using python${python_version} -m pip."
             return "${FAIL}"
         fi
