@@ -139,6 +139,7 @@ if [[ -z "${UTILS_APT_SH_LOADED:-}" ]]; then
 
         return "${overall_status}"
     }
+
     # Perform a full apt update, autoremove, clean, and upgrade
     function _apt_update() {
         # Update package list

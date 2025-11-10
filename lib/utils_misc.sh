@@ -82,6 +82,20 @@ if [[ -z "${UTILS_MISC_SH_LOADED:-}" ]]; then
     #   show_spinner "long running command"
     # Function to show a spinner for a command or a running process
     function show_spinner() {
+        # Filter out empty arguments
+        local args=()
+        for arg in "$@"; do
+            if [[ -n "${arg}" ]]; then
+                args+=("${arg}")
+            fi
+        done
+
+        # Check if we have any arguments left
+        if [[ ${#args[@]} -eq 0 ]]; then
+            echo "Error: show_spinner requires at least one argument"
+            return 1
+        fi
+
         local delay=0.1
         local spin='|/-\\'
         local start_time
@@ -90,12 +104,12 @@ if [[ -z "${UTILS_MISC_SH_LOADED:-}" ]]; then
         local is_command=0
 
         # First arg is a PID if it's only digits and only one argument
-        if [[ "$1" =~ ^[0-9]+$ ]] && [[ $# -eq 1 ]]; then
-            pid="$1"
+        if [[ "${args[0]}" =~ ^[0-9]+$ ]] && [[ ${#args[@]} -eq 1 ]]; then
+            pid="${args[0]}"
         else
             is_command=1
             # Execute command with all arguments
-            "$@" > /dev/null 2>&1 &
+            "${args[@]}" > /dev/null 2>&1 &
             pid=$!
         fi
 
