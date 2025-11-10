@@ -99,7 +99,7 @@ for util_file in "${UTILS_DIR}"/util_*.sh; do
 done
 
 if [[ "${UTILS_SOURCED}" == false ]]; then
-    warn "No util_*.sh scripts found in ${UTILS_SUBDIR}"
+    warn "No util_*.sh scripts found in ${UTILS_DIR}"
 else
     info "All utility modules loaded successfully."
 fi
