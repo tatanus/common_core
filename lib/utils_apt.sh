@@ -121,18 +121,9 @@ if [[ -z "${UTILS_APT_SH_LOADED:-}" ]]; then
 
         # Build and execute the install command
         local install_result
-        if [[ -n "${PROXY}" ]]; then
-            # With proxy
-            if ! show_spinner ${PROXY} apt -qq -y install "${apt_packages_valid[@]}"; then
-                fail "Failed to install one or more packages."
-                return "${FAIL}"
-            fi
-        else
-            # Without proxy
-            if ! show_spinner apt -qq -y install "${apt_packages_valid[@]}"; then
-                fail "Failed to install one or more packages."
-                return "${FAIL}"
-            fi
+        if ! show_spinner "${PROXY}" apt -qq -y install "${apt_packages_valid[@]}"; then
+            fail "Failed to install one or more packages."
+            return "${FAIL}"
         fi
 
         # Verify that each package is properly installed
@@ -151,7 +142,7 @@ if [[ -z "${UTILS_APT_SH_LOADED:-}" ]]; then
     # Perform a full apt update, autoremove, clean, and upgrade
     function _apt_update() {
         # Update package list
-        if ! show_spinner "${PROXY} apt -qq -y update --fix-missing > /dev/null 2>&1"; then
+        if ! show_spinner "${PROXY}" apt -qq -y update --fix-missing; then
             fail "Failed to update package list."
             return "${FAIL}"
         fi
@@ -159,7 +150,7 @@ if [[ -z "${UTILS_APT_SH_LOADED:-}" ]]; then
         pass "Package list updated successfully."
 
         # Remove unnecessary packages
-        if ! show_spinner "${PROXY} apt -qq -y autoremove > /dev/null 2>&1"; then
+        if ! show_spinner "${PROXY}" apt -qq -y autoremove; then
             fail "Failed to remove unnecessary packages."
             return "${FAIL}"
         fi
@@ -167,7 +158,7 @@ if [[ -z "${UTILS_APT_SH_LOADED:-}" ]]; then
         pass "Unnecessary packages removed successfully."
 
         # Clean up the package cache
-        if ! show_spinner "${PROXY} apt -qq -y clean > /dev/null 2>&1"; then
+        if ! show_spinner "${PROXY}" apt -qq -y clean; then
             fail "Failed to clean package cache."
             return "${FAIL}"
         fi
@@ -175,7 +166,7 @@ if [[ -z "${UTILS_APT_SH_LOADED:-}" ]]; then
         pass "Package cache cleaned successfully."
 
         # Upgrade installed packages
-        if ! show_spinner "${PROXY} apt -qq -y upgrade > /dev/null 2>&1"; then
+        if ! show_spinner "${PROXY}" apt -qq -y upgrade; then
             fail "Failed to upgrade packages."
             return "${FAIL}"
         fi

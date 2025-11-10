@@ -606,7 +606,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         fi
 
         info "Installing ${package} using pipx with Python ${python_cmd}..."
-        if ! show_spinner "${PROXY} pipx install ${package} --force --python ${python_cmd} > /dev/null 2>&1"; then
+        if ! show_spinner "${PROXY}" pipx install "${package}" --force --python "${python_cmd}"; then
             fail "Failed to install ${package} with pipx."
             return "${FAIL}"
         fi

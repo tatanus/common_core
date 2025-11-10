@@ -89,15 +89,13 @@ if [[ -z "${UTILS_MISC_SH_LOADED:-}" ]]; then
         local pid
         local is_command=0
 
-        # First arg is a PID if it's only digits
+        # First arg is a PID if it's only digits and only one argument
         if [[ "$1" =~ ^[0-9]+$ ]] && [[ $# -eq 1 ]]; then
             pid="$1"
         else
             is_command=1
-            # Execute command with all arguments, redirect to temp file
-            local temp_output
-            temp_output=$(mktemp)
-            "$@" > "${temp_output}" 2>&1 &
+            # Execute command with all arguments
+            "$@" > /dev/null 2>&1 &
             pid=$!
         fi
 
@@ -122,13 +120,8 @@ if [[ -z "${UTILS_MISC_SH_LOADED:-}" ]]; then
             printf "\rProcessing... Done! (Total time: %s seconds)\n" "${total_time}"
         else
             printf "\rProcessing... Failed! (Total time: %s seconds)\n" "${total_time}"
-            # Optionally show error output
-            if [[ -n "${temp_output:-}" && -f "${temp_output}" ]]; then
-                cat "${temp_output}" >&2
-            fi
         fi
 
-        [[ -n "${temp_output:-}" && -f "${temp_output}" ]] && rm -f "${temp_output}"
         return "${exit_code}"
     }
 
