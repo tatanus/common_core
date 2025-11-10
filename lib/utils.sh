@@ -83,7 +83,7 @@ info "Scanning for util_*.sh files under ${UTILS_DIR}..."
 UTILS_SOURCED=false
 
 # shellcheck disable=SC2231
-for util_file in "${UTILS_DIR}"/util_*.sh; do
+for util_file in "${UTILS_DIR}"/utils_*.sh; do
     [[ -e "${util_file}" ]] || continue
     if [[ -f "${util_file}" ]]; then
         debug "Attempting to source: ${util_file}"
