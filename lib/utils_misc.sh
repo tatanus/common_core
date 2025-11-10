@@ -82,53 +82,53 @@ if [[ -z "${UTILS_MISC_SH_LOADED:-}" ]]; then
     #   show_spinner "long running command"
     # Function to show a spinner for a command or a running process
     function show_spinner() {
-        local arg="$1"       # First argument, either a PID or a command
-        local delay=0.1      # Delay between spinner updates
-        # shellcheck disable=SC1003
+        local delay=0.1
         local spin='|/-\\'
         local start_time
-        start_time=$(date +%s) # Record the start time
-        local pid             # PID to monitor
-        local is_command=0    # Flag to determine if arg is a command
+        start_time=$(date +%s)
+        local pid
+        local is_command=0
 
-        # Determine if the argument is a PID or a command
-        if [[ "${arg}" =~ ^[0-9]+$ ]]; then
-            pid="${arg}" # Use the provided PID
+        # First arg is a PID if it's only digits
+        if [[ "$1" =~ ^[0-9]+$ ]] && [[ $# -eq 1 ]]; then
+            pid="$1"
         else
             is_command=1
-            # Run the command in the same shell and get its PID
-            eval "${arg} &"
+            # Execute command with all arguments, redirect to temp file
+            local temp_output
+            temp_output=$(mktemp)
+            "$@" > "${temp_output}" 2>&1 &
             pid=$!
         fi
 
         printf "Processing... (0s) "
-
         i=0
         while kill -0 "${pid}" 2> /dev/null; do
             i=$(((i + 1) % 4))
             local current_time
             current_time=$(date +%s)
-            local elapsed=$((current_time - start_time))   # Calculate elapsed time
-
-            # Update spinner and elapsed time
+            local elapsed=$((current_time - start_time))
             printf "\rProcessing... %s (%s seconds) " "${spin:${i}:1}" "${elapsed}"
             sleep "${delay}"
         done
 
-        # Wait for the command (if applicable) and capture its exit code
         if [[ ${is_command} -eq 1 ]]; then
             wait "${pid}"
         fi
         local exit_code=$?
 
-        # Overwrite spinner with "Done!" or "Failed" and total elapsed time
-        local total_time=$(($( date +%s) - start_time))
+        local total_time=$(($(date +%s) - start_time))
         if [[ ${exit_code} -eq 0 ]]; then
             printf "\rProcessing... Done! (Total time: %s seconds)\n" "${total_time}"
         else
             printf "\rProcessing... Failed! (Total time: %s seconds)\n" "${total_time}"
+            # Optionally show error output
+            if [[ -n "${temp_output:-}" && -f "${temp_output}" ]]; then
+                cat "${temp_output}" >&2
+            fi
         fi
 
+        [[ -n "${temp_output:-}" && -f "${temp_output}" ]] && rm -f "${temp_output}"
         return "${exit_code}"
     }
 

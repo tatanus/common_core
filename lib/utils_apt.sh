@@ -80,35 +80,23 @@ if [[ -z "${UTILS_APT_SH_LOADED:-}" ]]; then
 
         # Validate each package and add to the valid list if it exists
         for package in "${APT_PACKAGES[@]}"; do
-            # Check whether package exists in apt cache
-            if ! apt-cache show "${package}" 2> /dev/null | grep -q '^Package:'; then
-                info "${package} does not exist and will be skipped."
+            # Get policy information for the package
+            local policy_output
+            policy_output=$(apt-cache policy "${package}" 2> /dev/null)
+
+            # Check if package exists in apt cache
+            if [[ -z "${policy_output}" ]]; then
+                info "${package} does not exist in apt cache and will be skipped."
                 skipped_packages+=("${package}")
                 continue
             fi
 
-            # Check whether package is virtual
-            if apt-cache showpkg "${package}" | grep -q "^Reverse Provides:"; then
-                reverse=$(apt-cache showpkg "${package}" | awk '/^Reverse Provides:/,EOF' | tail -n +2 | grep -v '^\s*$')
+            # Check if package has an installable candidate
+            local candidate
+            candidate=$(echo "${policy_output}" | awk '/Candidate:/ {print $2}')
 
-                if [[ -n "${reverse}" ]]; then
-                    # It's virtual → check dependencies
-                    dependencies=$(apt-cache showpkg "${package}" | awk '/^Dependencies:/,/^Reverse Provides:/' | grep -v -E '^(Dependencies|Reverse Provides):' | grep -v '^\s*$')
-
-                    if [[ -z "${dependencies}" ]]; then
-                        info "${package} is a purely virtual package with no dependencies and will be skipped."
-                        skipped_packages+=("${package}")
-                        continue
-                    else
-                        info "${package} is a virtual package but has dependencies. It will be included."
-                    fi
-                fi
-            fi
-
-            # Check if a candidate exists
-            candidate=$(apt-cache policy "${package}" | awk '/Candidate:/ {print $2}')
             if [[ -z "${candidate}" || "${candidate}" == "(none)" ]]; then
-                info "${package} exists but has no installable candidate and will be skipped."
+                info "${package} has no installable candidate and will be skipped."
                 skipped_packages+=("${package}")
                 continue
             fi
@@ -122,16 +110,29 @@ if [[ -z "${UTILS_APT_SH_LOADED:-}" ]]; then
             info "Skipped packages: ${skipped_packages[*]}"
         fi
 
+        # Check if there are valid packages to install
+        if [[ "${#apt_packages_valid[@]}" -eq 0 ]]; then
+            info "No valid packages to install."
+            return 0
+        fi
+
         # Install valid packages
-        if [[ "${#apt_packages_valid[@]}" -gt 0 ]]; then
-            info "Installing packages: ${apt_packages_valid[*]}"
-            if ! show_spinner "${PROXY} apt -qq -y install ${apt_packages_valid[*]} > /dev/null 2>&1"; then
+        info "Installing packages: ${apt_packages_valid[*]}"
+
+        # Build and execute the install command
+        local install_result
+        if [[ -n "${PROXY}" ]]; then
+            # With proxy
+            if ! show_spinner ${PROXY} apt -qq -y install "${apt_packages_valid[@]}"; then
                 fail "Failed to install one or more packages."
                 return "${FAIL}"
             fi
-            _wait_pid
         else
-            info "No valid packages to install."
+            # Without proxy
+            if ! show_spinner apt -qq -y install "${apt_packages_valid[@]}"; then
+                fail "Failed to install one or more packages."
+                return "${FAIL}"
+            fi
         fi
 
         # Verify that each package is properly installed
@@ -147,7 +148,6 @@ if [[ -z "${UTILS_APT_SH_LOADED:-}" ]]; then
 
         return "${overall_status}"
     }
-
     # Perform a full apt update, autoremove, clean, and upgrade
     function _apt_update() {
         # Update package list

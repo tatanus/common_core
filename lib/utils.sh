@@ -1,62 +1,111 @@
 #!/usr/bin/env bash
-set -uo pipefail
-
-# =============================================================================
-# NAME        : utils.sh
-# DESCRIPTION : Utility script for dynamically sourcing utility scripts and
-#               defining commonly used variables and behaviors.
-# AUTHOR      : Adam Compton
-# DATE CREATED: 2024-12-15 21:16:38
-# =============================================================================
+###############################################################################
+# NAME         : utils.sh
+# DESCRIPTION  : Dynamically load all utility modules (util_*.sh) from ./utils.
+# AUTHOR       : Adam Compton
+# DATE CREATED : 2024-12-15
+###############################################################################
 # EDIT HISTORY:
-# DATE                 | EDITED BY    | DESCRIPTION OF CHANGE
-# ---------------------|--------------|----------------------------------------
-# 2024-12-15 21:16:38  | Adam Compton | Initial creation.
-# =============================================================================
+# DATE        | EDITED BY      | DESCRIPTION
+# ------------|----------------|-----------------------------------------------
+# 2025-10-29  | Adam Compton   | Updated to load util_*.sh files from ./utils/
+#                              | Added local log function fallbacks (no color).
+###############################################################################
 
-# Guard to prevent multiple sourcing
-if [[ -z "${UTILS_SH_LOADED:-}" ]]; then
-    declare -g UTILS_SH_LOADED=true
+set -uo pipefail
+IFS=$'\n\t'
 
-    # =============================================================================
-    # GLOBAL VARIABLES
-    # =============================================================================
-
-    export DEBIAN_FRONTEND=noninteractive
-
-    # Validate SCRIPT_DIR
-    if [[ -z "${SCRIPT_DIR:-}" ]]; then
-        echo "Error: SCRIPT_DIR is not set." >&2
-        exit 1
-    fi
-
-    # =============================================================================
-    # DYNAMIC SCRIPT SOURCING
-    # =============================================================================
-    # Dynamically source all `utils_*.sh` files from the lib directory
-
-    UTIL_LIB_PATH="$(realpath "${BASH_SOURCE[0]}")"
-    UTIL_LIB_DIR="$(dirname "${UTIL_LIB_PATH}")"
-
-    info "Utils lib directory determined: ${UTIL_LIB_DIR}"
-
-    if [[ -d "${UTIL_LIB_DIR}" ]]; then
-        sourced_any=false
-        for utils_file in "${UTIL_LIB_DIR}"/utils_*.sh; do
-            if [[ -f "${utils_file}" ]]; then
-                source "${utils_file}" || {
-                    fail "Failed to source ${utils_file}" >&2
-                    exit 1
-                }
-                pass "Sourced: ${utils_file}" # Logging success
-                sourced_any=true
-            fi
-        done
-        if [[ "${sourced_any}" == false ]]; then
-            info "No utils_*.sh scripts found to source in ${UTIL_LIB_DIR}"
-        fi
+#===============================================================================
+# Library Guard
+#===============================================================================
+if [[ -n "${UTILS_SH_LOADED:-}" ]]; then
+    if (return 0 2> /dev/null); then
+        return 0
     else
-        fail "Utility library directory does not exist: ${UTIL_LIB_DIR}" >&2
-        exit 1
+        exit 0
     fi
+else
+    export UTILS_SH_LOADED=1
 fi
+
+#===============================================================================
+# Environment Setup
+#===============================================================================
+export DEBIAN_FRONTEND=noninteractive
+
+UTILS_PATH="$(realpath "${BASH_SOURCE[0]}")"
+UTILS_DIR="$(dirname "${UTILS_PATH}")"
+UTILS_SUBDIR="${UTILS_DIR}/utils"
+
+#===============================================================================
+# Local Fallback Logging (No Colors)
+#------------------------------------------------------------------------------
+# These functions are defined only if not already provided by sourced modules.
+###############################################################################
+if ! declare -F info > /dev/null 2>&1; then
+    function info()  { printf '[INFO ] %s\n' "${*}" >&2; }
+fi
+
+if ! declare -F warn > /dev/null 2>&1; then
+    function warn()  { printf '[WARN ] %s\n' "${*}" >&2; }
+fi
+
+if ! declare -F error > /dev/null 2>&1; then
+    function error() { printf '[ERROR] %s\n' "${*}" >&2; }
+fi
+
+if ! declare -F debug > /dev/null 2>&1; then
+    function debug() { printf '[DEBUG] %s\n' "${*}" >&2; }
+fi
+
+if ! declare -F pass > /dev/null 2>&1; then
+    function pass()  { printf '[PASS ] %s\n' "${*}" >&2; }
+fi
+
+if ! declare -F fail > /dev/null 2>&1; then
+    function fail()  { printf '[FAIL ] %s\n' "${*}" >&2; }
+fi
+
+#===============================================================================
+# Dynamic Utility Loader
+#------------------------------------------------------------------------------
+# Searches ./utils/ for all util_*.sh scripts and sources them sequentially.
+# Fails fast if any source fails. Logs each action without color.
+###############################################################################
+info "Initializing utility loader in: ${UTILS_DIR}"
+
+if [[ ! -d "${UTILS_SUBDIR}" ]]; then
+    error "Missing ./utils directory. Expected at: ${UTILS_SUBDIR}"
+    exit 1
+fi
+
+info "Scanning for util_*.sh files under ${UTILS_SUBDIR}..."
+UTILS_SOURCED=false
+
+# shellcheck disable=SC2231
+for util_file in "${UTILS_SUBDIR}"/util_*.sh; do
+    [[ -e "${util_file}" ]] || continue
+    if [[ -f "${util_file}" ]]; then
+        debug "Attempting to source: ${util_file}"
+        # shellcheck disable=SC1090
+        if source "${util_file}"; then
+            pass "Successfully sourced: $(basename "${util_file}")"
+            UTILS_SOURCED=true
+        else
+            fail "Failed to source: ${util_file}"
+            exit 1
+        fi
+    fi
+done
+
+if [[ "${UTILS_SOURCED}" == false ]]; then
+    warn "No util_*.sh scripts found in ${UTILS_SUBDIR}"
+else
+    info "All utility modules loaded successfully."
+fi
+
+#===============================================================================
+# Exported Variables
+#===============================================================================
+export UTILS_DIR UTILS_SUBDIR UTILS_SOURCED
+debug "Utility framework initialization complete."
