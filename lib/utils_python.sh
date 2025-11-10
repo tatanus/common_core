@@ -446,6 +446,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
     function _pip_install_ver() {
         local python_version="$1"
         local lib="$2"
+        shift 2
         local local_PIP_ARGS="$@"
 
         # Verify that both parameters are provided
@@ -495,6 +496,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
     function _pip_install_requirements_ver() {
         local python_version="$1"
         local file="$2"
+        shift 2
         local local_PIP_ARGS="$@"
 
         # Verify that both parameters are provided
