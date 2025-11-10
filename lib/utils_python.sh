@@ -447,7 +447,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         local python_version="$1"
         local lib="$2"
         shift 2
-        local local_PIP_ARGS="$@"
+        local -a local_PIP_ARGS=("$@")
 
         # Verify that both parameters are provided
         if [[ -z "${python_version}" ]] || [[ -z "${lib}" ]]; then
@@ -498,7 +498,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         local python_version="$1"
         local file="$2"
         shift 2
-        local local_PIP_ARGS="$@"
+        local -a local_PIP_ARGS=("$@")
 
         # Verify that both parameters are provided
         if [[ -z "${python_version}" ]] || [[ -z "${file}" ]]; then
