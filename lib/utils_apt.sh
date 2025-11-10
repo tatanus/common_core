@@ -107,7 +107,12 @@ if [[ -z "${UTILS_APT_SH_LOADED:-}" ]]; then
 
         # Summarize skipped packages
         if [[ "${#skipped_packages[@]}" -gt 0 ]]; then
-            info "Skipped packages: ${skipped_packages[*]}"
+            local skipped_list
+            skipped_list=$(
+                           IFS=', '
+                                     echo "${skipped_packages[*]}"
+            )
+            info "Skipped packages: ${skipped_list}"
         fi
 
         # Check if there are valid packages to install
@@ -117,7 +122,12 @@ if [[ -z "${UTILS_APT_SH_LOADED:-}" ]]; then
         fi
 
         # Install valid packages
-        info "Installing packages: ${apt_packages_valid[*]}"
+        local install_list
+        install_list=$(
+                       IFS=', '
+                                 echo "${apt_packages_valid[*]}"
+        )
+        info "Installing packages: ${install_list}"
 
         # Build and execute the install command
         local install_result

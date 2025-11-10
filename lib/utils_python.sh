@@ -446,7 +446,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
     function _pip_install_ver() {
         local python_version="$1"
         local lib="$2"
-        local local_PIP_ARGS="$3"
+        local local_PIP_ARGS="$@"
 
         # Verify that both parameters are provided
         if [[ -z "${python_version}" ]] || [[ -z "${lib}" ]]; then
@@ -458,7 +458,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
 
         # Attempt to install the library using pip
         # shellcheck disable=SC2086 # this breaks if you put quotes around ${local_PIP_ARGS}
-        if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip ${local_PIP_ARGS} "${lib}" > /dev/null 2>&1; then
+        if ! PIP_ROOT_USER_ACTION=ignore "${PROXY}" python"${python_version}" -m pip "${local_PIP_ARGS[@]}" "${lib}" > /dev/null 2>&1; then
             fail "Failed to install ${lib} using python${python_version} -m pip."
             return "${FAIL}"
         fi
@@ -494,7 +494,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
     function _pip_install_requirements_ver() {
         local python_version="$1"
         local file="$2"
-        local local_PIP_ARGS="$3"
+        local local_PIP_ARGS="$@"
 
         # Verify that both parameters are provided
         if [[ -z "${python_version}" ]] || [[ -z "${file}" ]]; then
@@ -505,7 +505,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         info "Installing Python packages from ${file} using python${python_version}..."
 
         # Attempt to install the libraries using pip
-        if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip "${local_PIP_ARGS}" -r "${file}" > /dev/null 2>&1; then
+        if ! PIP_ROOT_USER_ACTION=ignore "${PROXY}" python"${python_version}" -m pip "${local_PIP_ARGS[@]}" -r "${file}" > /dev/null 2>&1; then
             fail "Failed to install packages from ${file} using python${python_version} -m pip."
             return "${FAIL}"
         fi
