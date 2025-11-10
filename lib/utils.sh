@@ -35,7 +35,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 UTILS_PATH="$(realpath "${BASH_SOURCE[0]}")"
 UTILS_DIR="$(dirname "${UTILS_PATH}")"
-UTILS_SUBDIR="${UTILS_DIR}/utils"
+#UTILS_SUBDIR="${UTILS_DIR}/utils"
 
 #===============================================================================
 # Local Fallback Logging (No Colors)
@@ -74,16 +74,16 @@ fi
 ###############################################################################
 info "Initializing utility loader in: ${UTILS_DIR}"
 
-if [[ ! -d "${UTILS_SUBDIR}" ]]; then
-    error "Missing ./utils directory. Expected at: ${UTILS_SUBDIR}"
-    exit 1
-fi
+# if [[ ! -d "${UTILS_SUBDIR}" ]]; then
+#     error "Missing ./utils directory. Expected at: ${UTILS_SUBDIR}"
+#     exit 1
+# fi
 
-info "Scanning for util_*.sh files under ${UTILS_SUBDIR}..."
+info "Scanning for util_*.sh files under ${UTILS_DIR}..."
 UTILS_SOURCED=false
 
 # shellcheck disable=SC2231
-for util_file in "${UTILS_SUBDIR}"/util_*.sh; do
+for util_file in "${UTILS_DIR}"/util_*.sh; do
     [[ -e "${util_file}" ]] || continue
     if [[ -f "${util_file}" ]]; then
         debug "Attempting to source: ${util_file}"
