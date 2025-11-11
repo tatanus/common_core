@@ -318,11 +318,11 @@ function _install_git_python_tool() {
     fi
     pass "git cloned"
 
-    __pushd "${TOOLS_DIR}/${directory_name}" || return "${FAIL}"
+    _pushd "${TOOLS_DIR}/${directory_name}" || return "${FAIL}"
 
     if ! "${PYTHON}" -m venv ./venv; then
         fail "Failed to create virtual environment."
-        __popd || true
+        _popd || true
         return "${FAIL}"
     fi
     pass "Created virtual env"
@@ -335,7 +335,7 @@ function _install_git_python_tool() {
             Install_Impacket || {
                 fail "Failed to install Impacket."
                 deactivate || true
-                __popd || true
+                _popd || true
                 return "${FAIL}"
             }
         else
@@ -347,7 +347,7 @@ function _install_git_python_tool() {
         if ! _pip_install_requirements "${requirements_file}" ""; then
             fail "Failed to install requirements from ${requirements_file}."
             deactivate || true
-            __popd || true
+            _popd || true
             return "${FAIL}"
         fi
     fi
@@ -359,7 +359,7 @@ function _install_git_python_tool() {
                 if ! _pip_install "${TOOLS_DIR}/${directory_name}/." ""; then
                     fail "Failed to install package: ${TOOLS_DIR}/${directory_name}/."
                     deactivate || true
-                    __popd || true
+                    _popd || true
                     fail "Failed to install ${directory_name}"
                     return "${FAIL}"
                 fi
@@ -367,7 +367,7 @@ function _install_git_python_tool() {
                 if ! _pip_install "${package}" ""; then
                     fail "Failed to install package: ${package}"
                     deactivate || true
-                    __popd || true
+                    _popd || true
                     fail "Failed to install ${directory_name}"
                     return "${FAIL}"
                 fi
@@ -380,7 +380,7 @@ function _install_git_python_tool() {
         if ! "${PYTHON}" setup.py install; then
             fail "setup.py install failed."
             deactivate || true
-            __popd || true
+            _popd || true
             return "${FAIL}"
         fi
         pass "setup.py install completed"
@@ -388,7 +388,7 @@ function _install_git_python_tool() {
 
     deactivate || true
     _add_tool_function "${tool_name}" "${directory_name}/${tool_name}"
-    __popd || true
+    _popd || true
     pass "${directory_name} installed and virtual environment set up successfully."
     return "${PASS}"
 }
