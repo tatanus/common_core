@@ -286,7 +286,7 @@ function _del_tool_function() {
 function _install_git_python_tool() {
     local tool_name="${1:-}"
     local git_url="${2:-}"
-    local install_impacket="${3:-}"
+    local install_impacket="${3:-false}"
     local requirements_file="${4:-}"
     shift 4 || true
     local pip_installs=("$@")
@@ -304,32 +304,34 @@ function _install_git_python_tool() {
         return "${FAIL}"
     fi
 
-    local directory_name="${git_url}"
-    [[ "${directory_name}" == *.git ]] && directory_name="${directory_name%.git}"
-    directory_name="${directory_name##*/}"
+    local directory_name="${git_url##*/}"
+    directory_name="${directory_name%.git}"
 
+    # Clone repository
     if ! command -v _git_clone > /dev/null 2>&1; then
-        fail "_git_clone helper is missing (lib/utils_git.sh)."
+        fail "_git_clone helper missing (lib/utils_git.sh)."
         return "${FAIL}"
     fi
     if ! _git_clone "${git_url}"; then
-        fail "Failed to clone repository from ${git_url}."
+        fail "Failed to clone ${git_url}."
         return "${FAIL}"
     fi
     pass "git cloned"
 
     _pushd "${TOOLS_DIR}/${directory_name}" || return "${FAIL}"
 
+    # Create virtual environment
     if ! "${PYTHON}" -m venv ./venv; then
-        fail "Failed to create virtual environment."
+        fail "Failed to create virtual environment for ${directory_name}."
         _popd || true
         return "${FAIL}"
     fi
-    pass "Created virtual env"
+    pass "Created virtual environment for ${directory_name}"
 
-    # shellcheck source=/dev/null
+    # shellcheck disable=SC1091
     . ./venv/bin/activate
 
+    # Install impacket if requested
     if [[ "${install_impacket}" == "true" ]]; then
         if command -v Install_Impacket > /dev/null 2>&1; then
             Install_Impacket || {
@@ -339,12 +341,13 @@ function _install_git_python_tool() {
                 return "${FAIL}"
             }
         else
-            warn "Install_Impacket helper not available; skipping Impacket install."
+            warn "Install_Impacket helper not found; skipping Impacket install."
         fi
     fi
 
+    # Install from requirements file if present
     if [[ -n "${requirements_file}" && -f "${requirements_file}" ]]; then
-        if ! _pip_install_requirements "${requirements_file}" ""; then
+        if ! _pip_install_requirements "${requirements_file}" "true"; then
             fail "Failed to install requirements from ${requirements_file}."
             deactivate || true
             _popd || true
@@ -352,44 +355,45 @@ function _install_git_python_tool() {
         fi
     fi
 
+    # Install any additional pip packages
     if [[ ${#pip_installs[@]} -gt 0 ]]; then
         local package
         for package in "${pip_installs[@]}"; do
+            info "Installing extra package: ${package}"
             if [[ "${package}" == "." ]]; then
-                if ! _pip_install "${TOOLS_DIR}/${directory_name}/." ""; then
-                    fail "Failed to install package: ${TOOLS_DIR}/${directory_name}/."
+                if ! _pip_install "." "true"; then
+                    fail "Failed to install package from current directory."
                     deactivate || true
                     _popd || true
-                    fail "Failed to install ${directory_name}"
                     return "${FAIL}"
                 fi
             else
-                if ! _pip_install "${package}" ""; then
+                if ! _pip_install "${package}" "true"; then
                     fail "Failed to install package: ${package}"
                     deactivate || true
                     _popd || true
-                    fail "Failed to install ${directory_name}"
                     return "${FAIL}"
                 fi
             fi
-            info "Installed package ${package}"
         done
     fi
 
+    # Run setup.py if present
     if [[ -f "setup.py" ]]; then
-        if ! "${PYTHON}" setup.py install; then
-            fail "setup.py install failed."
+        info "Running setup.py install for ${directory_name}..."
+        if ! "${PYTHON}" setup.py install &> "/tmp/setup_${directory_name}.log"; then
+            fail "setup.py install failed for ${directory_name}. See /tmp/setup_${directory_name}.log"
             deactivate || true
             _popd || true
             return "${FAIL}"
         fi
-        pass "setup.py install completed"
+        pass "setup.py install completed for ${directory_name}"
     fi
 
     deactivate || true
     _add_tool_function "${tool_name}" "${directory_name}/${tool_name}"
     _popd || true
-    pass "${directory_name} installed and virtual environment set up successfully."
+    pass "${directory_name} installed and virtual environment configured successfully."
     return "${PASS}"
 }
 

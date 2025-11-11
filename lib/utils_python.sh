@@ -60,8 +60,8 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         fi
     fi
 
-    # Default pip arguments
-    PIP_ARGS="install --quiet --upgrade"
+    # Default pip arguments (array-safe)
+    declare -ag PIP_ARGS=(install --quiet --upgrade)
     export PIP_ARGS
 
     # -----------------------------------------------------------------------------
@@ -430,14 +430,20 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
             return "${FAIL}"
         fi
 
+        # Build pip args safely as an array
         local -a tmp_PIP_ARGS=()
-        if [[ "${USE_PIP_ARGS}" = "true" ]]; then
-            # shellcheck disable=SC2206
-            tmp_PIP_ARGS=(${PIP_ARGS})
+        if [[ "${USE_PIP_ARGS}" == "true" ]]; then
+            if declare -p PIP_ARGS 2> /dev/null | grep -q 'declare \-a'; then
+                tmp_PIP_ARGS=("${PIP_ARGS[@]}")
+            else
+                # Fallback if PIP_ARGS was accidentally set as a string
+                # shellcheck disable=SC2206
+                tmp_PIP_ARGS=(${PIP_ARGS})
+            fi
         else
-            tmp_PIP_ARGS=("install")
+            tmp_PIP_ARGS=(install)
         fi
-        [[ -n "${break_system_packages_option}" ]] && tmp_PIP_ARGS+=("${break_system_packages_option}")
+        [[ -n "${break_system_packages_option:-}" ]] && tmp_PIP_ARGS+=("${break_system_packages_option}")
 
         _pip_install_ver "${PYTHON_VERSION}" "${lib}" "${tmp_PIP_ARGS[@]}"
         return $?
@@ -456,18 +462,19 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
             return "${FAIL}"
         fi
 
-        info "Installing ${lib} using python${python_version}..."
-
+        local python_cmd="python${python_version}"
         local log_file="/tmp/pip_${python_version}_${lib}.log"
 
+        info "Installing ${lib} using ${python_cmd} ${local_PIP_ARGS[*]} ..."
+
         # shellcheck disable=SC2086
-        if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip "${local_PIP_ARGS[@]}" "${lib}" &> "${log_file}"; then
-            fail "Failed to install ${lib} using python${python_version} -m pip. See ${log_file}"
+        if ! PIP_ROOT_USER_ACTION=ignore ${PROXY:-} "${python_cmd}" -m pip "${local_PIP_ARGS[@]}" "${lib}" &> "${log_file}"; then
+            fail "Failed to install ${lib} using ${python_cmd}. See ${log_file}"
             tail -n 8 "${log_file}" || true
             return "${FAIL}"
         fi
 
-        pass "Successfully installed ${lib} using python${python_version}."
+        pass "Successfully installed ${lib} using ${python_cmd}."
         return "${PASS}"
     }
 
@@ -484,15 +491,18 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
 
         local -a tmp_PIP_ARGS=()
         if [[ "${USE_PIP_ARGS}" == "true" ]]; then
-            # shellcheck disable=SC2206
-            tmp_PIP_ARGS=(${PIP_ARGS})
+            if declare -p PIP_ARGS 2> /dev/null | grep -q 'declare \-a'; then
+                tmp_PIP_ARGS=("${PIP_ARGS[@]}")
+            else
+                # shellcheck disable=SC2206
+                tmp_PIP_ARGS=(${PIP_ARGS})
+            fi
         else
-            tmp_PIP_ARGS=("install")
+            tmp_PIP_ARGS=(install)
         fi
-        [[ -n "${break_system_packages_option}" ]] && tmp_PIP_ARGS+=("${break_system_packages_option}")
+        [[ -n "${break_system_packages_option:-}" ]] && tmp_PIP_ARGS+=("${break_system_packages_option}")
 
         _pip_install_requirements_ver "${PYTHON_VERSION}" "${file}" "${tmp_PIP_ARGS[@]}"
-        return $?
     }
 
     # Function to install Python libraries from a requirements file for a particular version of python
@@ -508,28 +518,33 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
             return "${FAIL}"
         fi
 
-        info "Installing Python packages from ${file} using python${python_version}..."
+        local python_cmd="python${python_version}"
         local log_file="/tmp/pipreq_${python_version}_$(basename "${file}").log"
 
-        # Attempt to install the libraries using pip
-        if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip "${local_PIP_ARGS[@]}" -r "${file}" &> "${log_file}"; then
-            fail "Failed to install packages from ${file} using python${python_version}. See ${log_file}"
+        info "Installing Python packages from ${file} using ${python_cmd} ${local_PIP_ARGS[*]} ..."
+
+        # shellcheck disable=SC2086
+        if ! PIP_ROOT_USER_ACTION=ignore ${PROXY:-} "${python_cmd}" -m pip "${local_PIP_ARGS[@]}" -r "${file}" &> "${log_file}"; then
+            fail "Failed to install packages from ${file} using ${python_cmd}. See ${log_file}"
             tail -n 8 "${log_file}" || true
             return "${FAIL}"
         fi
 
-        # Verify each package listed in the requirements file
+        # Verify each package (skip comments and empty lines)
         while IFS= read -r package; do
-            [[ "${package}" =~ ^\s*# ]] || [[ -z "${package}" ]] && continue
+            [[ "${package}" =~ ^\s*# ]] && continue
+            [[ -z "${package}" ]] && continue
+
             local package_name
             package_name=$(echo "${package}" | awk -F'[>=<]' '{print $1}' | xargs)
-            if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip show "${package_name}" > /dev/null 2>&1; then
-                fail "${package_name} from ${file} is not installed for python${python_version}."
+
+            if ! PIP_ROOT_USER_ACTION=ignore ${PROXY:-} "${python_cmd}" -m pip show "${package_name}" > /dev/null 2>&1; then
+                fail "Verification failed: ${package_name} from ${file} not installed for ${python_cmd}."
                 return "${FAIL}"
             fi
         done < "${file}"
 
-        pass "Successfully installed packages from ${file} using python${python_version}."
+        pass "Successfully installed and verified packages from ${file} using ${python_cmd}."
         return "${PASS}"
     }
 
