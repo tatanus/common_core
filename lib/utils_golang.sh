@@ -75,7 +75,13 @@ if [[ -z "${UTILS_GOLANG_SH_LOADED:-}" ]]; then
 
         # Add Golang binary path to the current session's PATH
         #export PATH=$PATH:/usr/local/go/bin
-        source "${BASH_DIR}/bash.path.sh"
+        if [[ -f "${BASH_DIR:-}/bash.path.sh" ]]; then
+            source "${BASH_DIR}/bash.path.sh"
+        elif [[ -f "${HOME}/.bashrc" ]]; then
+            source "${HOME}/.bashrc"
+        else
+            export PATH="$PATH:/usr/local/go/bin"
+        fi
 
         # Verify that the Go command is available and print its version
         if command -v go > /dev/null 2>&1; then
@@ -96,6 +102,9 @@ if [[ -z "${UTILS_GOLANG_SH_LOADED:-}" ]]; then
     # Function to install Go packages from the list or provided parameter
     function _install_go_tools() {
         local tools=("$@")
+
+        export GOPATH="${GOPATH:-$HOME/go}"
+        export PATH="${PATH}:${GOPATH}/bin"
 
         # If no parameters are passed, use the default go_tools array
         if [[ ${#tools[@]} -eq 0 ]]; then
@@ -123,8 +132,12 @@ if [[ -z "${UTILS_GOLANG_SH_LOADED:-}" ]]; then
             local tool_name
             tool_name=$(basename "${tool}" | cut -d '@' -f 1)
 
-            if ! command -v "${tool_name}" > /dev/null 2>&1; then
-                fail "Verification failed: ${tool_name} is not installed."
+            local bin_path
+            bin_path="$(go env GOPATH)/bin/${tool_name}"
+            if [[ -x "${bin_path}" ]]; then
+                pass "Verified ${tool_name} installed at ${bin_path}."
+            else
+                fail "Verification failed: ${tool_name} not found in $(go env GOPATH)/bin."
             fi
         done
 
