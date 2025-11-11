@@ -424,21 +424,22 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         local lib="$1"
         local USE_PIP_ARGS="${2:-"true"}"
 
-        local tmp_PIP_ARGS
-        if [[ "${USE_PIP_ARGS}" = "true" ]]; then
-            tmp_PIP_ARGS="${PIP_ARGS} ${break_system_packages_option} "
-        else
-            tmp_PIP_ARGS="install ${break_system_packages_option} "
-        fi
-
         # Verify that the library name is provided
         if [[ -z "${lib}" ]]; then
             fail "Library name must be provided."
             return "${FAIL}"
         fi
 
-        # Call _PipInstallVer with the global python version
-        _pip_install_ver "${PYTHON_VERSION}" "${lib}" "${tmp_PIP_ARGS}"
+        local -a tmp_PIP_ARGS=()
+        if [[ "${USE_PIP_ARGS}" = "true" ]]; then
+            # shellcheck disable=SC2206
+            tmp_PIP_ARGS=(${PIP_ARGS})
+        else
+            tmp_PIP_ARGS=("install")
+        fi
+        [[ -n "${break_system_packages_option}" ]] && tmp_PIP_ARGS+=("${break_system_packages_option}")
+
+        _pip_install_ver "${PYTHON_VERSION}" "${lib}" "${tmp_PIP_ARGS[@]}"
         return $?
     }
 
@@ -450,19 +451,19 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         local -a local_PIP_ARGS=("$@")
 
         # Verify that both parameters are provided
-        if [[ -z "${python_version}" ]] || [[ -z "${lib}" ]]; then
+        if [[ -z "${python_version}" || -z "${lib}" ]]; then
             fail "Both python_version and library name must be provided."
             return "${FAIL}"
         fi
 
         info "Installing ${lib} using python${python_version}..."
 
-        # Attempt to install the library using pip
-        # shellcheck disable=SC2086 # this breaks if you put quotes around ${local_PIP_ARGS}
-        echo "PIP_ROOT_USER_ACTION=ignore ${PROXY} python${python_version} -m pip ${local_PIP_ARGS[@]} ${lib}"
-        if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip "${local_PIP_ARGS[@]}" "${lib}"; then
-            #        if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip "${local_PIP_ARGS[@]}" "${lib}" > /dev/null 2>&1; then
-            fail "Failed to install ${lib} using python${python_version} -m pip."
+        local log_file="/tmp/pip_${python_version}_${lib}.log"
+
+        # shellcheck disable=SC2086
+        if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip "${local_PIP_ARGS[@]}" "${lib}" &> "${log_file}"; then
+            fail "Failed to install ${lib} using python${python_version} -m pip. See ${log_file}"
+            tail -n 8 "${log_file}" || true
             return "${FAIL}"
         fi
 
@@ -475,22 +476,23 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         local file="$1"
         local USE_PIP_ARGS="${2:-"true"}"
 
-        if [[ "${USE_PIP_ARGS}" = "true" ]]; then
-            tmp_PIP_ARGS="${PIP_ARGS} ${break_system_packages_option} "
-        else
-            tmp_PIP_ARGS="install ${break_system_packages_option} "
-        fi
-
         # Verify that a file name is provided
         if [[ -z "${file}" ]]; then
             fail "Filename name must be provided."
             return "${FAIL}"
         fi
 
-        # Call _PipInstallRequirementsVer with the global python version
-        # shellcheck disable=SC2086 # this breaks if you put quotes around ${tmp_PIP_ARGS}
-        _pip_install_requirements_ver "${PYTHON_VERSION}" "${file}" ${tmp_PIP_ARGS}
-        return "${PASS}"
+        local -a tmp_PIP_ARGS=()
+        if [[ "${USE_PIP_ARGS}" == "true" ]]; then
+            # shellcheck disable=SC2206
+            tmp_PIP_ARGS=(${PIP_ARGS})
+        else
+            tmp_PIP_ARGS=("install")
+        fi
+        [[ -n "${break_system_packages_option}" ]] && tmp_PIP_ARGS+=("${break_system_packages_option}")
+
+        _pip_install_requirements_ver "${PYTHON_VERSION}" "${file}" "${tmp_PIP_ARGS[@]}"
+        return $?
     }
 
     # Function to install Python libraries from a requirements file for a particular version of python
@@ -507,25 +509,22 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         fi
 
         info "Installing Python packages from ${file} using python${python_version}..."
+        local log_file="/tmp/pipreq_${python_version}_$(basename "${file}").log"
 
         # Attempt to install the libraries using pip
-        if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip "${local_PIP_ARGS[@]}" -r "${file}" > /dev/null 2>&1; then
-            fail "Failed to install packages from ${file} using python${python_version} -m pip."
+        if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip "${local_PIP_ARGS[@]}" -r "${file}" &> "${log_file}"; then
+            fail "Failed to install packages from ${file} using python${python_version}. See ${log_file}"
+            tail -n 8 "${log_file}" || true
             return "${FAIL}"
         fi
 
-        # Verify installation of each package listed in the requirements file
+        # Verify each package listed in the requirements file
         while IFS= read -r package; do
-            # Skip comments and empty lines
             [[ "${package}" =~ ^\s*# ]] || [[ -z "${package}" ]] && continue
-
-            # Extract package name (strip version if present)
             local package_name
             package_name=$(echo "${package}" | awk -F'[>=<]' '{print $1}' | xargs)
-
-            # Check if the package is installed
             if ! PIP_ROOT_USER_ACTION=ignore ${PROXY} python"${python_version}" -m pip show "${package_name}" > /dev/null 2>&1; then
-                fail "${package_name} from ${file} is not installed for python${python_version}. Verification failed."
+                fail "${package_name} from ${file} is not installed for python${python_version}."
                 return "${FAIL}"
             fi
         done < "${file}"
@@ -538,8 +537,7 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
     # Function to install Python libraries for all Python versions
     # -----------------------------------------------------------------------------
     function _install_python_libs() {
-        local libs=("${1:-${PIP_PACKAGES[@]}}")  # Use provided parameter or fallback to pip_packages
-
+        local libs=("${@:-${PIP_PACKAGES[@]}}")
         # Ensure at least one library is provided
         if [[ ${#libs[@]} -eq 0 ]]; then
             fail "No Python libraries provided for installation."
@@ -547,35 +545,31 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
         fi
 
         source "${HOME}/.bashrc"
-
         ERROR_FLAG=false
 
         for version in "${PYTHON_VERSIONS[@]}"; do
             local python_cmd="python${version}"
 
             if ! command -v "${python_cmd}" > /dev/null 2>&1; then
-                warn "Python version ${version} is not installed. Skipping."
+                warn "Python version ${version} not found. Skipping."
                 continue
             fi
 
             info "Installing Python libraries for ${python_cmd}..."
 
-            # Install each library
+            local -a tmp_PIP_ARGS=("install")
+            [[ -n "${break_system_packages_option}" ]] && tmp_PIP_ARGS+=("${break_system_packages_option}")
+
             for lib in "${libs[@]}"; do
                 info "Installing ${lib} for ${python_cmd}..."
-
-                local tmp_PIP_ARGS
-                tmp_PIP_ARGS="install ${break_system_packages_option} "
-
-                if ! _pip_install_ver "${version}" "${lib}" "${tmp_PIP_ARGS}"; then
+                if ! _pip_install_ver "${version}" "${lib}" "${tmp_PIP_ARGS[@]}"; then
                     fail "Failed to install ${lib} for ${python_cmd}."
                     ERROR_FLAG=true
                     continue
                 fi
 
-                # Verify installation
                 if ! ${python_cmd} -m pip show "${lib}" > /dev/null 2>&1; then
-                    fail "${lib} is not installed for ${python_cmd}. Verification failed."
+                    fail "${lib} verification failed for ${python_cmd}."
                     ERROR_FLAG=true
                 else
                     pass "${lib} successfully installed for ${python_cmd}."
@@ -583,15 +577,16 @@ if [[ -z "${UTILS_PYTHON_SH_LOADED:-}" ]]; then
             done
         done
 
-        # Remove old or unnecessary packages
+        # This probably should be moved elsewhere
         if ! ${PROXY} apt remove -y python3-blinker > /dev/null 2>&1; then
-            warn "Failed to remove python3-blinker."
+            warn "Failed to remove python3-blinker (non-fatal)."
         fi
 
-        if [[ "${ERROR_FLAG}" = true ]]; then
-            fail "Failed to install all Python Libraries."
+        if [[ "${ERROR_FLAG}" == "true" ]]; then
+            fail "Some Python libraries failed to install."
             return "${FAIL}"
         fi
+
         pass "Successfully installed all Python libraries."
         return "${PASS}"
     }
