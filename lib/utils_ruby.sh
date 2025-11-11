@@ -25,32 +25,29 @@ if [[ -z "${UTILS_RUBY_SH_LOADED:-}" ]]; then
     # _install_ruby_gems
     #==============================
     # Install Ruby gems from a provided list or from the RUBY_GEMS array.
+    # Accepts RUBY_GEMS entries written as quoted strings, e.g.:
+    #   RUBY_GEMS=( "nori -v 2.6.0" "evil-winrm" )
     #————————————————————
     # Usage:
     # _install_ruby_gems [gem-spec ...]
-    #   Each gem-spec may include install options (for example: "nori -v 2.6.0"
-    #   or "evil-winrm"). If no args provided, the function uses the
-    #   RUBY_GEMS array.
     #
     # Return Values:
-    # 0 on success (all gems installed or verified), non-zero otherwise.
-    #————————————————————
-    # Requirements:
-    # - gem (RubyGems) in PATH
-    # - Logging helpers: info, pass, fail
-    # - Optional helper: show_spinner (if present)
+    # 0 = all OK
+    # 1 = one or more install/verify failures
+    # 2 = gem binary missing
+    # 3 = RUBY_GEMS missing
     ###############################################################################
     function _install_ruby_gems() {
         local -a gems=("$@")
-        local gem_spec name part ver_found ver_value
-        local -a parts args
-        local rc=0
+        local gem_spec name args parts
+        local ver_value ver_found rc=0
+        local proxy_env cmd_ok
 
         # If no parameters are passed, use the default RUBY_GEMS array
         if ((${#gems[@]} == 0)); then
             if [[ -z "${RUBY_GEMS+x}" ]]; then
-                fail "ruby_gems array is not defined."
-                return 1
+                fail "RUBY_GEMS array is not defined."
+                return 3
             fi
             gems=("${RUBY_GEMS[@]}")
         fi
@@ -62,81 +59,102 @@ if [[ -z "${UTILS_RUBY_SH_LOADED:-}" ]]; then
         fi
 
         for gem_spec in "${gems[@]}"; do
-            # Split the spec into words so we can separate name from flags
-            # shellcheck disable=SC2206
-            parts=(${gem_spec})
+            # Safely split the spec string into words (preserves quoted words inside spec if present)
+            # Example: "nori -v 2.6.0" -> parts=(nori -v 2.6.0)
+            IFS=' ' read -r -a parts <<< "${gem_spec}"
+
             name="${parts[0]}"
             args=("${parts[@]:1}")
 
-            # find -v or --version value (if provided) for verification
+            # Detect version flags in multiple forms:
+            # -v 2.6.0   -> args contains "-v" then "2.6.0"
+            # -v2.6.0    -> args contains "-v2.6.0"
+            # --version=2.6.0
             ver_found=""
             ver_value=""
             for ((i = 0; i < ${#args[@]}; i++)); do
-                if [[ "${args[i]}" == "-v" || "${args[i]}" == "--version" ]]; then
-                    ver_found="1"
-                    # next element may be the version string
+                local a="${args[i]}"
+                if [[ "${a}" == "-v" || "${a}" == "--version" ]]; then
+                    ver_found=1
                     if ((i + 1 < ${#args[@]})); then
                         ver_value="${args[i + 1]}"
                     fi
+                    break
+                elif [[ "${a}" == -v* && "${a}" != "-v" ]]; then
+                    # -v2.6.0
+                    ver_found=1
+                    ver_value="${a:2}"
+                    break
+                elif [[ "${a}" == --version=* ]]; then
+                    ver_found=1
+                    ver_value="${a#*=}"
                     break
                 fi
             done
 
             info "Installing ${name} ${args[*]:-}(no extra flags)... This may take a while."
 
-            # If PROXY is set as an env-assignment string (e.g. "http_proxy=..."), honor it.
+            # Build install command wrapper depending on PROXY format
+            # If PROXY looks like "VAR=value" (contains '='), use env $PROXY ...
+            # Otherwise treat PROXY as a URL and export http_proxy/https_proxy for the install.
             if [[ -n "${PROXY:-}" ]]; then
-                if type show_spinner > /dev/null 2>&1; then
-                    if show_spinner env "${PROXY}" gem install --no-document "${name}" "${args[@]}"; then
-                        pass "Installed ${name}."
-                    else
-                        fail "Failed to install ${name} (with PROXY)."
-                        rc=3
-                    fi
+                if [[ "${PROXY}" == *"="* ]]; then
+                    proxy_env=("env" "${PROXY}")
                 else
-                    if env "${PROXY}" gem install --no-document "${name}" "${args[@]}"; then
-                        pass "Installed ${name}."
-                    else
-                        fail "Failed to install ${name} (with PROXY)."
-                        rc=3
-                    fi
+                    proxy_env=("env" "http_proxy=${PROXY}" "https_proxy=${PROXY}")
                 fi
             else
-                if type show_spinner > /dev/null 2>&1; then
-                    if show_spinner gem install --no-document "${name}" "${args[@]}"; then
-                        pass "Installed ${name}."
-                    else
-                        fail "Failed to install ${name}."
-                        rc=3
-                    fi
+                proxy_env=()
+            fi
+
+            # Run install (use show_spinner if available)
+            if type show_spinner > /dev/null 2>&1; then
+                if "${proxy_env[@]}" gem install --no-document "${name}" "${args[@]}"; then
+                    cmd_ok=0
+                    pass "Installed ${name}."
                 else
-                    if gem install --no-document "${name}" "${args[@]}"; then
-                        pass "Installed ${name}."
-                    else
-                        fail "Failed to install ${name}."
-                        rc=3
-                    fi
+                    cmd_ok=1
+                    fail "Failed to install ${name}."
+                fi
+            else
+                if "${proxy_env[@]}" gem install --no-document "${name}" "${args[@]}"; then
+                    cmd_ok=0
+                    pass "Installed ${name}."
+                else
+                    cmd_ok=1
+                    fail "Failed to install ${name}."
                 fi
             fi
 
-            # Verification: use version-aware check when a -v/--version was supplied
-            if [[ -n "${ver_found}" && -n "${ver_value}" ]]; then
-                if gem list -i "${name}" -v "${ver_value}" > /dev/null 2>&1; then
-                    pass "Verification OK: ${name} (${ver_value})."
+            # Verification
+            if ((cmd_ok == 0)); then
+                if [[ -n "${ver_found}" && -n "${ver_value}" ]]; then
+                    if gem list -i --version "${ver_value}" "${name}" > /dev/null 2>&1; then
+                        pass "Verification OK: ${name} (${ver_value})."
+                    else
+                        fail "Verification failed: ${name} (${ver_value}) not found."
+                        ((rc++))
+                    fi
                 else
-                    fail "Verification failed: ${name} (${ver_value}) not found."
-                    rc=4
+                    if gem list -i "${name}" > /dev/null 2>&1; then
+                        pass "Verification OK: ${name}."
+                    else
+                        fail "Verification failed: ${name} not found."
+                        ((rc++))
+                    fi
                 fi
             else
-                if gem list -i "${name}" > /dev/null 2>&1; then
-                    pass "Verification OK: ${name}."
-                else
-                    fail "Verification failed: ${name} not found."
-                    rc=4
-                fi
+                # install failed: count as one failure (verification skipped)
+                ((rc++))
             fi
         done
 
-        return "${rc}"
+        if ((rc > 0)); then
+            fail "One or more Ruby gems failed to install or verify (${rc} failures)."
+            return 1
+        fi
+
+        pass "All Ruby gems installed and verified successfully."
+        return 0
     }
 fi
