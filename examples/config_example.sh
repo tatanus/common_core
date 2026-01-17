@@ -6,6 +6,9 @@
 # DATE CREATED : 2024-12-15
 ###############################################################################
 
+set -uo pipefail
+IFS=$'\n\t'
+
 # Source the common_core library
 if [[ -f "${HOME}/.config/bash/lib/common_core/util.sh" ]]; then
     source "${HOME}/.config/bash/lib/common_core/util.sh"
