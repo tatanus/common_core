@@ -86,10 +86,16 @@ if [[ -z "${LOGGER_SH_LOADED:-}" ]]; then
     log_level_priorities[fail]=60
     log_level_priorities[error]=60
 
-    # =============================================================================
-    # Validates an instance name to ensure it's a valid Bash variable name.
-    # SECURITY: This is critical - instance name becomes part of function names
-    # =============================================================================
+    ###############################################################################
+    # _validate_instance_name
+    #-------------------------------------------------------------------------------
+    # Purpose  : Validate that an instance name is a safe Bash variable name
+    # Usage    : _validate_instance_name <name>
+    # Arguments:
+    #   $1 : Instance name to validate
+    # Returns  : 0 if valid, 1 if invalid
+    # Security : Critical - instance name becomes part of function names
+    ###########################################################################
     function _validate_instance_name() {
         local -r name="${1:-${LOGGER_INSTANCE_DEFAULT}}"
 
@@ -118,9 +124,16 @@ if [[ -z "${LOGGER_SH_LOADED:-}" ]]; then
         return 0
     }
 
-    # =============================================================================
-    # Sanitizes a file path to prevent directory traversal attacks.
-    # =============================================================================
+    ###############################################################################
+    # _sanitize_log_path
+    #-------------------------------------------------------------------------------
+    # Purpose  : Sanitize a file path to prevent directory traversal attacks
+    # Usage    : _sanitize_log_path <path>
+    # Arguments:
+    #   $1 : Path to sanitize
+    # Returns  : 0 if valid, 1 if path contains traversal patterns
+    # Outputs  : Sanitized absolute path
+    ###########################################################################
     function _sanitize_log_path() {
         local -r path="${1}"
 
@@ -147,9 +160,15 @@ if [[ -z "${LOGGER_SH_LOADED:-}" ]]; then
         return 0
     }
 
-    # =============================================================================
-    # Validates if a given log level is valid
-    # =============================================================================
+    ###############################################################################
+    # _validate_log_level
+    #-------------------------------------------------------------------------------
+    # Purpose  : Validate that a log level is a recognized level
+    # Usage    : _validate_log_level <level>
+    # Arguments:
+    #   $1 : Log level to validate
+    # Returns  : 0 if valid, 1 if invalid
+    ###########################################################################
     function _validate_log_level() {
         local -r level="${1:-${LOGGER_LEVEL_DEFAULT}}"
 
@@ -168,10 +187,16 @@ if [[ -z "${LOGGER_SH_LOADED:-}" ]]; then
         fi
     }
 
-    # =============================================================================
-    # SECURITY FIX: Create instance methods safely without direct eval
-    # Uses temp file approach which is safer than direct eval
-    # =============================================================================
+    ###############################################################################
+    # _logger_create_instance_methods
+    #-------------------------------------------------------------------------------
+    # Purpose  : Create instance methods safely without direct eval
+    # Usage    : _logger_create_instance_methods <instance_name>
+    # Arguments:
+    #   $1 : Instance name (validated)
+    # Returns  : 0 on success, 1 on failure
+    # Security : Uses temp file approach which is safer than direct eval
+    ###########################################################################
     function _logger_create_instance_methods() {
         local -r instance_name="${1}"
 
@@ -225,9 +250,19 @@ LOGGER_METHODS_EOF
         return "${rc}"
     }
 
-    # =============================================================================
-    # Initializes a new logger instance
-    # =============================================================================
+    ###############################################################################
+    # logger_init
+    #-------------------------------------------------------------------------------
+    # Purpose  : Initialize a new logger instance with specified configuration
+    # Usage    : logger_init <name> [log_file] [log_level] [to_screen] [to_file]
+    # Arguments:
+    #   $1 : Instance name (default: LOGGER_INSTANCE_DEFAULT)
+    #   $2 : Log file path (default: $HOME/<name>.log)
+    #   $3 : Log level (default: LOGGER_LEVEL_DEFAULT)
+    #   $4 : Log to screen (default: LOGGER_SCREEN_DEFAULT)
+    #   $5 : Log to file (default: LOGGER_FILE_DEFAULT)
+    # Returns  : 0 on success, 1 on failure
+    ###########################################################################
     function logger_init() {
         local -r instance_name="${1:-${LOGGER_INSTANCE_DEFAULT}}"
         local log_file="${2:-${HOME}/${instance_name}.log}"
@@ -299,9 +334,15 @@ LOGGER_METHODS_EOF
         return 0
     }
 
-    # =============================================================================
-    # Destroys a logger instance and cleans up resources
-    # =============================================================================
+    ###############################################################################
+    # logger_destroy
+    #-------------------------------------------------------------------------------
+    # Purpose  : Destroy a logger instance and clean up resources
+    # Usage    : logger_destroy <instance_name>
+    # Arguments:
+    #   $1 : Instance name to destroy
+    # Returns  : 0 on success, 1 if instance does not exist
+    ###########################################################################
     function logger_destroy() {
         local -r instance_name="${1:-${LOGGER_INSTANCE_DEFAULT}}"
 
@@ -342,9 +383,17 @@ LOGGER_METHODS_EOF
         date +"[%Y-%m-%d %H:%M:%S]"
     }
 
-    # =============================================================================
-    # Logs a message for the given instance and log level.
-    # =============================================================================
+    ###############################################################################
+    # logger_log
+    #-------------------------------------------------------------------------------
+    # Purpose  : Log a message at the specified level for a logger instance
+    # Usage    : logger_log <instance_name> <level> <message...>
+    # Arguments:
+    #   $1 : Instance name
+    #   $2 : Log level (debug, info, warn, pass, fail, error, vdebug)
+    #   $@ : Message to log (remaining arguments)
+    # Returns  : 0 on success, 1 on failure
+    ###########################################################################
     function logger_log() {
         local -r instance_name="${1:-${LOGGER_INSTANCE_DEFAULT}}"
         local -r level="${2:-${LOGGER_LEVEL_DEFAULT}}"
@@ -468,9 +517,17 @@ LOGGER_METHODS_EOF
         fi
     }
 
-    # =============================================================================
-    # Set a property for a logger instance
-    # =============================================================================
+    ###############################################################################
+    # _logger_set_property
+    #-------------------------------------------------------------------------------
+    # Purpose  : Set a property for a logger instance
+    # Usage    : _logger_set_property <instance_name> <property> <value>
+    # Arguments:
+    #   $1 : Instance name
+    #   $2 : Property name (log_level, log_to_screen, log_to_file, etc.)
+    #   $3 : Property value
+    # Returns  : 0 on success, 1 on failure
+    ###########################################################################
     function _logger_set_property() {
         local -r instance_name="${1}"
         local -r property="${2}"
@@ -520,9 +577,17 @@ LOGGER_METHODS_EOF
         props_array_ref[${property}]="${value}"
     }
 
-    # =============================================================================
-    # Get a property from a logger instance
-    # =============================================================================
+    ###############################################################################
+    # _logger_get_property
+    #-------------------------------------------------------------------------------
+    # Purpose  : Get a property from a logger instance
+    # Usage    : _logger_get_property <instance_name> <property>
+    # Arguments:
+    #   $1 : Instance name
+    #   $2 : Property name
+    # Returns  : 0 on success, 1 if instance does not exist
+    # Outputs  : Property value
+    ###########################################################################
     function _logger_get_property() {
         local -r instance_name="${1}"
         local -r property="${2}"
@@ -539,9 +604,14 @@ LOGGER_METHODS_EOF
         printf "%s" "${props_array_ref[${property}]}"
     }
 
-    # =============================================================================
-    # Lists all active logger instances
-    # =============================================================================
+    ###############################################################################
+    # logger_list_instances
+    #-------------------------------------------------------------------------------
+    # Purpose  : List all active logger instances with their configuration
+    # Usage    : logger_list_instances
+    # Returns  : 0 always
+    # Outputs  : List of active instances with level and log file
+    ###########################################################################
     function logger_list_instances() {
         if [[ ${#LOGGER_INSTANCES[@]} -eq 0 ]]; then
             printf "No logger instances currently active.\n"
