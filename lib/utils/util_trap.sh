@@ -382,7 +382,10 @@ function trap::self_test() {
     fi
 
     # Test 4: Test that valid function is accepted
-    _trap_test_cleanup_func() { true; }
+    ###############################################################################
+    # _trap_test_cleanup_func - Test helper for trap::add_cleanup validation
+    ###############################################################################
+    function _trap_test_cleanup_func() { true; }
     if trap::add_cleanup _trap_test_cleanup_func; then
         pass "trap::add_cleanup accepts declared functions"
     else

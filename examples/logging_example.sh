@@ -41,7 +41,16 @@ info "=== Using Logging in Scripts ==="
 # Practical example: validating prerequisites
 info "Checking prerequisites..."
 
-check_prereq() {
+###############################################################################
+# check_prereq
+#-------------------------------------------------------------------------------
+# Purpose  : Check if a command exists in PATH
+# Usage    : check_prereq <command>
+# Arguments:
+#   $1 : Command name to check
+# Returns  : PASS if found, FAIL if missing
+###############################################################################
+function check_prereq() {
     local cmd="$1"
     if cmd::exists "${cmd}"; then
         pass "Found: ${cmd}"
