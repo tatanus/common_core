@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-01-17
+
+### Added
+
+- `CLAUDE.md` and `CLAUDE_HUMAN.md` - Project contract documentation for Claude Code
+
+### Fixed
+
+- Fixed shfmt formatting: spacing around redirections (`2>/dev/null` → `2> /dev/null`)
+- Fixed function syntax in `tools/check_bash_style.sh`: added `function` keyword to `info()` and `error()`
+- Added missing strict mode (`set -uo pipefail`) and IFS to example scripts
+- Added proc-doc blocks to 12 functions in `lib/logger.sh`, `lib/utils/util_trap.sh`, and `examples/logging_example.sh`
+
+### Changed
+
+- All project gates now pass (style_blocks, function_syntax, proc_docs, shfmt, shellcheck)
+
 ## [0.0.2] - 2026-01-11
 
 ### Added
