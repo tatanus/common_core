@@ -1,0 +1,76 @@
+# common_core Configuration File
+# Copy this file to common_core.conf and customize as needed
+#
+# Format: KEY=value (no spaces around =)
+# Comments start with #
+# Empty lines are ignored
+
+#===============================================================================
+# General Settings
+#===============================================================================
+
+# Application name (used in logging and identification)
+APP_NAME=common_core
+
+# Enable debug mode (true/false)
+# When enabled, additional debug messages are printed
+DEBUG_MODE=false
+
+# Log level: debug, info, warn, error
+LOG_LEVEL=info
+
+#===============================================================================
+# Directory Settings
+#===============================================================================
+
+# Base directory for data files
+# DATA_DIR=/var/lib/common_core
+
+# Directory for temporary files
+# TEMP_DIR=/tmp/common_core
+
+# Directory for log files
+# LOG_DIR=/var/log/common_core
+
+#===============================================================================
+# Network Settings
+#===============================================================================
+
+# Default timeout for network operations (seconds)
+NET_TIMEOUT=30
+
+# Maximum retry attempts for failed operations
+MAX_RETRIES=3
+
+# Delay between retries (seconds)
+RETRY_DELAY=5
+
+#===============================================================================
+# Package Manager Settings
+#===============================================================================
+
+# Automatically update package lists before installing (true/false)
+AUTO_UPDATE=true
+
+# Use sudo for package operations (true/false)
+USE_SUDO=true
+
+#===============================================================================
+# Git Settings
+#===============================================================================
+
+# Default branch name for new repositories
+GIT_DEFAULT_BRANCH=main
+
+# Automatically sign commits (true/false)
+GIT_SIGN_COMMITS=false
+
+#===============================================================================
+# Python Settings
+#===============================================================================
+
+# Preferred Python version
+PYTHON_VERSION=3.12
+
+# Use virtual environments by default (true/false)
+USE_VENV=true

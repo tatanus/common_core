@@ -1,0 +1,92 @@
+###############################################################################
+# .gitignore
+#
+# Purpose:
+# - Keep repo clean
+# - Prevent CI / workspace artifacts from leaking
+# - Avoid committing secrets, caches, or generated files
+###############################################################################
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+*.rej
+*.log
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.env
+.env.*
+
+# Go
+bin/
+pkg/
+*.exe
+*.out
+*.test
+
+# Ruby
+.bundle/
+vendor/bundle/
+*.gem
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Bash / Test Artifacts
+coverage/
+test-results/
+*.cov
+*.lcov
+
+# Claude System Workspace
+.claude/
+
+# Patch & diff artifacts
+*.diff
+*.patch
+
+# Build outputs
+dist/
+build/
+out/
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+
+# Secrets
+*.key
+*.pem
+*.crt
+secrets.yml
+secrets.json
+
+# Local override configs
+.local.env
+.env.local
+
+# macOS quarantine
+*.DS_Store
+

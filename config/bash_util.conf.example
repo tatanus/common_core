@@ -1,0 +1,160 @@
+# =============================================================================
+# Bash Utility Library Configuration
+# =============================================================================
+# Copy this file to ~/.bash_util.conf to customize settings.
+#
+# Settings can also be overridden via environment variables:
+#   export UTIL_CONFIG_LOG_LEVEL=debug
+#
+# Priority: Environment > Config File > Default
+# =============================================================================
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+# Log level controls which messages are displayed during library loading
+# and operation. Available levels (from most to least verbose):
+#   debug  - All messages including debug info
+#   info   - Informational messages and above
+#   warn   - Warnings and errors only
+#   error  - Errors only
+#   none   - Suppress all log output
+#
+# Default: info (suppresses debug/pass messages during shell startup)
+log.level=warn
+
+# Enable colored output: true, false, auto
+# auto: enable colors if terminal supports it
+log.color=auto
+
+# Include timestamps in log output
+log.timestamp=false
+
+# Log file path (empty = no file logging)
+# log.file=/var/log/bash_util.log
+
+# Log format: text, json
+log.format=text
+
+# =============================================================================
+# TEMPORARY FILE CONFIGURATION
+# =============================================================================
+# Base directory for temporary files
+tmp.dir=/tmp
+
+# Default permissions for temp files/dirs (octal)
+tmp.mode=0700
+
+# Auto-cleanup temporary files on exit
+tmp.cleanup=true
+
+# Prefix for temporary file/directory names
+tmp.prefix=util
+
+# =============================================================================
+# NETWORK CONFIGURATION
+# =============================================================================
+# Network operation timeout (seconds)
+net.timeout=30
+
+# Number of network retry attempts
+net.retries=3
+
+# Delay between retries (seconds)
+net.retry_delay=2
+
+# User agent string for HTTP requests
+net.user_agent=util-bash/1.0
+
+# HTTP/HTTPS proxy URL (empty = no proxy)
+# net.proxy=http://proxy.example.com:8080
+
+# Network cache TTL (seconds)
+net.cache_ttl=600
+
+# =============================================================================
+# CURL CONFIGURATION
+# =============================================================================
+# Curl timeout (seconds)
+curl.timeout=30
+
+# Maximum HTTP redirects
+curl.max_redirects=10
+
+# Maximum retry attempts
+curl.max_retries=3
+
+# Delay between retries (seconds)
+curl.retry_delay=2
+
+# =============================================================================
+# FILE OPERATIONS CONFIGURATION
+# =============================================================================
+# Suffix for backup files
+file.backup_suffix=.bak
+
+# Enable safety checks for destructive operations
+file.safe_mode=true
+
+# Default checksum algorithm: md5, sha1, sha256, sha512
+file.checksum_algo=sha256
+
+# =============================================================================
+# DIRECTORY OPERATIONS CONFIGURATION
+# =============================================================================
+# Enable safety checks for directory operations
+dir.safe_mode=true
+
+# Maximum directory traversal depth
+dir.max_depth=100
+
+# =============================================================================
+# PACKAGE MANAGER CONFIGURATION
+# =============================================================================
+# Auto-update package lists before install (APT)
+apt.auto_update=false
+
+# Auto-repair broken dependencies (APT)
+apt.auto_repair=true
+
+# Auto-update Homebrew before install
+brew.auto_update=false
+
+# =============================================================================
+# GIT CONFIGURATION
+# =============================================================================
+# Default branch name for new repos
+git.default_branch=main
+
+# Auto-fetch before git operations
+git.auto_fetch=false
+
+# =============================================================================
+# PLATFORM CONFIGURATION
+# =============================================================================
+# Prefer GNU tools on BSD/macOS
+platform.prefer_gnu=true
+
+# Cache platform detection results
+platform.detect_cache=true
+
+# =============================================================================
+# MENU/TUI CONFIGURATION
+# =============================================================================
+# Show timestamps in menu items
+menu.timestamps=false
+
+# Show breadcrumb navigation
+menu.breadcrumbs=true
+
+# TUI backend: dialog, whiptail
+tui.dialog_backend=dialog
+
+# =============================================================================
+# SECURITY CONFIGURATION
+# =============================================================================
+# Enable strict security checks
+security.strict_mode=true
+
+# Allow automatic privilege escalation
+security.allow_elevated=true
