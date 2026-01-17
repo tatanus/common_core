@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.0.3] - 2026-01-17
+## [2026.01.17.0] - 2026-01-17
 
 ### Added
 
@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - All project gates now pass (style_blocks, function_syntax, proc_docs, shfmt, shellcheck)
 
-## [0.0.2] - 2026-01-11
+## [2026.01.11.0] - 2026-01-11
 
 ### Added
 
@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Addressed TOCTOU (time-of-check-time-of-use) vulnerability in self_test temp file handling
 - Temp files now created with mode 600 immediately after creation
 
-## [0.0.1] - 2024-12-15
+## [2024.12.15.0] - 2024-12-15
 
 ### Added
 
