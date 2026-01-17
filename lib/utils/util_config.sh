@@ -54,14 +54,14 @@ if ! declare -F debug > /dev/null 2>&1; then
     if declare -F _util_should_log > /dev/null 2>&1; then
         function debug() { _util_should_log debug && printf '[DEBUG] %s\n' "${*}" >&2; }
     else
-        function debug() { : ; }  # Silent by default if no log system
+        function debug() { :; } # Silent by default if no log system
     fi
 fi
 if ! declare -F pass > /dev/null 2>&1; then
     if declare -F _util_should_log > /dev/null 2>&1; then
         function pass() { _util_should_log pass && printf '[PASS ] %s\n' "${*}" >&2; }
     else
-        function pass() { : ; }  # Silent by default if no log system
+        function pass() { :; } # Silent by default if no log system
     fi
 fi
 if ! declare -F fail > /dev/null 2>&1; then

@@ -29,7 +29,7 @@ readonly _UTIL_PLATFORM_VERSION=2
 
 if [[ -n "${UTIL_PLATFORM_SH_LOADED:-}" ]]; then
     # Check if we have the helper functions (version 2+)
-    if declare -F _platform_get_flag &>/dev/null; then
+    if declare -F _platform_get_flag &> /dev/null; then
         if (return 0 2> /dev/null); then
             return 0
         fi
@@ -142,7 +142,7 @@ declare -gA PLATFORM_FLAGS=(
 function _platform_get_flag() {
     local key="$1"
     # Use indirect reference to avoid variable expansion issues under set -u
-    local -n arr_ref=PLATFORM_FLAGS 2>/dev/null || {
+    local -n arr_ref=PLATFORM_FLAGS 2> /dev/null || {
         # Fallback for bash < 4.3 without nameref
         eval 'printf "%s" "${PLATFORM_FLAGS[$key]:-}"'
         return
@@ -166,7 +166,7 @@ function _platform_get_cmd() {
     local default="${2:-}"
     local result=""
     # Use indirect reference to avoid variable expansion issues under set -u
-    local -n arr_ref=PLATFORM_CMD 2>/dev/null || {
+    local -n arr_ref=PLATFORM_CMD 2> /dev/null || {
         # Fallback for bash < 4.3 without nameref
         eval 'result="${PLATFORM_CMD[$key]:-}"'
         if [[ -n "${result}" ]]; then

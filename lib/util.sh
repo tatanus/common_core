@@ -77,7 +77,7 @@ if [[ -z "${_UTIL_CURRENT_LOG_LEVEL}" ]]; then
     _UTIL_CONFIG_FILE="${HOME}/.bash_util.conf"
     if [[ -f "${_UTIL_CONFIG_FILE}" && -r "${_UTIL_CONFIG_FILE}" ]]; then
         # Simple grep for log.level - avoid sourcing untrusted file
-        _UTIL_CONFIG_LEVEL=$(grep -E '^\s*log\.level\s*=' "${_UTIL_CONFIG_FILE}" 2>/dev/null | head -1 | sed 's/.*=\s*//' | tr -d '[:space:]"'"'")
+        _UTIL_CONFIG_LEVEL=$(grep -E '^\s*log\.level\s*=' "${_UTIL_CONFIG_FILE}" 2> /dev/null | head -1 | sed 's/.*=\s*//' | tr -d '[:space:]"'"'")
         if [[ -n "${_UTIL_CONFIG_LEVEL}" ]]; then
             _UTIL_CURRENT_LOG_LEVEL="${_UTIL_CONFIG_LEVEL}"
         fi
