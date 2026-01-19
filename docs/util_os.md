@@ -5,15 +5,16 @@ Operating system detection and information utilities providing consistent access
 ## Overview
 
 This module provides:
-- OS type detection (Linux, macOS, WSL, BSD)
+- OS type detection (Linux, macOS, WSL, Windows)
 - Linux distribution identification
 - Version and architecture information
-- System resource information
+- System resource information (CPU, memory, uptime)
 - Root/privilege detection
+- Shell detection
 
 ## Dependencies
 
-- `util_platform.sh`
+- `util_platform.sh` (must be loaded before util_os.sh)
 
 ## Functions
 
@@ -30,7 +31,7 @@ echo "Running on: ${os_name}"
 
 **Returns:** `PASS` (0) always
 
-**Outputs:** One of: `linux`, `macos`, `wsl`, `freebsd`, `openbsd`, `netbsd`, `windows`, `unknown`
+**Outputs:** One of: `linux`, `macos`, `wsl`, `windows`, `unknown`
 
 #### os::is_linux
 
@@ -71,19 +72,7 @@ fi
 
 **Returns:** `PASS` (0) if WSL, `FAIL` (1) otherwise
 
-**Notes:** Detects both WSL1 and WSL2
-
-#### os::is_freebsd
-
-Check if running on FreeBSD.
-
-```bash
-if os::is_freebsd; then
-    pkg update
-fi
-```
-
-**Returns:** `PASS` (0) if FreeBSD, `FAIL` (1) otherwise
+**Notes:** Detects both WSL1 and WSL2 by checking `/proc/sys/kernel/osrelease` and `/proc/version`
 
 #### os::is_root
 
@@ -98,7 +87,68 @@ else
 fi
 ```
 
-**Returns:** `PASS` (0) if root, `FAIL` (1) otherwise
+**Returns:** `PASS` (0) if root (EUID == 0), `FAIL` (1) otherwise
+
+#### os::require_root
+
+Require root privileges, exit if not root.
+
+```bash
+os::require_root "Installation requires root privileges"
+# Script continues only if running as root
+```
+
+**Arguments:**
+- `$1` - Optional custom error message (default: "This script must be run as root")
+
+**Returns:** `PASS` (0) if root, `FAIL` (1) if not root (with error message to stderr)
+
+### Architecture Detection
+
+#### os::get_arch
+
+Get the normalized system architecture.
+
+```bash
+arch=$(os::get_arch)
+echo "Architecture: ${arch}"
+```
+
+**Returns:** `PASS` (0) always
+
+**Outputs:** Normalized architecture string:
+- `amd64` (from x86_64)
+- `arm64` (from aarch64 or arm64)
+- `386` (from i386, i486, i586, i686)
+- `armhf` (from armv7l)
+- `armv6` (from armv6l)
+- `ppc64le`
+- `s390x`
+- `unsupported` (for unrecognized architectures)
+
+#### os::is_arm
+
+Check if system architecture is ARM-based.
+
+```bash
+if os::is_arm; then
+    info "ARM architecture detected"
+fi
+```
+
+**Returns:** `PASS` (0) if ARM (arm64, armhf, armv6, aarch64), `FAIL` (1) otherwise
+
+#### os::is_x86
+
+Check if system architecture is x86-based.
+
+```bash
+if os::is_x86; then
+    info "x86 architecture detected"
+fi
+```
+
+**Returns:** `PASS` (0) if x86 (amd64, 386, x86_64, i386-i686), `FAIL` (1) otherwise
 
 ### Distribution Information
 
@@ -113,41 +163,18 @@ echo "Distribution: ${distro}"
 
 **Returns:** `PASS` (0) always
 
-**Outputs:** Distribution name (e.g., `ubuntu`, `debian`, `fedora`, `centos`, `arch`, `alpine`, `unknown`)
+**Outputs:** Distribution name (e.g., `ubuntu`, `debian`, `fedora`, `centos`, `arch`, `rhel`, `unknown`)
 
-**Notes:** Returns `macos` on macOS, `unknown` on unrecognized systems
-
-#### os::get_distro_version
-
-Get the distribution version.
-
-```bash
-version=$(os::get_distro_version)
-echo "Version: ${version}"
-```
-
-**Returns:** `PASS` (0) always
-
-**Outputs:** Version string (e.g., `22.04`, `14.2`, `39`)
-
-#### os::get_distro_codename
-
-Get the distribution codename (if available).
-
-```bash
-codename=$(os::get_distro_codename)
-echo "Codename: ${codename}"  # e.g., "jammy", "bookworm"
-```
-
-**Returns:** `PASS` (0) always
-
-**Outputs:** Codename or empty string
+**Notes:**
+- Returns `macos` on macOS
+- Uses `/etc/os-release`, `lsb_release`, or distribution-specific files for detection
+- Returns `unknown` on unrecognized systems
 
 ### System Information
 
 #### os::get_version
 
-Get the full OS version string.
+Get the OS version string.
 
 ```bash
 version=$(os::get_version)
@@ -156,33 +183,25 @@ echo "OS Version: ${version}"
 
 **Returns:** `PASS` (0) always
 
-**Outputs:** Full version string
+**Outputs:** Version string (e.g., `14.2` on macOS, `22.04` on Ubuntu) or `unknown`
 
-#### os::get_kernel
+**Notes:**
+- On macOS: uses `sw_vers -productVersion`
+- On Linux/WSL: uses `/etc/os-release` VERSION_ID or `lsb_release -sr`
+- On Windows: parses output from `cmd.exe /c ver`
 
-Get the kernel version.
+#### os::get_kernel_version
+
+Get the kernel version string.
 
 ```bash
-kernel=$(os::get_kernel)
+kernel=$(os::get_kernel_version)
 echo "Kernel: ${kernel}"  # e.g., "5.15.0-91-generic"
 ```
 
 **Returns:** `PASS` (0) always
 
-**Outputs:** Kernel version string
-
-#### os::get_arch
-
-Get the system architecture.
-
-```bash
-arch=$(os::get_arch)
-echo "Architecture: ${arch}"
-```
-
-**Returns:** `PASS` (0) always
-
-**Outputs:** Architecture (e.g., `x86_64`, `aarch64`, `arm64`, `i686`, `armv7l`)
+**Outputs:** Kernel version string from `uname -r`, or `unknown`
 
 #### os::get_hostname
 
@@ -195,39 +214,58 @@ echo "Hostname: ${hostname}"
 
 **Returns:** `PASS` (0) always
 
-**Outputs:** Hostname
+**Outputs:** Hostname (uses `hostname` command, `/etc/hostname`, or `uname -n`)
+
+#### os::get_shell
+
+Get the current shell name.
+
+```bash
+shell=$(os::get_shell)
+echo "Shell: ${shell}"  # e.g., "bash", "zsh"
+```
+
+**Returns:** `PASS` (0) always
+
+**Outputs:** Shell name (e.g., `bash`, `zsh`) or `unknown`
+
+**Notes:** Detects from `$SHELL` environment variable or `ps` command
+
+#### os::str
+
+Print a concise OS descriptor string.
+
+```bash
+os_info=$(os::str)
+echo "System: ${os_info}"  # e.g., "macos 14.2 arm64"
+```
+
+**Returns:** `PASS` (0) always
+
+**Outputs:** Combined string in format: `<OS> <Version> <Arch>`
 
 ### Resource Information
 
-#### os::get_memory
+#### os::get_memory_total
 
-Get total system memory in KB.
+Get total system memory in bytes.
 
 ```bash
-memory=$(os::get_memory)
-echo "Total Memory: ${memory} KB"
+memory=$(os::get_memory_total)
+echo "Total Memory: ${memory} bytes"
 
 # Convert to GB
-memory_gb=$((memory / 1024 / 1024))
+memory_gb=$((memory / 1024 / 1024 / 1024))
 echo "Total Memory: ${memory_gb} GB"
 ```
 
-**Returns:** `PASS` (0) on success, `FAIL` (1) on error
+**Returns:** `PASS` (0) on success, `FAIL` (1) on error (outputs `0`)
 
-**Outputs:** Memory in kilobytes
+**Outputs:** Memory in bytes
 
-#### os::get_memory_free
-
-Get available/free system memory in KB.
-
-```bash
-free=$(os::get_memory_free)
-echo "Free Memory: ${free} KB"
-```
-
-**Returns:** `PASS` (0) on success, `FAIL` (1) on error
-
-**Outputs:** Available memory in kilobytes
+**Notes:**
+- On macOS: uses `sysctl -n hw.memsize`
+- On Linux: reads from `/proc/meminfo` and converts from KB to bytes
 
 #### os::get_cpu_count
 
@@ -238,43 +276,13 @@ cpus=$(os::get_cpu_count)
 echo "CPU Cores: ${cpus}"
 ```
 
-**Returns:** `PASS` (0) always
+**Returns:** `PASS` (0) on success, `FAIL` (1) on error (outputs `1` as fallback)
 
 **Outputs:** Number of CPU cores
 
-#### os::get_disk_usage
-
-Get disk usage for a path.
-
-```bash
-usage=$(os::get_disk_usage "/")
-echo "Root disk usage: ${usage}%"
-```
-
-**Arguments:**
-- `$1` - Path to check (default: /)
-
-**Returns:** `PASS` (0) on success, `FAIL` (1) on error
-
-**Outputs:** Usage percentage (0-100)
-
-#### os::get_disk_free
-
-Get free disk space in KB.
-
-```bash
-free=$(os::get_disk_free "/home")
-echo "Free space: ${free} KB"
-```
-
-**Arguments:**
-- `$1` - Path to check (default: /)
-
-**Returns:** `PASS` (0) on success, `FAIL` (1) on error
-
-**Outputs:** Free space in kilobytes
-
-### Utility Functions
+**Notes:**
+- On macOS: uses `sysctl -n hw.ncpu`
+- On Linux: counts processors in `/proc/cpuinfo` or uses `nproc`
 
 #### os::get_uptime
 
@@ -289,22 +297,34 @@ hours=$((uptime / 3600))
 echo "Uptime: ${hours} hours"
 ```
 
-**Returns:** `PASS` (0) on success, `FAIL` (1) on error
+**Returns:** `PASS` (0) on success, `FAIL` (1) on error (outputs `0`)
 
 **Outputs:** Uptime in seconds
 
-#### os::get_load_average
+**Notes:**
+- On macOS: calculates from boot time via `sysctl -n kern.boottime`
+- On Linux: reads from `/proc/uptime`
 
-Get system load average.
+### Self-Test
+
+#### os::self_test
+
+Run self-test for util_os.sh functionality.
 
 ```bash
-load=$(os::get_load_average)
-echo "Load average: ${load}"
+source util.sh
+os::self_test
 ```
 
-**Returns:** `PASS` (0) always
+**Returns:** `PASS` (0) if all tests pass, `FAIL` (1) otherwise
 
-**Outputs:** Load average (1-minute)
+**Tests:**
+- OS detection (`os::detect`)
+- Architecture detection (`os::get_arch`)
+- Shell detection (`os::get_shell`)
+- String representation (`os::str`)
+- Distribution detection (`os::get_distro`)
+- CPU count (`os::get_cpu_count`)
 
 ## Examples
 
@@ -321,7 +341,7 @@ case "${os}" in
     linux)
         distro=$(os::get_distro)
         info "Running on Linux (${distro})"
-        
+
         case "${distro}" in
             ubuntu|debian)
                 package_manager="apt"
@@ -357,44 +377,37 @@ source util.sh
 
 check_requirements() {
     local errors=0
-    
+
     # Check architecture
-    local arch
-    arch=$(os::get_arch)
-    if [[ "${arch}" != "x86_64" && "${arch}" != "aarch64" ]]; then
-        error "Unsupported architecture: ${arch}"
+    if os::is_arm; then
+        info "ARM architecture detected"
+    elif os::is_x86; then
+        info "x86 architecture detected"
+    else
+        error "Unsupported architecture: $(os::get_arch)"
         ((errors++))
     fi
-    
+
     # Check memory (require at least 2GB)
     local memory
-    memory=$(os::get_memory)
-    local min_memory=$((2 * 1024 * 1024))  # 2GB in KB
+    memory=$(os::get_memory_total)
+    local min_memory=$((2 * 1024 * 1024 * 1024))  # 2GB in bytes
     if (( memory < min_memory )); then
-        error "Insufficient memory: ${memory}KB < ${min_memory}KB"
+        error "Insufficient memory: ${memory} bytes < ${min_memory} bytes"
         ((errors++))
     fi
-    
-    # Check disk space (require at least 10GB)
-    local disk_free
-    disk_free=$(os::get_disk_free "/")
-    local min_disk=$((10 * 1024 * 1024))  # 10GB in KB
-    if (( disk_free < min_disk )); then
-        error "Insufficient disk space: ${disk_free}KB < ${min_disk}KB"
-        ((errors++))
-    fi
-    
+
     # Check CPU count
     local cpus
     cpus=$(os::get_cpu_count)
     if (( cpus < 2 )); then
         warn "Low CPU count: ${cpus} (recommended: 2+)"
     fi
-    
+
     if (( errors > 0 )); then
         return "${FAIL}"
     fi
-    
+
     pass "System requirements met"
     return "${PASS}"
 }
@@ -407,16 +420,7 @@ check_requirements() {
 source util.sh
 
 # Some operations require root
-if ! os::is_root; then
-    if cmd::sudo_available; then
-        info "Elevating privileges..."
-        exec sudo "$0" "$@"
-    else
-        error "This script requires root privileges"
-        error "Please run with sudo or as root"
-        exit 1
-    fi
-fi
+os::require_root "This installation requires root privileges"
 
 # Now running as root
 info "Running as root user"
@@ -430,13 +434,13 @@ source util.sh
 
 if os::is_wsl; then
     info "Detected WSL environment"
-    
+
     # Access Windows files
     windows_home="/mnt/c/Users/${USER}"
     if [[ -d "${windows_home}" ]]; then
         info "Windows home: ${windows_home}"
     fi
-    
+
     # Check WSL version
     if [[ -f /proc/version ]] && grep -qi "microsoft.*WSL2" /proc/version; then
         info "Running WSL2"
@@ -455,40 +459,30 @@ source util.sh
 system_report() {
     echo "=== System Information ==="
     echo "OS:           $(os::detect)"
-    echo "Distro:       $(os::get_distro) $(os::get_distro_version)"
-    echo "Kernel:       $(os::get_kernel)"
+    echo "Distro:       $(os::get_distro)"
+    echo "Version:      $(os::get_version)"
+    echo "Kernel:       $(os::get_kernel_version)"
     echo "Architecture: $(os::get_arch)"
     echo "Hostname:     $(os::get_hostname)"
+    echo "Shell:        $(os::get_shell)"
     echo ""
     echo "=== Resources ==="
     echo "CPUs:         $(os::get_cpu_count)"
-    echo "Memory:       $(($(os::get_memory) / 1024)) MB"
-    echo "Memory Free:  $(($(os::get_memory_free) / 1024)) MB"
-    echo "Disk Usage:   $(os::get_disk_usage /)%"
+    echo "Memory:       $(($(os::get_memory_total) / 1024 / 1024)) MB"
     echo "Uptime:       $(($(os::get_uptime) / 3600)) hours"
-    echo "Load:         $(os::get_load_average)"
+    echo ""
+    echo "=== Summary ==="
+    echo "$(os::str)"
 }
 
 system_report
 ```
 
-## Self-Test
-
-```bash
-source util.sh
-os::self_test
-```
-
-Tests:
-- OS detection functions
-- Distribution detection
-- Architecture detection
-- Root check
-
 ## Notes
 
-- WSL detection checks for Microsoft-specific strings in `/proc/version`
-- Distribution detection uses `/etc/os-release` on Linux
-- Memory values are in kilobytes for precision
-- Architecture normalizes common variants (e.g., `arm64` → `aarch64`)
+- WSL detection checks for Microsoft-specific strings in `/proc/sys/kernel/osrelease` and `/proc/version`
+- Distribution detection uses `/etc/os-release` on Linux (preferred), with fallbacks to `lsb_release` and distribution-specific files
+- Memory values are returned in bytes (not kilobytes)
+- Architecture is normalized to common identifiers (e.g., `x86_64` becomes `amd64`)
 - Some functions may require elevated privileges for full information
+- The module requires `util_platform.sh` to be loaded first

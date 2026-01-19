@@ -13,8 +13,11 @@ This module provides:
 
 ## Dependencies
 
-- `util_cmd.sh`
-- `util_tui.sh`
+- `util_platform.sh` - Platform detection utilities
+- `util_config.sh` - Configuration management
+- `util_trap.sh` - Trap and cleanup utilities
+- `util_cmd.sh` - Command execution utilities (for `cmd::exists`, `cmd::run`)
+- `util_curl.sh` - HTTP utilities (for GitHub API calls)
 
 ## Functions
 
@@ -22,7 +25,7 @@ This module provides:
 
 #### git::is_available
 
-Check if git is installed.
+Check if git is installed and accessible.
 
 ```bash
 if git::is_available; then
@@ -53,28 +56,29 @@ Clone a repository.
 ```bash
 git::clone "https://github.com/user/repo.git" "/path/to/dest"
 git::clone "git@github.com:user/repo.git"  # Clones to current directory
+git::clone "https://github.com/user/repo.git" "/path/to/dest" --depth 1  # With extra args
 ```
 
 **Arguments:**
-- `$1` - Repository URL
+- `$1` - Repository URL (required)
 - `$2` - Destination path (optional, defaults to repo name)
+- `$@` - Additional git clone arguments (optional)
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
 
 #### git::pull
 
-Pull latest changes from remote.
+Pull latest changes from remote with rebase.
 
 ```bash
 git::pull
-git::pull "origin" "main"
 ```
 
-**Arguments:**
-- `$1` - Remote name (optional, default: origin)
-- `$2` - Branch name (optional, default: current branch)
-
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
+
+**Notes:**
+- Uses `git pull --rebase` internally
+- Auto-fetches first if `git.auto_fetch` config is enabled
 
 #### git::push
 
@@ -82,12 +86,7 @@ Push commits to remote.
 
 ```bash
 git::push
-git::push "origin" "feature-branch"
 ```
-
-**Arguments:**
-- `$1` - Remote name (optional, default: origin)
-- `$2` - Branch name (optional, default: current branch)
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
 
@@ -97,10 +96,12 @@ Stage all changes and commit.
 
 ```bash
 git::commit "Add new feature"
+git::commit "Add new feature" --no-verify  # With extra args
 ```
 
 **Arguments:**
-- `$1` - Commit message
+- `$1` - Commit message (required)
+- `$@` - Additional git commit arguments (optional)
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
 
@@ -119,37 +120,35 @@ echo "Current branch: ${branch}"
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
 
-**Outputs:** Branch name
+**Outputs:** Branch name to stdout (or "unknown" if detection fails)
 
 #### git::create_branch
 
-Create a new branch.
+Create and checkout a new branch.
 
 ```bash
 git::create_branch "feature/new-feature"
-git::create_branch "bugfix/issue-123" "main"  # From specific base
 ```
 
 **Arguments:**
-- `$1` - New branch name
-- `$2` - Base branch (optional, default: current branch)
+- `$1` - New branch name (required)
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
 
-**Notes:** Also checks out the new branch
+**Notes:** Also checks out the new branch and displays the configured default branch name
 
 #### git::delete_branch
 
-Delete a branch.
+Delete a local branch.
 
 ```bash
 git::delete_branch "feature/old-feature"
-git::delete_branch "feature/old-feature" true  # Force delete
+git::delete_branch "feature/old-feature" --force  # Force delete unmerged branch
 ```
 
 **Arguments:**
-- `$1` - Branch name
-- `$2` - Force delete (true/false, default: false)
+- `$1` - Branch name (required)
+- `$2` - `--force` flag to force delete (optional, uses `-D` instead of `-d`)
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
 
@@ -164,7 +163,7 @@ git::checkout "abc123"  # Specific commit
 ```
 
 **Arguments:**
-- `$1` - Branch, tag, or commit to checkout
+- `$1` - Branch, tag, or commit to checkout (required)
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
 
@@ -172,7 +171,7 @@ git::checkout "abc123"  # Specific commit
 
 #### git::has_changes
 
-Check if there are uncommitted changes.
+Check if there are uncommitted changes (staged or unstaged).
 
 ```bash
 if git::has_changes; then
@@ -184,7 +183,7 @@ fi
 
 #### git::is_clean
 
-Check if the working tree is clean.
+Check if the working tree is clean (no uncommitted changes).
 
 ```bash
 if git::is_clean; then
@@ -201,36 +200,24 @@ Get the current commit hash.
 ```bash
 commit=$(git::get_commit)
 echo "Current commit: ${commit}"
-
-# Short hash
-short=$(git::get_commit short)
-echo "Short hash: ${short}"
 ```
-
-**Arguments:**
-- `$1` - "short" for abbreviated hash (optional)
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
 
-**Outputs:** Commit hash
+**Outputs:** Full commit hash to stdout (or "unknown" if detection fails)
 
 #### git::get_remote_url
 
-Get the URL of a remote.
+Get the URL of the origin remote.
 
 ```bash
 url=$(git::get_remote_url)
 echo "Origin URL: ${url}"
-
-url=$(git::get_remote_url "upstream")
 ```
-
-**Arguments:**
-- `$1` - Remote name (optional, default: origin)
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
 
-**Outputs:** Remote URL
+**Outputs:** Remote URL to stdout (or "unknown" if not configured)
 
 #### git::get_root
 
@@ -249,20 +236,23 @@ echo "Repo root: ${root}"
 
 #### git::stash_save
 
-Stash current changes.
+Stash current changes with optional message.
 
 ```bash
 git::stash_save "WIP: working on feature"
+git::stash_save  # Uses default message "WIP"
 ```
 
 **Arguments:**
-- `$1` - Stash message (optional)
+- `$1` - Stash message (optional, default: "WIP")
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
 
+**Notes:** Returns `PASS` with info message if there are no changes to stash
+
 #### git::stash_pop
 
-Pop the most recent stash.
+Apply and remove the most recent stash.
 
 ```bash
 git::stash_pop
@@ -274,24 +264,25 @@ git::stash_pop
 
 #### git::tag
 
-Create a tag.
+Create or list tags.
 
 ```bash
-git::tag "v1.0.0"
-git::tag "v1.0.0" "Release version 1.0.0"  # Annotated tag
+git::tag "v1.0.0"  # Create lightweight tag
+git::tag           # List all tags
 ```
 
 **Arguments:**
-- `$1` - Tag name
-- `$2` - Tag message (optional, creates annotated tag)
+- `$1` - Tag name (optional; if omitted, lists all tags)
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
+
+**Notes:** Creates lightweight tags only; use git directly for annotated tags
 
 ### Submodules
 
 #### git::submodule_update
 
-Initialize and update submodules.
+Initialize and update submodules recursively.
 
 ```bash
 git::submodule_update
@@ -299,24 +290,39 @@ git::submodule_update
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
 
+**Notes:** Runs `git submodule update --init --recursive`
+
 ### Configuration
 
 #### git::set_config
 
-Set a git configuration value.
+Set a git configuration value with input validation and security warnings.
 
 ```bash
 git::set_config "user.name" "John Doe"
 git::set_config "user.email" "john@example.com"
 git::set_config "core.editor" "vim" "--global"
+git::set_config "push.default" "current" "--local"
 ```
 
 **Arguments:**
-- `$1` - Config key
-- `$2` - Config value
-- `$3` - Scope flag (optional, e.g., "--global")
+- `$1` - Config key (required, must match pattern `section.key` or `section.subsection.key`)
+- `$2` - Config value (required)
+- `$3` - Scope flag (optional: `--global`, `--local`, `--system`, `--worktree`, `--file`, `--file=<path>`)
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
+
+**Security Features:**
+- Validates key format to prevent command injection
+- Validates scope flag to ensure only allowed values
+- Warns when setting security-sensitive keys:
+  - `core.gitProxy`, `core.sshCommand`
+  - `credential.*`
+  - `http.proxy`, `https.proxy`
+  - `filter.*`
+  - `diff.external`, `merge.external`
+  - `receive.denyCurrentBranch`
+  - `safe.directory`
 
 #### git::get_config
 
@@ -328,46 +334,92 @@ echo "User: ${name}"
 ```
 
 **Arguments:**
-- `$1` - Config key
+- `$1` - Config key (required)
 
-**Returns:** `PASS` (0) on success, `FAIL` (1) if not set
+**Returns:** `PASS` (0) if value exists and is non-empty, `FAIL` (1) if not set or empty
 
-**Outputs:** Config value
+**Outputs:** Config value to stdout
 
 ### GitHub Integration
 
 #### git::get_latest_release_info
 
-Get information about the latest GitHub release.
+Fetch latest GitHub release info and expose values via nameref variables.
 
 ```bash
-info=$(git::get_latest_release_info "cli" "cli")
-echo "${info}"  # Returns JSON
+local tag name asset
+if git::get_latest_release_info "sharkdp/bat" "linux" "amd64" tag name asset; then
+    echo "Tag:   ${tag}"
+    echo "Name:  ${name}"
+    echo "Asset: ${asset}"
+fi
+
+# Using default variable names
+git::get_latest_release_info "cli/cli" "linux" "amd64"
+echo "Tag: ${GIT_RELEASE_TAG}"
+echo "Asset: ${GIT_RELEASE_ASSET}"
 ```
 
 **Arguments:**
-- `$1` - GitHub owner/org
-- `$2` - Repository name
+- `$1` - Repository in `owner/repo` format (required)
+- `$2` - OS pattern to match in asset URL, e.g., "linux", "darwin" (required)
+- `$3` - Architecture pattern to match in asset URL, e.g., "amd64", "x86_64", "arm64" (required)
+- `$4` - Variable name to store tag (optional, default: `GIT_RELEASE_TAG`)
+- `$5` - Variable name to store release name (optional, default: `GIT_RELEASE_NAME`)
+- `$6` - Variable name to store asset URL (optional, default: `GIT_RELEASE_ASSET`)
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
 
-**Outputs:** JSON release information
+**Requirements:**
+- `curl` must be available
+- `jq` must be installed for JSON parsing
+
+**Notes:**
+- Uses GitHub API: `https://api.github.com/repos/{owner}/{repo}/releases/latest`
+- OS and architecture patterns are case-insensitive matches
+- If multiple assets match, returns the first one
 
 #### git::get_release
 
-Download a GitHub release asset.
+Download the latest GitHub release asset matching OS and architecture.
 
 ```bash
-git::get_release "cli" "cli" "gh_*_linux_amd64.tar.gz" "/tmp/gh.tar.gz"
+git::get_release "sharkdp/bat" "linux" "amd64" "/tmp/bat.tar.gz"
+git::get_release "cli/cli" "darwin" "arm64" "/usr/local/bin/"
 ```
 
 **Arguments:**
-- `$1` - GitHub owner/org
-- `$2` - Repository name
-- `$3` - Asset filename pattern (glob)
-- `$4` - Destination path
+- `$1` - Repository in `owner/repo` format (required)
+- `$2` - OS pattern to match in asset URL, e.g., "linux", "darwin" (required)
+- `$3` - Architecture pattern to match in asset URL, e.g., "amd64", "x86_64" (required)
+- `$4` - Destination path (required)
 
 **Returns:** `PASS` (0) on success, `FAIL` (1) on error
+
+**Behavior:**
+- If `dest` is a directory, the asset's filename is preserved inside it
+- If `dest` is a file path, the asset is saved exactly there
+- Uses `trap::with_cleanup` for automatic temporary file cleanup
+
+**Requirements:**
+- `curl` must be available
+
+### Self-Test
+
+#### git::self_test
+
+Run basic self-tests for util_git.sh.
+
+```bash
+git::self_test
+```
+
+**Returns:** `PASS` (0) on success, `FAIL` (1) on critical failure
+
+**Tests:**
+- Git availability check
+- Repository detection (if in a git repo)
+- Branch and commit introspection (if in a git repo)
 
 ## Examples
 
@@ -377,23 +429,23 @@ git::get_release "cli" "cli" "gh_*_linux_amd64.tar.gz" "/tmp/gh.tar.gz"
 #!/usr/bin/env bash
 source util.sh
 
-setup_repo() {
+function setup_repo() {
     local url="$1"
     local dir="$2"
-    
+
     # Clone if doesn't exist
     if [[ ! -d "${dir}/.git" ]]; then
         git::clone "${url}" "${dir}"
     fi
-    
+
     cd "${dir}" || return "${FAIL}"
-    
+
     # Configure
     git::set_config "core.autocrlf" "input"
-    
+
     # Update submodules
     git::submodule_update
-    
+
     pass "Repository ready"
 }
 ```
@@ -404,35 +456,35 @@ setup_repo() {
 #!/usr/bin/env bash
 source util.sh
 
-start_feature() {
+function start_feature() {
     local feature_name="$1"
-    
+
     # Ensure clean state
     if git::has_changes; then
         git::stash_save "WIP before ${feature_name}"
     fi
-    
+
     # Update main
     git::checkout "main"
     git::pull
-    
+
     # Create feature branch
     git::create_branch "feature/${feature_name}"
-    
+
     pass "Ready to work on ${feature_name}"
 }
 
-finish_feature() {
+function finish_feature() {
     local message="$1"
-    
+
     # Commit changes
     if git::has_changes; then
         git::commit "${message}"
     fi
-    
+
     # Push branch
     git::push
-    
+
     pass "Feature branch pushed"
 }
 ```
@@ -443,22 +495,21 @@ finish_feature() {
 #!/usr/bin/env bash
 source util.sh
 
-create_release() {
+function create_release() {
     local version="$1"
-    local message="$2"
-    
+
     # Verify clean state
     if ! git::is_clean; then
         error "Working tree not clean"
         return "${FAIL}"
     fi
-    
-    # Create annotated tag
-    git::tag "v${version}" "${message}"
-    
-    # Push with tags
+
+    # Create lightweight tag
+    git::tag "v${version}"
+
+    # Push tag to remote
     git push origin "v${version}"
-    
+
     pass "Release v${version} created"
 }
 ```
@@ -469,20 +520,29 @@ create_release() {
 #!/usr/bin/env bash
 source util.sh
 
-install_gh_cli() {
-    local dest="/usr/local/bin/gh"
+function install_bat() {
+    local dest="/usr/local/bin"
     local tmp_dir
     tmp_dir=$(dir::tempdir)
-    
+
+    # Get release info first
+    local tag name asset_url
+    if ! git::get_latest_release_info "sharkdp/bat" "linux" "x86_64" tag name asset_url; then
+        fail "Could not get release info"
+        return "${FAIL}"
+    fi
+
+    info "Installing bat ${tag}"
+
     # Download latest release
-    git::get_release "cli" "cli" "gh_*_linux_amd64.tar.gz" "${tmp_dir}/gh.tar.gz"
-    
+    git::get_release "sharkdp/bat" "linux" "x86_64" "${tmp_dir}/bat.tar.gz"
+
     # Extract and install
-    tar -xzf "${tmp_dir}/gh.tar.gz" -C "${tmp_dir}"
-    cp "${tmp_dir}"/gh_*/bin/gh "${dest}"
-    chmod +x "${dest}"
-    
-    pass "GitHub CLI installed"
+    tar -xzf "${tmp_dir}/bat.tar.gz" -C "${tmp_dir}"
+    cp "${tmp_dir}"/bat-*/bat "${dest}/"
+    chmod +x "${dest}/bat"
+
+    pass "bat ${tag} installed"
 }
 ```
 
@@ -492,11 +552,11 @@ install_gh_cli() {
 #!/usr/bin/env bash
 source util.sh
 
-pre_commit() {
+function pre_commit() {
     # Get staged files
     local files
     files=$(git diff --cached --name-only --diff-filter=ACM)
-    
+
     # Run checks
     for file in ${files}; do
         case "${file}" in
@@ -508,7 +568,7 @@ pre_commit() {
                 ;;
         esac
     done
-    
+
     pass "Pre-commit checks passed"
 }
 ```
@@ -519,19 +579,41 @@ pre_commit() {
 #!/usr/bin/env bash
 source util.sh
 
-repo_info() {
+function repo_info() {
     if ! git::is_repo; then
         error "Not in a git repository"
         return "${FAIL}"
     fi
-    
+
     echo "Repository Information"
     echo "======================"
     echo "Root:     $(git::get_root)"
     echo "Branch:   $(git::get_branch)"
-    echo "Commit:   $(git::get_commit short)"
+    echo "Commit:   $(git::get_commit)"
     echo "Remote:   $(git::get_remote_url)"
     echo "Status:   $(git::is_clean && echo 'Clean' || echo 'Modified')"
+}
+```
+
+### Secure Configuration
+
+```bash
+#!/usr/bin/env bash
+source util.sh
+
+function configure_git_identity() {
+    local name="$1"
+    local email="$2"
+
+    # Set local repository identity
+    git::set_config "user.name" "${name}" "--local"
+    git::set_config "user.email" "${email}" "--local"
+
+    # Set global defaults
+    git::set_config "init.defaultBranch" "main" "--global"
+    git::set_config "pull.rebase" "true" "--global"
+
+    pass "Git identity configured"
 }
 ```
 
@@ -543,15 +625,16 @@ git::self_test
 ```
 
 Tests:
-- git availability
+- Git availability
 - Repository detection
-- Branch operations
-- Configuration access
+- Branch and commit introspection (when in a repo)
 
 ## Notes
 
-- All operations are logged via the logging system
+- All operations are logged via the logging system (info, warn, error, debug, pass, fail)
 - Push/pull operations may require authentication
-- GitHub API has rate limits for unauthenticated requests
+- GitHub API has rate limits for unauthenticated requests (60 requests/hour)
 - Submodule operations are recursive by default
-- Tags are not pushed by default; use `git push --tags`
+- Tags are not pushed by default; use `git push origin <tag>` or `git push --tags`
+- The `git::set_config` function includes security validation and warns on sensitive keys
+- Functions that produce data output to stdout; all logging goes to stderr

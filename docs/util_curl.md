@@ -141,19 +141,21 @@ curl::download "https://example.com/file.tar.gz" "/tmp/file.tar.gz"
 
 **Notes:** Shows spinner during download
 
-#### curl::download_if_missing
+#### curl::upload
 
-Download a file only if it doesn't exist locally.
+Upload a file via multipart/form-data POST.
 
 ```bash
-curl::download_if_missing "https://example.com/file.tar.gz" "/tmp/file.tar.gz"
+response=$(curl::upload "https://example.com/upload" "/path/to/file.txt")
 ```
 
 **Arguments:**
-- `$1` - URL to download
-- `$2` - Destination path
+- `$1` - URL to upload to
+- `$2` - Path to local file
 
-**Returns:** `PASS` (0) on success/exists, `FAIL` (1) on error
+**Returns:** `PASS` (0) on success, `FAIL` (1) on error
+
+**Outputs:** Server response body
 
 ### Response Inspection
 
