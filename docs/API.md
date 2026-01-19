@@ -1,632 +1,582 @@
 # common_core API Reference
 
-Complete API reference for all public functions in the common_core library. For detailed documentation with examples, see the individual `util_*.md` files.
+Complete API reference for all public functions in the common_core library.
+
+## Data Format
+
+The canonical API reference is available in YAML format: [`API.yaml`](./API.yaml)
+
+This provides structured data with:
+- **function**: Function name
+- **description**: What the function does
+- **arguments**: Required and optional parameters
+- **returns**: Exit code (0 = success, 1 = failure)
+- **output**: Data written to stdout (if any)
+
+For detailed documentation with examples, see the individual `util_*.md` files.
 
 ## Conventions
 
 - **Returns:** `PASS` (0) for success, `FAIL` (1) for failure unless otherwise noted
 - **Outputs:** Data written to stdout; logging to stderr
 - **Optional args:** Shown in `[brackets]`
+- **~:** Indicates no value (null)
 
 ---
 
-## util_apt
+## Quick Reference
 
-APT package management for Debian/Ubuntu systems.
+### util_apt — APT package management
 
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `apt::is_available` | — | 0/1 | — |
-| `apt::update` | — | 0/1 | — |
-| `apt::upgrade` | — | 0/1 | — |
-| `apt::install` | `packages...` | 0/1 | — |
-| `apt::is_installed` | `package` | 0/1 | — |
-| `apt::ensure_installed` | `packages...` | 0/1 | — |
-| `apt::install_from_array` | `array_name` | 0/1 | — |
-| `apt::add_repository` | `repo_url` | 0/1 | — |
-| `apt::repair` | — | 0/1 | — |
-| `apt::clean` | — | 0/1 | — |
-| `apt::autoremove` | — | 0/1 | — |
-| `apt::maintain` | — | 0/1 | — |
-| `apt::get_version` | `package` | 0/1 | version string |
-| `apt::self_test` | — | 0/1 | — |
-
----
-
-## util_brew
-
-Homebrew package management for macOS.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `brew::is_available` | — | 0/1 | — |
-| `brew::install_self` | — | 0/1 | — |
-| `brew::tap` | `repo` | 0/1 | — |
-| `brew::install` | `packages...` | 0/1 | — |
-| `brew::install_cask` | `packages...` | 0/1 | — |
-| `brew::is_installed` | `package` | 0/1 | — |
-| `brew::ensure_installed` | `packages...` | 0/1 | — |
-| `brew::install_from_array` | `array_name` | 0/1 | — |
-| `brew::uninstall` | `packages...` | 0/1 | — |
-| `brew::update` | — | 0/1 | — |
-| `brew::upgrade` | `[packages...]` | 0/1 | — |
-| `brew::cleanup` | — | 0/1 | — |
-| `brew::get_version` | `package` | 0/1 | version string |
-| `brew::list` | — | 0 | package list |
-| `brew::rosetta_available` | — | 0/1 | — |
-| `brew::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `apt::is_available` | Check if APT is available and usable | — | 0/1 | — |
+| `apt::update` | Update the APT package lists | — | 0/1 | — |
+| `apt::upgrade` | Upgrade all installed APT packages | — | 0/1 | — |
+| `apt::install` | Install packages with validation and repair | `packages...` | 0/1 | — |
+| `apt::is_installed` | Check if a package is installed | `package` | 0/1 | — |
+| `apt::ensure_installed` | Install packages only if missing | `packages...` | 0/1 | — |
+| `apt::install_from_array` | Install packages from named array | `array_name` | 0/1 | — |
+| `apt::add_repository` | Add a repository to APT sources | `repo_url` | 0/1 | — |
+| `apt::repair` | Fix broken APT dependencies | — | 0/1 | — |
+| `apt::clean` | Clean APT cache | — | 0/1 | — |
+| `apt::autoremove` | Remove unused packages | — | 0/1 | — |
+| `apt::maintain` | Full maintenance (update, upgrade, clean) | — | 0/1 | — |
+| `apt::get_version` | Get installed package version | `package` | 0/1 | version |
+| `apt::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## util_cmd
+### util_brew — Homebrew package management
 
-Command execution and validation utilities.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `cmd::run` | `command...` | cmd exit | command output |
-| `cmd::run_silent` | `command...` | cmd exit | — |
-| `cmd::run_with_env` | `"VAR=val..." command...` | cmd exit | command output |
-| `cmd::run_as_user` | `user command...` | cmd exit | command output |
-| `cmd::build` | `parts...` | 0 | command string |
-| `cmd::test` | `command...` | cmd exit | — |
-| `cmd::test_tool` | `tool_name` | 0/1 | — |
-| `cmd::test_batch` | `array_name` | 0/1 | status report |
-| `cmd::require` | `command [msg]` | 0/exit | — |
-| `cmd::ensure` | `command [package]` | 0/1 | — |
-| `cmd::ensure_all` | `commands...` | 0/1 | — |
-| `cmd::install_package` | `package` | 0/1 | — |
-| `cmd::retry` | `max_attempts command...` | cmd exit | command output |
-| `cmd::timeout` | `seconds command...` | cmd exit | command output |
-| `cmd::parallel` | `commands...` | 0/1 | command outputs |
-| `cmd::parallel_array` | `array_name` | 0/1 | command outputs |
-| `cmd::elevate` | `command...` | cmd exit | command output |
-| `cmd::sudo_available` | — | 0/1 | — |
-| `cmd::ensure_sudo_cached` | — | 0/1 | — |
-| `cmd::get_exit_code` | — | 0 | last exit code |
-| `cmd::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `brew::is_available` | Check if Homebrew is installed | — | 0/1 | — |
+| `brew::install_self` | Install Homebrew | — | 0/1 | — |
+| `brew::tap` | Add a Homebrew tap | `repo` | 0/1 | — |
+| `brew::install` | Install packages | `packages...` | 0/1 | — |
+| `brew::install_cask` | Install cask (macOS app) | `packages...` | 0/1 | — |
+| `brew::is_installed` | Check if package is installed | `package` | 0/1 | — |
+| `brew::ensure_installed` | Install packages only if missing | `packages...` | 0/1 | — |
+| `brew::install_from_array` | Install packages from named array | `array_name` | 0/1 | — |
+| `brew::uninstall` | Uninstall packages | `packages...` | 0/1 | — |
+| `brew::update` | Update Homebrew metadata | — | 0/1 | — |
+| `brew::upgrade` | Upgrade installed formulae | `[packages...]` | 0/1 | — |
+| `brew::cleanup` | Remove old package versions | — | 0/1 | — |
+| `brew::get_version` | Get installed package version | `package` | 0/1 | version |
+| `brew::list` | List all installed formulae | — | 0 | package list |
+| `brew::rosetta_available` | Check Rosetta 2 (ARM Macs) | — | 0/1 | — |
+| `brew::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## util_config
+### util_cmd — Command execution utilities
 
-Configuration management with validation.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `config::init` | — | 0 | — |
-| `config::set` | `key value` | 0/1 | — |
-| `config::get` | `key [default]` | 0/1 | value |
-| `config::get_bool` | `key [default]` | 0/1 | — |
-| `config::get_int` | `key [default]` | 0/1 | integer |
-| `config::register` | `key type default desc` | 0/1 | — |
-| `config::validate` | — | 0/1 | — |
-| `config::list` | — | 0 | key list |
-| `config::count` | — | 0 | count |
-| `config::show` | — | 0 | key=value pairs |
-| `config::reset` | — | 0 | — |
-| `config::lock` | — | 0 | — |
-| `config::unlock` | — | 0 | — |
-| `config::load_from_env` | `[prefix]` | 0/1 | — |
-| `config::load_from_file` | `filepath` | 0/1 | — |
-| `config::load_from_files` | `files...` | 0/1 | — |
-| `config::save_to_file` | `filepath` | 0/1 | — |
-| `config::export_env` | — | 0 | — |
-| `config::export_json` | — | 0 | JSON |
-| `config::self_test` | — | 0/1 | — |
-
----
-
-## util_curl
-
-HTTP client utilities.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `curl::is_available` | — | 0/1 | — |
-| `curl::get` | `url` | 0/1 | response body |
-| `curl::post` | `url [data]` | 0/1 | response body |
-| `curl::put` | `url [data]` | 0/1 | response body |
-| `curl::delete` | `url` | 0/1 | response body |
-| `curl::download` | `url dest` | 0/1 | — |
-| `curl::upload` | `file url` | 0/1 | response body |
-| `curl::check_url` | `url` | 0/1 | — |
-| `curl::get_status_code` | `url` | 0/1 | HTTP status |
-| `curl::get_headers` | `url` | 0/1 | headers |
-| `curl::get_response_time` | `url` | 0/1 | time in seconds |
-| `curl::get_with_retry` | `url [max_retries]` | 0/1 | response body |
-| `curl::follow_redirects` | `url` | 0/1 | final URL |
-| `curl::with_auth` | `user:pass url` | 0/1 | response body |
-| `curl::with_headers` | `"Header: val" url` | 0/1 | response body |
-| `curl::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `cmd::run` | Execute command with logging | `command...` | cmd exit | output |
+| `cmd::run_silent` | Execute command silently | `command...` | cmd exit | — |
+| `cmd::run_with_env` | Run with custom env vars | `"VAR=val" cmd...` | cmd exit | output |
+| `cmd::run_as_user` | Execute as specified user | `user command...` | cmd exit | output |
+| `cmd::build` | Build command array safely | `parts...` | 0 | cmd string |
+| `cmd::test` | Verify exit code matches | `expected cmd...` | cmd exit | — |
+| `cmd::test_tool` | Test if tool is functioning | `tool_name` | 0/1 | — |
+| `cmd::test_batch` | Run tests from assoc array | `array_name` | 0/1 | report |
+| `cmd::require` | Require command or exit | `command [msg]` | 0/exit | — |
+| `cmd::ensure` | Ensure tool exists, install if not | `command [pkg]` | 0/1 | — |
+| `cmd::ensure_all` | Ensure multiple tools exist | `commands...` | 0/1 | — |
+| `cmd::install_package` | Install package by OS | `package` | 0/1 | — |
+| `cmd::retry` | Retry command with delays | `attempts cmd...` | cmd exit | output |
+| `cmd::timeout` | Run with timeout | `seconds cmd...` | cmd exit | output |
+| `cmd::parallel` | Run commands in parallel | `commands...` | 0/1 | outputs |
+| `cmd::parallel_array` | Parallel from array | `array_name` | 0/1 | outputs |
+| `cmd::elevate` | Run with sudo/root | `command...` | cmd exit | output |
+| `cmd::sudo_available` | Check if sudo works | — | 0/1 | — |
+| `cmd::ensure_sudo_cached` | Cache sudo credentials | — | 0/1 | — |
+| `cmd::get_exit_code` | Get last exit code | — | 0 | exit code |
+| `cmd::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## util_dir
+### util_config — Configuration management
 
-Directory operations.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `dir::exists` | `path` | 0/1 | — |
-| `dir::create` | `path [mode]` | 0/1 | — |
-| `dir::delete` | `path` | 0/1 | — |
-| `dir::copy` | `src dest` | 0/1 | — |
-| `dir::move` | `src dest` | 0/1 | — |
-| `dir::is_empty` | `path` | 0/1 | — |
-| `dir::is_readable` | `path` | 0/1 | — |
-| `dir::is_writable` | `path` | 0/1 | — |
-| `dir::ensure_exists` | `path [mode]` | 0/1 | — |
-| `dir::ensure_writable` | `path` | 0/1 | — |
-| `dir::empty` | `path` | 0/1 | — |
-| `dir::get_size` | `path` | 0/1 | size in bytes |
-| `dir::get_absolute_path` | `path` | 0/1 | absolute path |
-| `dir::get_relative_path` | `path [base]` | 0/1 | relative path |
-| `dir::in_path` | `dir` | 0/1 | — |
-| `dir::list_files` | `path` | 0/1 | file list |
-| `dir::list_dirs` | `path` | 0/1 | dir list |
-| `dir::find_files` | `path pattern` | 0/1 | file list |
-| `dir::count_files` | `path` | 0/1 | count |
-| `dir::count_dirs` | `path` | 0/1 | count |
-| `dir::backup` | `path [dest]` | 0/1 | backup path |
-| `dir::rotate` | `path [count]` | 0/1 | — |
-| `dir::cleanup_old` | `path days` | 0/1 | — |
-| `dir::tempdir` | `[prefix]` | 0/1 | temp path |
-| `dir::push` | `path` | 0/1 | — |
-| `dir::pop` | — | 0/1 | — |
-| `dir::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `config::init` | Initialize config system | — | 0 | — |
+| `config::set` | Set config value | `key value` | 0/1 | — |
+| `config::get` | Get config value | `key [default]` | 0/1 | value |
+| `config::get_bool` | Get boolean config | `key [default]` | 0/1 | — |
+| `config::get_int` | Get integer config | `key [default]` | 0/1 | integer |
+| `config::register` | Register key with metadata | `key type default desc` | 0/1 | — |
+| `config::validate` | Validate config value | — | 0/1 | — |
+| `config::list` | List all config keys | — | 0 | key list |
+| `config::count` | Count registered keys | — | 0 | count |
+| `config::show` | Show config details | — | 0 | key=value |
+| `config::reset` | Reset to default | — | 0 | — |
+| `config::lock` | Lock key (immutable) | — | 0 | — |
+| `config::unlock` | Unlock key | — | 0 | — |
+| `config::load_from_env` | Load from env vars | `[prefix]` | 0/1 | — |
+| `config::load_from_file` | Load from file | `filepath` | 0/1 | — |
+| `config::load_from_files` | Load from locations | `files...` | 0/1 | — |
+| `config::save_to_file` | Save to file | `filepath` | 0/1 | — |
+| `config::export_env` | Export as env vars | — | 0 | — |
+| `config::export_json` | Export as JSON | — | 0 | JSON |
+| `config::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## util_env
+### util_curl — HTTP client utilities
 
-Environment variable management.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `env::get` | `name [default]` | 0/1 | value |
-| `env::set` | `name value` | 0 | — |
-| `env::unset` | `name` | 0 | — |
-| `env::exists` | `name` | 0/1 | — |
-| `env::require` | `name [msg]` | 0/exit | value |
-| `env::check` | `names...` | 0/1 | — |
-| `env::get_home` | — | 0 | home path |
-| `env::get_user` | — | 0 | username |
-| `env::get_temp_dir` | — | 0 | temp path |
-| `env::get_xdg_config_home` | — | 0 | config path |
-| `env::get_xdg_data_home` | — | 0 | data path |
-| `env::get_xdg_cache_home` | — | 0 | cache path |
-| `env::get_xdg_state_home` | — | 0 | state path |
-| `env::is_ci` | — | 0/1 | — |
-| `env::is_container` | — | 0/1 | — |
-| `env::is_tmux` | — | 0/1 | — |
-| `env::is_screen` | — | 0/1 | — |
-| `env::remove_from_path` | `dir` | 0 | — |
-| `env::save_to_file` | `filepath vars...` | 0/1 | — |
-| `env::export_file` | `filepath` | 0/1 | — |
-| `env::diff_files` | `file1 file2` | 0/1 | diff output |
-| `env::validate_env_file` | `filepath` | 0/1 | — |
-| `env::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `curl::is_available` | Check if curl exists | — | 0/1 | — |
+| `curl::get` | HTTP GET request | `url` | 0/1 | body |
+| `curl::post` | HTTP POST request | `url [data]` | 0/1 | body |
+| `curl::put` | HTTP PUT request | `url [data]` | 0/1 | body |
+| `curl::delete` | HTTP DELETE request | `url` | 0/1 | body |
+| `curl::download` | Download file | `url dest` | 0/1 | — |
+| `curl::upload` | Upload file | `file url` | 0/1 | body |
+| `curl::check_url` | Check if URL accessible | `url` | 0/1 | — |
+| `curl::get_status_code` | Get HTTP status | `url` | 0/1 | status |
+| `curl::get_headers` | Get response headers | `url` | 0/1 | headers |
+| `curl::get_response_time` | Get response time | `url` | 0/1 | seconds |
+| `curl::get_with_retry` | GET with retry | `url [max]` | 0/1 | body |
+| `curl::follow_redirects` | Get final URL | `url` | 0/1 | final URL |
+| `curl::with_auth` | Request with auth | `user:pass url` | 0/1 | body |
+| `curl::with_headers` | Request with headers | `"H: v" url` | 0/1 | body |
+| `curl::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## util_file
+### util_dir — Directory operations
 
-File operations.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `file::exists` | `path` | 0/1 | — |
-| `file::is_readable` | `path` | 0/1 | — |
-| `file::is_writable` | `path` | 0/1 | — |
-| `file::is_executable` | `path` | 0/1 | — |
-| `file::is_non_empty` | `path` | 0/1 | — |
-| `file::touch` | `path` | 0/1 | — |
-| `file::delete` | `path` | 0/1 | — |
-| `file::copy` | `src dest` | 0/1 | — |
-| `file::move` | `src dest` | 0/1 | — |
-| `file::append` | `path content` | 0/1 | — |
-| `file::prepend` | `path content` | 0/1 | — |
-| `file::contains` | `path pattern` | 0/1 | — |
-| `file::replace_line` | `path pattern replacement` | 0/1 | — |
-| `file::replace_env_vars` | `path` | 0/1 | — |
-| `file::count_lines` | `path` | 0/1 | count |
-| `file::get_size` | `path` | 0/1 | size in bytes |
-| `file::get_checksum` | `path [algo]` | 0/1 | checksum |
-| `file::get_basename` | `path` | 0 | basename |
-| `file::get_dirname` | `path` | 0 | dirname |
-| `file::get_extension` | `path` | 0 | extension |
-| `file::compare` | `file1 file2` | 0/1 | — |
-| `file::backup` | `path [suffix]` | 0/1 | backup path |
-| `file::restore_old_backup` | `path` | 0/1 | — |
-| `file::generate_filename` | `prefix [ext]` | 0 | filename |
-| `file::copy_list_from_array` | `array_name dest` | 0/1 | — |
-| `file::mktemp` | `[template]` | 0/1 | temp path |
-| `file::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `dir::exists` | Check directory exists | `path` | 0/1 | — |
+| `dir::is_readable` | Check dir readable | `path` | 0/1 | — |
+| `dir::is_writable` | Check dir writable | `path` | 0/1 | — |
+| `dir::is_empty` | Check dir empty | `path` | 0/1 | — |
+| `dir::create` | Create directory | `path [mode]` | 0/1 | — |
+| `dir::delete` | Delete dir recursively | `path` | 0/1 | — |
+| `dir::copy` | Copy dir recursively | `src dest` | 0/1 | — |
+| `dir::move` | Move or rename dir | `src dest` | 0/1 | — |
+| `dir::get_size` | Get directory size | `path` | 0/1 | bytes |
+| `dir::list_files` | List files in dir | `path` | 0/1 | file list |
+| `dir::list_dirs` | List subdirs | `path` | 0/1 | dir list |
+| `dir::find_files` | Find files by pattern | `path pattern` | 0/1 | file list |
+| `dir::backup` | Create timestamped backup | `path [dest]` | 0/1 | backup path |
+| `dir::cleanup_old` | Remove old files | `path days` | 0/1 | — |
+| `dir::get_absolute_path` | Get absolute path | `path` | 0/1 | abs path |
+| `dir::get_relative_path` | Get relative path | `path [base]` | 0/1 | rel path |
+| `dir::push` | Push to dir stack | `path` | 0/1 | — |
+| `dir::pop` | Pop from dir stack | — | 0/1 | — |
+| `dir::in_path` | Check if in PATH | `dir` | 0/1 | — |
+| `dir::ensure_exists` | Create if missing | `path [mode]` | 0/1 | — |
+| `dir::ensure_writable` | Ensure writable | `path` | 0/1 | — |
+| `dir::tempdir` | Create temp dir | `[prefix]` | 0/1 | path |
+| `dir::empty` | Empty dir contents | `path` | 0/1 | — |
+| `dir::rotate` | Rotate backups | `path [count]` | 0/1 | — |
+| `dir::count_files` | Count files | `path` | 0/1 | count |
+| `dir::count_dirs` | Count subdirs | `path` | 0/1 | count |
+| `dir::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## util_git
+### util_env — Environment variable management
 
-Git and GitHub utilities.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `git::is_available` | — | 0/1 | — |
-| `git::is_repo` | — | 0/1 | — |
-| `git::clone` | `url [dest] [args...]` | 0/1 | — |
-| `git::pull` | — | 0/1 | — |
-| `git::push` | — | 0/1 | — |
-| `git::commit` | `message [args...]` | 0/1 | — |
-| `git::checkout` | `ref` | 0/1 | — |
-| `git::create_branch` | `name` | 0/1 | — |
-| `git::delete_branch` | `name [--force]` | 0/1 | — |
-| `git::get_branch` | — | 0/1 | branch name |
-| `git::get_commit` | — | 0/1 | commit hash |
-| `git::get_remote_url` | — | 0/1 | URL |
-| `git::get_root` | — | 0/1 | root path |
-| `git::has_changes` | — | 0/1 | — |
-| `git::is_clean` | — | 0/1 | — |
-| `git::stash_save` | `[message]` | 0/1 | — |
-| `git::stash_pop` | — | 0/1 | — |
-| `git::tag` | `[name]` | 0/1 | tag list if no name |
-| `git::submodule_update` | — | 0/1 | — |
-| `git::set_config` | `key value [scope]` | 0/1 | — |
-| `git::get_config` | `key` | 0/1 | value |
-| `git::get_latest_release_info` | `owner/repo os arch [tag_var] [name_var] [asset_var]` | 0/1 | sets nameref vars |
-| `git::get_release` | `owner/repo os arch dest` | 0/1 | — |
-| `git::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `env::get_xdg_config_home` | Get XDG config dir | — | 0 | path |
+| `env::get_xdg_data_home` | Get XDG data dir | — | 0 | path |
+| `env::get_xdg_cache_home` | Get XDG cache dir | — | 0 | path |
+| `env::get_xdg_state_home` | Get XDG state dir | — | 0 | path |
+| `env::exists` | Check var defined | `name` | 0/1 | — |
+| `env::check` | Check var non-empty | `names...` | 0/1 | — |
+| `env::get` | Get var with default | `name [default]` | 0/1 | value |
+| `env::set` | Set env variable | `name value` | 0 | — |
+| `env::unset` | Remove env variable | `name` | 0 | — |
+| `env::require` | Require var or exit | `name [msg]` | 0/exit | value |
+| `env::remove_from_path` | Remove from PATH | `dir` | 0 | — |
+| `env::validate_env_file` | Validate .env format | `filepath` | 0/1 | — |
+| `env::diff_files` | Diff two .env files | `file1 file2` | 0/1 | diff |
+| `env::export_file` | Load .env file | `filepath` | 0/1 | — |
+| `env::save_to_file` | Save vars to file | `filepath vars...` | 0/1 | — |
+| `env::is_ci` | Detect CI environment | — | 0/1 | — |
+| `env::is_container` | Detect container | — | 0/1 | — |
+| `env::get_user` | Get current username | — | 0 | username |
+| `env::get_home` | Get home directory | — | 0 | path |
+| `env::get_temp_dir` | Get temp directory | — | 0 | path |
+| `env::is_tmux` | Detect tmux session | — | 0/1 | — |
+| `env::is_screen` | Detect GNU screen | — | 0/1 | — |
+| `env::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## util_go
+### util_file — File operations
 
-Go language utilities.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `go::is_available` | — | 0/1 | — |
-| `go::get_version` | — | 0/1 | version |
-| `go::install` | `[version]` | 0/1 | — |
-| `go::install_tool` | `package` | 0/1 | — |
-| `go::mod_init` | `module_name` | 0/1 | — |
-| `go::mod_tidy` | — | 0/1 | — |
-| `go::build` | `[target]` | 0/1 | — |
-| `go::build_cross` | `os arch [target]` | 0/1 | — |
-| `go::test` | — | 0/1 | test output |
-| `go::fmt` | `[path]` | 0/1 | — |
-| `go::vet` | `[path]` | 0/1 | — |
-| `go::lint` | `[path]` | 0/1 | — |
-| `go::set_module_proxy` | `url` | 0 | — |
-| `go::work_init` | `[modules...]` | 0/1 | — |
-| `go::get_gopath` | — | 0 | GOPATH |
-| `go::get_goroot` | — | 0 | GOROOT |
-| `go::self_test` | — | 0/1 | — |
-
----
-
-## util_menu
-
-Dialog-backed menu utilities.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `menu::select_single` | `title prompt options...` | 0/1 | selected option |
-| `menu::select_multi` | `title prompt options...` | 0/1 | selected options |
-| `menu::select_or_input` | `title prompt options...` | 0/1 | value |
-| `menu::confirm_action` | `prompt` | 0/1 | — |
-| `menu::pause` | — | 0 | — |
-| `menu::dynamic_from_file` | `title prompt timestamps filepath` | 0/1 | selected option |
-| `menu::tree` | `title prompt timestamps nodes...` | 0 | return value |
-| `menu::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `file::exists` | Check file exists | `path` | 0/1 | — |
+| `file::is_readable` | Check file readable | `path` | 0/1 | — |
+| `file::is_writable` | Check file writable | `path` | 0/1 | — |
+| `file::is_executable` | Check file executable | `path` | 0/1 | — |
+| `file::get_size` | Get file size | `path` | 0/1 | bytes |
+| `file::is_non_empty` | Check file non-empty | `path` | 0/1 | — |
+| `file::get_extension` | Get file extension | `path` | 0 | ext |
+| `file::get_basename` | Get filename | `path` | 0 | basename |
+| `file::get_dirname` | Get directory | `path` | 0 | dirname |
+| `file::generate_filename` | Generate timestamped name | `prefix [ext]` | 0 | filename |
+| `file::backup` | Create .bak backup | `path [suffix]` | 0/1 | backup path |
+| `file::copy` | Copy file | `src dest` | 0/1 | — |
+| `file::copy_list_from_array` | Copy files from array | `array dest` | 0/1 | — |
+| `file::move` | Move file | `src dest` | 0/1 | — |
+| `file::delete` | Delete file | `path` | 0/1 | — |
+| `file::touch` | Create/update mtime | `path` | 0/1 | — |
+| `file::append` | Append to file | `path content` | 0/1 | — |
+| `file::mktemp` | Create temp file | `[template]` | 0/1 | path |
+| `file::prepend` | Prepend to file | `path content` | 0/1 | — |
+| `file::replace_line` | Replace pattern | `path pattern repl` | 0/1 | — |
+| `file::replace_env_vars` | Replace placeholders | `path` | 0/1 | — |
+| `file::contains` | Check contains pattern | `path pattern` | 0/1 | — |
+| `file::count_lines` | Count lines | `path` | 0/1 | count |
+| `file::get_checksum` | Compute checksum | `path [algo]` | 0/1 | checksum |
+| `file::compare` | Compare two files | `file1 file2` | 0/1 | — |
+| `file::restore_old_backup` | Restore .old-N backup | `path` | 0/1 | — |
+| `file::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## util_net
+### util_git — Git and GitHub utilities
 
-Network utilities.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `net::is_online` | `[target]` | 0/1 | — |
-| `net::is_local_ip` | `ip` | 0/1 | — |
-| `net::resolve_target` | `hostname` | 0/1 | IPv4 address |
-| `net::resolve_target_ipv6` | `hostname` | 0/1 | IPv6 address |
-| `net::get_gateway` | — | 0/1 | gateway IP |
-| `net::get_dns_servers` | — | 0/1 | DNS IPs |
-| `net::get_local_ips` | — | 0/1 | interface list |
-| `net::get_external_ip` | — | 0/1 | external IP |
-| `net::list_interfaces` | — | 0/1 | interface names |
-| `net::get_interface_info` | `interface` | 0/1 | interface details |
-| `net::get_ip_method` | `interface` | 0/1 | DHCP/Static/Unknown |
-| `net::check_port` | `host port` | 0/1 | — |
-| `net::repair_connectivity` | — | 0/1 | — |
-| `net::full_diagnostic` | — | 0/1 | — |
-| `net::self_test` | — | 0/1 | — |
-
----
-
-## util_os
-
-OS detection and information.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `os::detect` | — | 0 | linux/macos/wsl/windows/unknown |
-| `os::is_linux` | — | 0/1 | — |
-| `os::is_macos` | — | 0/1 | — |
-| `os::is_wsl` | — | 0/1 | — |
-| `os::is_root` | — | 0/1 | — |
-| `os::require_root` | `[message]` | 0/1 | — |
-| `os::get_distro` | — | 0 | distro name |
-| `os::get_version` | — | 0 | version string |
-| `os::get_arch` | — | 0 | amd64/arm64/386/etc |
-| `os::is_arm` | — | 0/1 | — |
-| `os::is_x86` | — | 0/1 | — |
-| `os::get_shell` | — | 0 | shell name |
-| `os::get_kernel_version` | — | 0 | kernel version |
-| `os::get_hostname` | — | 0 | hostname |
-| `os::get_uptime` | — | 0/1 | seconds |
-| `os::get_memory_total` | — | 0/1 | bytes |
-| `os::get_cpu_count` | — | 0/1 | count |
-| `os::str` | — | 0 | "os version arch" |
-| `os::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `git::is_available` | Check git installed | — | 0/1 | — |
+| `git::is_repo` | Check in git repo | — | 0/1 | — |
+| `git::set_config` | Set git config value | `key value [scope]` | 0/1 | — |
+| `git::stash_save` | Stash changes | `[message]` | 0/1 | — |
+| `git::stash_pop` | Pop stash | — | 0/1 | — |
+| `git::submodule_update` | Update submodules | — | 0/1 | — |
+| `git::create_branch` | Create and checkout branch | `name` | 0/1 | — |
+| `git::delete_branch` | Delete local branch | `name [--force]` | 0/1 | — |
+| `git::get_branch` | Get current branch | — | 0/1 | branch |
+| `git::get_commit` | Get commit hash | — | 0/1 | hash |
+| `git::get_remote_url` | Get origin URL | — | 0/1 | URL |
+| `git::has_changes` | Check uncommitted changes | — | 0/1 | — |
+| `git::is_clean` | Check working dir clean | — | 0/1 | — |
+| `git::clone` | Clone repository | `url [dest] [args]` | 0/1 | — |
+| `git::pull` | Pull from remote | — | 0/1 | — |
+| `git::push` | Push to remote | — | 0/1 | — |
+| `git::commit` | Commit changes | `message [args]` | 0/1 | — |
+| `git::tag` | Create or list tags | `[name]` | 0/1 | tag list |
+| `git::checkout` | Checkout ref | `ref` | 0/1 | — |
+| `git::get_root` | Get repo root | — | 0/1 | path |
+| `git::get_config` | Get git config | `key` | 0/1 | value |
+| `git::get_latest_release_info` | Get GitHub release info | `owner/repo os arch [vars]` | 0/1 | namerefs |
+| `git::get_release` | Download GitHub release | `owner/repo os arch dest` | 0/1 | — |
+| `git::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## util_platform
+### util_go — Go language utilities
 
-Cross-platform abstractions.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `platform::detect_os` | — | 0 | sets PLATFORM_OS |
-| `platform::detect_variant` | — | 0 | sets PLATFORM_VARIANT |
-| `platform::setup_commands` | — | 0 | — |
-| `platform::find_command` | `name` | 0/1 | path |
-| `platform::check_gnu_tools` | — | 0/1 | — |
-| `platform::stat` | `mode path` | 0/1 | stat value |
-| `platform::date` | `format` | 0 | formatted date |
-| `platform::checksum` | `path [algo]` | 0/1 | checksum |
-| `platform::mktemp` | `[template]` | 0/1 | temp path |
-| `platform::readlink_canonical` | `path` | 0/1 | canonical path |
-| `platform::sed_inplace` | `pattern file` | 0/1 | — |
-| `platform::timeout` | `seconds command...` | cmd exit | command output |
-| `platform::dns_flush` | — | 0/1 | — |
-| `platform::network_restart` | — | 0/1 | — |
-| `platform::get_interface_ip` | `interface` | 0/1 | IP address |
-| `platform::get_interface_mac` | `interface` | 0/1 | MAC address |
-| `platform::info` | — | 0 | platform info |
-| `platform::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `go::is_available` | Check Go installed | — | 0/1 | — |
+| `go::get_version` | Get Go version | — | 0/1 | version |
+| `go::install` | Install Go | `[version]` | 0/1 | — |
+| `go::set_module_proxy` | Configure module proxy | `url` | 0 | — |
+| `go::build_cross` | Cross-compile | `os arch [target]` | 0/1 | — |
+| `go::work_init` | Initialize workspace | `[modules...]` | 0/1 | — |
+| `go::get_gopath` | Get GOPATH | — | 0 | GOPATH |
+| `go::get_goroot` | Get GOROOT | — | 0 | GOROOT |
+| `go::mod_init` | Initialize module | `module_name` | 0/1 | — |
+| `go::mod_tidy` | Tidy dependencies | — | 0/1 | — |
+| `go::build` | Build project | `[target]` | 0/1 | — |
+| `go::test` | Run tests | — | 0/1 | test output |
+| `go::install_tool` | Install Go tool | `package` | 0/1 | — |
+| `go::fmt` | Format code | `[path]` | 0/1 | — |
+| `go::vet` | Static analysis | `[path]` | 0/1 | — |
+| `go::lint` | Run linter | `[path]` | 0/1 | — |
+| `go::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## util_py
+### util_menu — Dialog-backed menus
 
-Python utilities.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `py::is_available` | `[version]` | 0/1 | — |
-| `py::get_version` | `[python_cmd]` | 0/1 | version |
-| `py::get_major_version` | `[version]` | 0/1 | major.minor |
-| `py::get_path` | `[version]` | 0/1 | python path |
-| `py::is_version_available` | `version` | 0/1 | — |
-| `py::install_python` | `[version]` | 0/1 | — |
-| `py::install_pip` | `[version]` | 0/1 | — |
-| `py::pip_install` | `packages...` | 0/1 | — |
-| `py::pip_install_for_version` | `version packages...` | 0/1 | — |
-| `py::pip_upgrade` | `[version]` | 0/1 | — |
-| `py::requirements_install` | `[file] [version]` | 0/1 | — |
-| `py::is_package_installed` | `package [version]` | 0/1 | — |
-| `py::get_package_version` | `package [version]` | 0/1 | version |
-| `py::get_site_packages` | `[version]` | 0/1 | path |
-| `py::freeze_requirements` | `[file] [version]` | 0/1 | — |
-| `py::create_venv` | `path [version]` | 0/1 | — |
-| `py::activate_venv` | `path` | 0/1 | — |
-| `py::install_pipx` | — | 0/1 | — |
-| `py::pipx_install` | `package` | 0/1 | — |
-| `py::install_uv` | — | 0/1 | — |
-| `py::uv_install` | `packages...` | 0/1 | — |
-| `py::run_script` | `script [args...]` | script exit | script output |
-| `py::pyenv_available` | — | 0/1 | — |
-| `py::pyenv_install_version` | `version` | 0/1 | — |
-| `py::pip_supports_break_system_packages` | — | 0/1 | — |
-| `py::get_pip_args` | — | 0 | pip args |
-| `py::install_build_dependencies` | — | 0/1 | — |
-| `py::get_latest_patch_version` | `major.minor` | 0/1 | version |
-| `py::download_source` | `version dest` | 0/1 | — |
-| `py::compile_from_source` | `version [prefix]` | 0/1 | — |
-| `py::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `menu::select_single` | Single-select menu | `title prompt opts...` | 0/1 | selection |
+| `menu::select_multi` | Multi-select checklist | `title prompt opts...` | 0/1 | selections |
+| `menu::select_or_input` | Select or enter value | `title prompt opts...` | 0/1 | value |
+| `menu::confirm_action` | Yes/no confirmation | `prompt` | 0/1 | — |
+| `menu::pause` | Pause until continue | — | 0 | — |
+| `menu::dynamic_from_file` | Menu from file | `title prompt ts file` | 0/1 | selection |
+| `menu::tree` | Tree-based navigation | `title prompt ts nodes...` | 0 | return val |
+| `menu::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## util_py_multi
+### util_net — Network utilities
 
-Multi-version Python management.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `py_multi::set_versions` | `versions...` | 0 | — |
-| `py_multi::get_versions` | — | 0 | version list |
-| `py_multi::add_version` | `version` | 0/1 | — |
-| `py_multi::remove_version` | `version` | 0/1 | — |
-| `py_multi::find_latest` | — | 0/1 | version |
-| `py_multi::set_default` | `[version]` | 0/1 | — |
-| `py_multi::get_default` | — | 0 | version |
-| `py_multi::install_all` | `[--compile]` | 0/1 | — |
-| `py_multi::install_pip_all` | — | 0/1 | — |
-| `py_multi::upgrade_pip_all` | — | 0/1 | — |
-| `py_multi::pip_install_all` | `packages...` | 0/1 | — |
-| `py_multi::requirements_install_all` | `[file]` | 0/1 | — |
-| `py_multi::verify_package_all` | `package` | 0/1 | status per version |
-| `py_multi::pipx_install_batch` | `array_name` | 0/1 | — |
-| `py_multi::status` | — | 0 | status table |
-| `py_multi::list_installed` | — | 0 | version list |
-| `py_multi::cleanup_cache` | — | 0 | — |
-| `py_multi::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `net::is_online` | Check connectivity | `[target]` | 0/1 | — |
+| `net::resolve_target_ipv6` | Resolve to IPv6 | `hostname` | 0/1 | IPv6 |
+| `net::get_dns_servers` | List DNS servers | — | 0/1 | DNS IPs |
+| `net::resolve_target` | Resolve to IPv4 | `hostname` | 0/1 | IPv4 |
+| `net::is_local_ip` | Check local/private IP | `ip` | 0/1 | — |
+| `net::get_gateway` | Get default gateway | — | 0/1 | gateway IP |
+| `net::list_interfaces` | List network interfaces | — | 0/1 | iface names |
+| `net::get_interface_info` | Get interface details | `interface` | 0/1 | details |
+| `net::check_port` | Check port open | `host port` | 0/1 | — |
+| `net::get_ip_method` | Get DHCP/Static | `interface` | 0/1 | method |
+| `net::get_local_ips` | Get local IPs | — | 0/1 | iface list |
+| `net::get_external_ip` | Get external IP | — | 0/1 | ext IP |
+| `net::repair_connectivity` | Self-heal network | — | 0/1 | — |
+| `net::full_diagnostic` | Full network check | — | 0/1 | — |
+| `net::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## util_ruby
+### util_os — Operating system detection
 
-Ruby and gem utilities.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `ruby::is_available` | — | 0/1 | — |
-| `ruby::get_version` | — | 0/1 | version |
-| `ruby::get_path` | — | 0 | ruby path |
-| `ruby::gem_available` | — | 0/1 | — |
-| `ruby::gem_install` | `gems...` | 0/1 | — |
-| `ruby::gem_install_spec` | `"gem -v version"` | 0/1 | — |
-| `ruby::gem_install_batch` | `[array_name]` | 0-3 | — |
-| `ruby::gem_install_with_version` | `gem version` | 0/1 | — |
-| `ruby::gem_update` | — | 0/1 | — |
-| `ruby::gem_uninstall` | `gem [version]` | 0/1 | — |
-| `ruby::gem_cleanup` | — | 0/1 | — |
-| `ruby::is_gem_installed` | `gem [version]` | 0/1 | — |
-| `ruby::get_gem_version` | `gem` | 0/1 | version |
-| `ruby::list_gems` | — | 0 | gem list |
-| `ruby::gem_outdated` | — | 0 | outdated list |
-| `ruby::bundler_install` | — | 0/1 | — |
-| `ruby::get_bundler_version` | — | 0/1 | major version |
-| `ruby::bundle_install` | — | 0/1 | — |
-| `ruby::bundle_exec` | `command...` | cmd exit | command output |
-| `ruby::run_script` | `script` | 0/1 | script output |
-| `ruby::rbenv_available` | — | 0/1 | — |
-| `ruby::rvm_available` | — | 0/1 | — |
-| `ruby::install_rbenv` | — | 0/1 | — |
-| `ruby::rbenv_install_version` | `version` | 0/1 | — |
-| `ruby::env_info` | — | 0 | environment info |
-| `ruby::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `os::detect` | Detect OS | — | 0 | os name |
+| `os::is_linux` | Check Linux | — | 0/1 | — |
+| `os::is_macos` | Check macOS | — | 0/1 | — |
+| `os::is_wsl` | Check WSL | — | 0/1 | — |
+| `os::get_distro` | Get Linux distro | — | 0 | distro |
+| `os::get_version` | Get OS version | — | 0 | version |
+| `os::get_arch` | Get architecture | — | 0 | arch |
+| `os::is_arm` | Check ARM arch | — | 0/1 | — |
+| `os::is_x86` | Check x86 arch | — | 0/1 | — |
+| `os::get_shell` | Get current shell | — | 0 | shell |
+| `os::is_root` | Check root user | — | 0/1 | — |
+| `os::require_root` | Require root or exit | `[message]` | 0/exit | — |
+| `os::get_kernel_version` | Get kernel version | — | 0 | version |
+| `os::get_hostname` | Get hostname | — | 0 | hostname |
+| `os::get_uptime` | Get uptime | — | 0/1 | seconds |
+| `os::get_memory_total` | Get total memory | — | 0/1 | bytes |
+| `os::get_cpu_count` | Get CPU count | — | 0/1 | count |
+| `os::str` | Get OS string | — | 0 | "OS ver arch" |
+| `os::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## util_str
+### util_platform — Platform abstraction
 
-String manipulation utilities.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `str::trim` | `string` | 0 | trimmed string |
-| `str::trim_left` | `string` | 0 | trimmed string |
-| `str::trim_right` | `string` | 0 | trimmed string |
-| `str::to_lower` | `string` | 0 | lowercase string |
-| `str::to_upper` | `string` | 0 | uppercase string |
-| `str::capitalize` | `string` | 0 | capitalized string |
-| `str::to_title_case` | `string` | 0 | title case string |
-| `str::length` | `string` | 0 | length |
-| `str::substring` | `string start [length]` | 0 | substring |
-| `str::replace` | `string search replace` | 0 | result string |
-| `str::replace_all` | `string search replace` | 0 | result string |
-| `str::remove` | `string search` | 0 | result string |
-| `str::remove_all` | `string search` | 0 | result string |
-| `str::contains` | `string substring` | 0/1 | — |
-| `str::starts_with` | `string prefix` | 0/1 | — |
-| `str::ends_with` | `string suffix` | 0/1 | — |
-| `str::is_empty` | `string` | 0/1 | — |
-| `str::is_not_empty` | `string` | 0/1 | — |
-| `str::is_blank` | `string` | 0/1 | — |
-| `str::is_integer` | `string` | 0/1 | — |
-| `str::is_positive_integer` | `string` | 0/1 | — |
-| `str::is_float` | `string` | 0/1 | — |
-| `str::is_alpha` | `string` | 0/1 | — |
-| `str::is_alphanumeric` | `string` | 0/1 | — |
-| `str::matches` | `string pattern` | 0/1 | — |
-| `str::split` | `string delimiter var_name` | 0 | sets array |
-| `str::join` | `delimiter elements...` | 0 | joined string |
-| `str::repeat` | `string count` | 0 | repeated string |
-| `str::reverse` | `string` | 0 | reversed string |
-| `str::pad_left` | `string width [char]` | 0 | padded string |
-| `str::pad_right` | `string width [char]` | 0 | padded string |
-| `str::truncate` | `string length [suffix]` | 0 | truncated string |
-| `str::count` | `string search` | 0 | count |
-| `str::in_list` | `string list...` | 0/1 | — |
-| `str::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `platform::detect_os` | Detect OS (cached) | — | 0 | os type |
+| `platform::detect_variant` | Detect cmd variant | `command` | 0 | variant |
+| `platform::find_command` | Find best command | `command` | 0/1 | path |
+| `platform::setup_commands` | Init cmd mappings | — | 0 | — |
+| `platform::stat` | Get file stats | `path format` | 0/1 | value |
+| `platform::date` | Format date | `format [ts]` | 0 | date |
+| `platform::sed_inplace` | In-place sed | `pattern file` | 0/1 | — |
+| `platform::readlink_canonical` | Get canonical path | `path` | 0/1 | path |
+| `platform::mktemp` | Create temp | `[options]` | 0/1 | path |
+| `platform::timeout` | Run with timeout | `seconds cmd...` | cmd exit | output |
+| `platform::dns_flush` | Flush DNS cache | — | 0/1 | — |
+| `platform::network_restart` | Restart network | — | 0/1 | — |
+| `platform::checksum` | Calculate checksum | `algo file` | 0/1 | checksum |
+| `platform::get_interface_ip` | Get interface IP | `interface` | 0/1 | IP |
+| `platform::get_interface_mac` | Get interface MAC | `interface` | 0/1 | MAC |
+| `platform::info` | Show platform info | — | 0 | info |
+| `platform::check_gnu_tools` | Check GNU tools | — | 0/1 | — |
+| `platform::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## util_tools
+### util_py — Python utilities
 
-Tool installation and management.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `tools::install_git_tool` | `name url entry_point` | 0/1 | — |
-| `tools::install_git_python` | `name url` | 0/1 | — |
-| `tools::add_function` | `name body` | 0/1 | — |
-| `tools::remove_function` | `name` | 0/1 | — |
-| `tools::list_functions` | — | 0 | function list |
-| `tools::list_installed` | — | 0 | tool list |
-| `tools::get_install_status` | `tool` | 0/1 | status |
-| `tools::test` | `tool` | 0/1 | — |
-| `tools::test_batch` | `array_name` | 0/1 | status report |
-| `tools::apply_fixes` | — | 0/1 | — |
-| `tools::run_command` | `command...` | cmd exit | command output |
-| `tools::self_test` | — | 0/1 | — |
-
----
-
-## util_trap
-
-Trap and cleanup management.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `trap::add_cleanup` | `function` | 0 | — |
-| `trap::add_temp_file` | `path` | 0 | — |
-| `trap::add_temp_dir` | `path` | 0 | — |
-| `trap::with_cleanup` | `command...` | cmd exit | command output |
-| `trap::clear_all` | — | 0 | — |
-| `trap::list` | — | 0 | trap list |
-| `trap::self_test` | — | 0/1 | — |
-
----
-
-## util_tui
-
-Terminal UI utilities.
-
-| Function | Arguments | Returns | Output |
-|----------|-----------|---------|--------|
-| `tui::is_terminal` | — | 0/1 | — |
-| `tui::supports_color` | — | 0/1 | — |
-| `tui::get_terminal_width` | — | 0 | width |
-| `tui::clear_line` | — | 0 | — |
-| `tui::strip_color` | `string` | 0 | plain string |
-| `tui::msg` | `type message` | 0 | — |
-| `tui::pause` | `[message]` | 0 | — |
-| `tui::prompt_input` | `prompt [default]` | 0/1 | input value |
-| `tui::prompt_yes_no` | `prompt [default]` | 0/1 | — |
-| `tui::prompt_select` | `prompt options...` | 0/1 | selected option |
-| `tui::prompt_multiselect` | `prompt options...` | 0/1 | selected options |
-| `tui::show_spinner` | `-- command...` | cmd exit | — |
-| `tui::show_progress_bar` | `current total [width]` | 0 | — |
-| `tui::show_dots` | `-- command...` | cmd exit | — |
-| `tui::show_timer` | `-- command...` | cmd exit | — |
-| `tui::self_test` | — | 0/1 | — |
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `py::is_available` | Check Python installed | — | 0/1 | — |
+| `py::is_version_available` | Check version installed | `version` | 0/1 | — |
+| `py::get_major_version` | Get major version | — | 0 | 2 or 3 |
+| `py::pyenv_available` | Check pyenv installed | — | 0/1 | — |
+| `py::pyenv_install_version` | Install via pyenv | `version` | 0/1 | — |
+| `py::get_path` | Get python path | — | 0/1 | path |
+| `py::get_version` | Get Python version | — | 0 | version |
+| `py::pip_supports_break_system_packages` | Check pip flag support | — | 0/1 | — |
+| `py::get_pip_args` | Build pip args | — | 0 | — |
+| `py::install_build_dependencies` | Install build deps | — | 0/1 | — |
+| `py::get_latest_patch_version` | Get latest patch | `minor` | 0/1 | patch |
+| `py::download_source` | Download source | `version` | 0/1 | path |
+| `py::compile_from_source` | Compile Python | `version [prefix]` | 0/1 | — |
+| `py::install_python` | Install Python | `version` | 0/1 | — |
+| `py::install_pip` | Install pip | — | 0/1 | — |
+| `py::install_uv` | Install uv | — | 0/1 | — |
+| `py::install_pipx` | Install pipx | — | 0/1 | — |
+| `py::uv_install` | Install via uv | `packages...` | 0/1 | — |
+| `py::pipx_install` | Install via pipx | `package` | 0/1 | — |
+| `py::create_venv` | Create virtualenv | `path` | 0/1 | — |
+| `py::activate_venv` | Activate venv | `path` | 0/1 | — |
+| `py::freeze_requirements` | Export requirements | `[output]` | 0/1 | — |
+| `py::pip_install` | Install via pip | `packages...` | 0/1 | — |
+| `py::pip_install_for_version` | Install for version | `ver packages...` | 0/1 | — |
+| `py::pip_upgrade` | Upgrade pip | — | 0/1 | — |
+| `py::requirements_install` | Install from file | `[file]` | 0/1 | — |
+| `py::is_package_installed` | Check pkg installed | `package` | 0/1 | — |
+| `py::get_package_version` | Get pkg version | `package` | 0/1 | version |
+| `py::get_site_packages` | Get site-packages | — | 0/1 | path |
+| `py::run_script` | Run Python script | `script [args]` | exit | output |
+| `py::self_test` | Run self-test | — | 0/1 | — |
 
 ---
 
-## Loading the Library
+### util_py_multi — Multi-version Python
 
-```bash
-#!/usr/bin/env bash
-source /path/to/common_core/util.sh
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `py_multi::set_versions` | Set versions to manage | `versions...` | 0 | — |
+| `py_multi::get_versions` | Get configured versions | — | 0 | list |
+| `py_multi::add_version` | Add version | `version` | 0/1 | — |
+| `py_multi::remove_version` | Remove version | `version` | 0/1 | — |
+| `py_multi::find_latest` | Find highest version | — | 0/1 | version |
+| `py_multi::set_default` | Set default version | `[version]` | 0/1 | — |
+| `py_multi::get_default` | Get default version | — | 0 | version |
+| `py_multi::install_all` | Install all versions | `[--compile]` | 0/1 | — |
+| `py_multi::install_pip_all` | Install pip for all | — | 0/1 | — |
+| `py_multi::upgrade_pip_all` | Upgrade pip for all | — | 0/1 | — |
+| `py_multi::pip_install_all` | Install pkgs for all | `packages...` | 0/1 | — |
+| `py_multi::requirements_install_all` | Install reqs for all | `[file]` | 0/1 | — |
+| `py_multi::verify_package_all` | Verify pkg all versions | `package` | 0/1 | status |
+| `py_multi::pipx_install_batch` | Install pipx batch | `array_name` | 0/1 | — |
+| `py_multi::status` | Show all versions status | — | 0 | table |
+| `py_multi::list_installed` | List installed versions | — | 0 | list |
+| `py_multi::cleanup_cache` | Clear pip caches | — | 0 | — |
+| `py_multi::self_test` | Run self-test | — | 0/1 | — |
 
-# All modules are now available
-os::str
-```
+---
 
-## Self-Test All Modules
+### util_ruby — Ruby utilities
 
-```bash
-#!/usr/bin/env bash
-source util.sh
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `ruby::is_available` | Check Ruby installed | — | 0/1 | — |
+| `ruby::gem_available` | Check gem available | — | 0/1 | — |
+| `ruby::get_version` | Get Ruby version | — | 0 | version |
+| `ruby::get_path` | Get Ruby path | — | 0/1 | path |
+| `ruby::rbenv_available` | Check rbenv installed | — | 0/1 | — |
+| `ruby::rvm_available` | Check RVM installed | — | 0/1 | — |
+| `ruby::gem_install` | Install gems | `gems...` | 0/1 | — |
+| `ruby::gem_install_spec` | Install with version | `spec` | 0/1 | — |
+| `ruby::gem_install_batch` | Install from array | `array_name` | 0/1 | — |
+| `ruby::gem_install_with_version` | Install specific version | `gem version` | 0/1 | — |
+| `ruby::gem_update` | Update all gems | — | 0/1 | — |
+| `ruby::install_rbenv` | Install rbenv | — | 0/1 | — |
+| `ruby::rbenv_install_version` | Install via rbenv | `version` | 0/1 | — |
+| `ruby::get_bundler_version` | Get Bundler version | — | 0 | version |
+| `ruby::gem_cleanup` | Remove old versions | — | 0/1 | — |
+| `ruby::is_gem_installed` | Check gem installed | `gem` | 0/1 | — |
+| `ruby::get_gem_version` | Get gem version | `gem` | 0/1 | version |
+| `ruby::gem_uninstall` | Uninstall gem | `gem` | 0/1 | — |
+| `ruby::bundler_install` | Install Bundler | — | 0/1 | — |
+| `ruby::bundle_install` | Run bundle install | — | 0/1 | — |
+| `ruby::bundle_exec` | Run in bundle context | `command...` | exit | output |
+| `ruby::run_script` | Run Ruby script | `script [args]` | exit | output |
+| `ruby::list_gems` | List installed gems | — | 0 | gem list |
+| `ruby::gem_outdated` | List outdated gems | — | 0 | list |
+| `ruby::env_info` | Show Ruby env info | — | 0 | info |
+| `ruby::self_test` | Run self-test | — | 0/1 | — |
 
-# Run all self-tests
-for module in apt brew cmd config curl dir env file git go menu net os platform py py_multi ruby str tools trap tui; do
-    "${module}::self_test" || echo "FAIL: ${module}"
-done
-```
+---
+
+### util_str — String manipulation
+
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `str::length` | Get string length | `string` | 0 | length |
+| `str::is_empty` | Check string empty | `string` | 0/1 | — |
+| `str::is_not_empty` | Check string not empty | `string` | 0/1 | — |
+| `str::is_blank` | Check blank/whitespace | `string` | 0/1 | — |
+| `str::to_upper` | Convert to uppercase | `string` | 0 | UPPER |
+| `str::to_lower` | Convert to lowercase | `string` | 0 | lower |
+| `str::capitalize` | Capitalize first char | `string` | 0 | String |
+| `str::to_title_case` | Title Case Each Word | `string` | 0 | Title |
+| `str::trim` | Trim whitespace | `string` | 0 | trimmed |
+| `str::trim_left` | Trim left whitespace | `string` | 0 | trimmed |
+| `str::trim_right` | Trim right whitespace | `string` | 0 | trimmed |
+| `str::pad_left` | Pad on left | `string len [ch]` | 0 | padded |
+| `str::pad_right` | Pad on right | `string len [ch]` | 0 | padded |
+| `str::substring` | Extract substring | `string start [len]` | 0 | substr |
+| `str::contains` | Check contains substr | `string substr` | 0/1 | — |
+| `str::starts_with` | Check starts with | `string prefix` | 0/1 | — |
+| `str::ends_with` | Check ends with | `string suffix` | 0/1 | — |
+| `str::replace` | Replace first match | `string pat repl` | 0 | modified |
+| `str::replace_all` | Replace all matches | `string pat repl` | 0 | modified |
+| `str::remove` | Remove first match | `string pattern` | 0 | modified |
+| `str::remove_all` | Remove all matches | `string pattern` | 0 | modified |
+| `str::split` | Split to array | `string delim arr` | 0 | — |
+| `str::join` | Join array | `delim array_name` | 0 | joined |
+| `str::is_integer` | Check integer | `string` | 0/1 | — |
+| `str::is_positive_integer` | Check positive int | `string` | 0/1 | — |
+| `str::is_float` | Check float | `string` | 0/1 | — |
+| `str::is_alpha` | Check alphabetic | `string` | 0/1 | — |
+| `str::is_alphanumeric` | Check alphanumeric | `string` | 0/1 | — |
+| `str::matches` | Check regex match | `string pattern` | 0/1 | — |
+| `str::repeat` | Repeat string n times | `string count` | 0 | repeated |
+| `str::reverse` | Reverse string | `string` | 0 | reversed |
+| `str::count` | Count occurrences | `string substr` | 0 | count |
+| `str::truncate` | Truncate with suffix | `string len [sfx]` | 0 | truncated |
+| `str::in_list` | Check value in list | `value array` | 0/1 | — |
+| `str::self_test` | Run self-test | — | 0/1 | — |
+
+---
+
+### util_tools — Tool installation
+
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `tools::add_function` | Add alias function | `name body` | 0/1 | — |
+| `tools::remove_function` | Remove alias function | `name` | 0/1 | — |
+| `tools::list_functions` | List tool functions | — | 0 | list |
+| `tools::install_git_python` | Clone + venv + alias | `repo_url [name]` | 0/1 | — |
+| `tools::install_git_tool` | Clone + alias | `repo_url [name]` | 0/1 | — |
+| `tools::test` | Test tool working | `tool_name` | 0/1 | — |
+| `tools::test_batch` | Batch test tools | `array_name` | 0/1 | results |
+| `tools::apply_fixes` | Apply tool fixes | `array_name` | 0/1 | — |
+| `tools::get_install_status` | Get install status | `tool_name` | 0/1 | status |
+| `tools::list_installed` | List installed tools | — | 0 | list |
+| `tools::run_command` | Run tool command | `tool args...` | exit | output |
+| `tools::self_test` | Run self-test | — | 0/1 | — |
+
+---
+
+### util_trap — Cleanup and trap management
+
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `trap::add_cleanup` | Add cleanup function | `function_name` | 0 | — |
+| `trap::add_temp_file` | Register temp file | `filepath` | 0 | — |
+| `trap::add_temp_dir` | Register temp dir | `dirpath` | 0 | — |
+| `trap::with_cleanup` | Run with cleanup | `command...` | exit | output |
+| `trap::clear_all` | Clear all cleanups | — | 0 | — |
+| `trap::list` | List cleanups | — | 0 | list |
+| `trap::self_test` | Run self-test | — | 0/1 | — |
+
+---
+
+### util_tui — Terminal UI utilities
+
+| Function | Description | Arguments | Returns | Output |
+|----------|-------------|-----------|---------|--------|
+| `tui::prompt_yes_no` | Yes/no prompt | `question [def]` | 0/1 | — |
+| `tui::prompt_input` | Text input prompt | `prompt [default]` | 0/1 | input |
+| `tui::prompt_select` | Single-select menu | `prompt opts...` | 0/1 | selection |
+| `tui::prompt_multiselect` | Multi-select menu | `prompt opts...` | 0/1 | selections |
+| `tui::msg` | Display message box | `message` | 0 | — |
+| `tui::show_spinner` | Show spinner | `message cmd...` | exit | — |
+| `tui::show_dots` | Show animated dots | `message cmd...` | exit | — |
+| `tui::show_progress_bar` | Show progress bar | `percent message` | 0 | — |
+| `tui::show_timer` | Show elapsed time | `command...` | exit | — |
+| `tui::is_terminal` | Check interactive | — | 0/1 | — |
+| `tui::supports_color` | Check color support | — | 0/1 | — |
+| `tui::get_terminal_width` | Get terminal width | — | 0 | columns |
+| `tui::clear_line` | Clear current line | — | 0 | — |
+| `tui::pause` | Pause for ENTER | — | 0 | — |
+| `tui::strip_color` | Remove ANSI codes | `[text]` | 0 | stripped |
+| `tui::self_test` | Run self-test | — | 0/1 | — |

@@ -1,0 +1,2595 @@
+# common_core API Reference
+# Comprehensive function documentation for all public functions
+# Format: function | description | arguments | returns | output
+---
+conventions:
+  returns: "PASS (0) for success, FAIL (1) for failure unless noted"
+  outputs: "Data written to stdout; logging to stderr"
+  optional_args: "Shown in [brackets]"
+
+modules:
+  #=============================================================================
+  # util_apt - APT package management for Debian/Ubuntu systems
+  #=============================================================================
+  util_apt:
+    description: "APT package management for Debian/Ubuntu systems"
+    functions:
+      - function: apt::is_available
+        description: "Check if APT is available and usable on this system"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: apt::update
+        description: "Update the APT package lists"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: apt::upgrade
+        description: "Upgrade all installed APT packages"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: apt::install
+        description: "Install one or more packages with validation, spinner, and repair"
+        arguments: "packages..."
+        returns: "0/1"
+        output: ~
+
+      - function: apt::is_installed
+        description: "Check if a package is installed"
+        arguments: "package"
+        returns: "0/1"
+        output: ~
+
+      - function: apt::ensure_installed
+        description: "Ensure packages are installed; install only if missing"
+        arguments: "packages..."
+        returns: "0/1"
+        output: ~
+
+      - function: apt::install_from_array
+        description: "Install all valid packages from an array by name"
+        arguments: "array_name"
+        returns: "0/1"
+        output: ~
+
+      - function: apt::add_repository
+        description: "Add a repository to APT sources"
+        arguments: "repo_url"
+        returns: "0/1"
+        output: ~
+
+      - function: apt::repair
+        description: "Attempt to fix broken or missing APT dependencies"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: apt::clean
+        description: "Clean APT cache"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: apt::autoremove
+        description: "Remove unused packages and dependencies"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: apt::maintain
+        description: "Perform full APT maintenance cycle (update, upgrade, autoremove, clean)"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: apt::get_version
+        description: "Get the installed version of a package"
+        arguments: "package"
+        returns: "0/1"
+        output: "version string"
+
+      - function: apt::self_test
+        description: "Run self-test for util_apt.sh"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_brew - Homebrew package management for macOS
+  #=============================================================================
+  util_brew:
+    description: "Homebrew package management for macOS"
+    functions:
+      - function: brew::is_available
+        description: "Check whether Homebrew is installed and usable"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: brew::install_self
+        description: "Install Homebrew on a system where it is missing"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: brew::tap
+        description: "Add a Homebrew tap (third-party repository)"
+        arguments: "repo"
+        returns: "0/1"
+        output: ~
+
+      - function: brew::install
+        description: "Install one or more Homebrew packages with validation and retry"
+        arguments: "packages..."
+        returns: "0/1"
+        output: ~
+
+      - function: brew::install_cask
+        description: "Install a Homebrew cask (macOS app)"
+        arguments: "packages..."
+        returns: "0/1"
+        output: ~
+
+      - function: brew::is_installed
+        description: "Determine if a formula or cask is currently installed"
+        arguments: "package"
+        returns: "0/1"
+        output: ~
+
+      - function: brew::ensure_installed
+        description: "Install packages only if missing"
+        arguments: "packages..."
+        returns: "0/1"
+        output: ~
+
+      - function: brew::install_from_array
+        description: "Install all packages defined in a named array"
+        arguments: "array_name"
+        returns: "0/1"
+        output: ~
+
+      - function: brew::uninstall
+        description: "Uninstall one or more Homebrew packages"
+        arguments: "packages..."
+        returns: "0/1"
+        output: ~
+
+      - function: brew::update
+        description: "Update Homebrew metadata (brew update)"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: brew::upgrade
+        description: "Upgrade all installed Homebrew formulae"
+        arguments: "[packages...]"
+        returns: "0/1"
+        output: ~
+
+      - function: brew::cleanup
+        description: "Remove old versions of installed Homebrew packages"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: brew::get_version
+        description: "Get the installed version of a Homebrew package"
+        arguments: "package"
+        returns: "0/1"
+        output: "version string"
+
+      - function: brew::list
+        description: "List all installed Homebrew formulae"
+        arguments: ~
+        returns: "0"
+        output: "package list"
+
+      - function: brew::rosetta_available
+        description: "Check if Rosetta 2 is installed (ARM Macs only)"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: brew::self_test
+        description: "Run self-test for util_brew.sh"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_cmd - Command execution and validation utilities
+  #=============================================================================
+  util_cmd:
+    description: "Command execution and validation utilities"
+    functions:
+      - function: cmd::run
+        description: "Execute a command visibly with logging and exit-code reporting"
+        arguments: "command..."
+        returns: "cmd exit"
+        output: "command output"
+
+      - function: cmd::run_silent
+        description: "Execute a command silently (output suppressed)"
+        arguments: "command..."
+        returns: "cmd exit"
+        output: ~
+
+      - function: cmd::run_with_env
+        description: "Run command with custom environment variables"
+        arguments: "\"VAR=val...\" command..."
+        returns: "cmd exit"
+        output: "command output"
+
+      - function: cmd::run_as_user
+        description: "Execute a command as a specified user via sudo"
+        arguments: "user command..."
+        returns: "cmd exit"
+        output: "command output"
+
+      - function: cmd::build
+        description: "Build a command array safely (helper for complex commands)"
+        arguments: "parts..."
+        returns: "0"
+        output: "command string"
+
+      - function: cmd::test
+        description: "Execute a command and verify its exit code matches expected"
+        arguments: "expected_code command..."
+        returns: "cmd exit"
+        output: ~
+
+      - function: cmd::test_tool
+        description: "Test if a tool is installed and functioning by running a command"
+        arguments: "tool_name"
+        returns: "0/1"
+        output: ~
+
+      - function: cmd::test_batch
+        description: "Run multiple tool tests from an associative array"
+        arguments: "array_name"
+        returns: "0/1"
+        output: "status report"
+
+      - function: cmd::require
+        description: "Ensure that a command is installed; exit with an error if missing"
+        arguments: "command [msg]"
+        returns: "0/exit"
+        output: ~
+
+      - function: cmd::ensure
+        description: "Ensure a tool exists; if not, attempt to install via apt or brew"
+        arguments: "command [package]"
+        returns: "0/1"
+        output: ~
+
+      - function: cmd::ensure_all
+        description: "Ensure multiple tools exist, installing any that are missing"
+        arguments: "commands..."
+        returns: "0/1"
+        output: ~
+
+      - function: cmd::install_package
+        description: "Generic package install dispatcher by OS"
+        arguments: "package"
+        returns: "0/1"
+        output: ~
+
+      - function: cmd::retry
+        description: "Retry a command multiple times with delay intervals"
+        arguments: "max_attempts command..."
+        returns: "cmd exit"
+        output: "command output"
+
+      - function: cmd::timeout
+        description: "Run a command with a timeout constraint (cross-platform)"
+        arguments: "seconds command..."
+        returns: "cmd exit"
+        output: "command output"
+
+      - function: cmd::parallel
+        description: "Run multiple commands in parallel and wait for all to complete"
+        arguments: "commands..."
+        returns: "0/1"
+        output: "command outputs"
+
+      - function: cmd::parallel_array
+        description: "Run multiple commands in parallel using array references"
+        arguments: "array_name"
+        returns: "0/1"
+        output: "command outputs"
+
+      - function: cmd::elevate
+        description: "Run a command with elevated privileges (sudo or root)"
+        arguments: "command..."
+        returns: "cmd exit"
+        output: "command output"
+
+      - function: cmd::sudo_available
+        description: "Determine whether sudo is installed and functional"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: cmd::ensure_sudo_cached
+        description: "Ensure sudo credentials are cached (macOS/Linux compatible)"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: cmd::get_exit_code
+        description: "Print the exit code of the last command"
+        arguments: ~
+        returns: "0"
+        output: "last exit code"
+
+      - function: cmd::self_test
+        description: "Run basic self-tests for util_cmd.sh functionality"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_config - Configuration management with validation
+  #=============================================================================
+  util_config:
+    description: "Configuration management with validation"
+    functions:
+      - function: config::init
+        description: "Initialize configuration system with defaults"
+        arguments: ~
+        returns: "0"
+        output: ~
+
+      - function: config::set
+        description: "Set a configuration value with validation"
+        arguments: "key value"
+        returns: "0/1"
+        output: ~
+
+      - function: config::get
+        description: "Get a configuration value"
+        arguments: "key [default]"
+        returns: "0/1"
+        output: "value"
+
+      - function: config::get_bool
+        description: "Get a boolean configuration value (returns 0/1)"
+        arguments: "key [default]"
+        returns: "0/1"
+        output: ~
+
+      - function: config::get_int
+        description: "Get an integer configuration value"
+        arguments: "key [default]"
+        returns: "0/1"
+        output: "integer"
+
+      - function: config::register
+        description: "Register a configuration key with metadata"
+        arguments: "key type default desc"
+        returns: "0/1"
+        output: ~
+
+      - function: config::validate
+        description: "Validate a configuration value against its metadata"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: config::list
+        description: "List all configuration keys and values"
+        arguments: ~
+        returns: "0"
+        output: "key list"
+
+      - function: config::count
+        description: "Count number of registered configuration keys"
+        arguments: ~
+        returns: "0"
+        output: "count"
+
+      - function: config::show
+        description: "Show detailed information about a configuration key"
+        arguments: ~
+        returns: "0"
+        output: "key=value pairs"
+
+      - function: config::reset
+        description: "Reset a configuration key to default value"
+        arguments: ~
+        returns: "0"
+        output: ~
+
+      - function: config::lock
+        description: "Lock a configuration key (make immutable)"
+        arguments: ~
+        returns: "0"
+        output: ~
+
+      - function: config::unlock
+        description: "Unlock a configuration key"
+        arguments: ~
+        returns: "0"
+        output: ~
+
+      - function: config::load_from_env
+        description: "Load configuration from environment variables"
+        arguments: "[prefix]"
+        returns: "0/1"
+        output: ~
+
+      - function: config::load_from_file
+        description: "Load configuration from a file"
+        arguments: "filepath"
+        returns: "0/1"
+        output: ~
+
+      - function: config::load_from_files
+        description: "Load configuration from standard locations"
+        arguments: "files..."
+        returns: "0/1"
+        output: ~
+
+      - function: config::save_to_file
+        description: "Save current configuration to a file"
+        arguments: "filepath"
+        returns: "0/1"
+        output: ~
+
+      - function: config::export_env
+        description: "Export configuration as environment variables"
+        arguments: ~
+        returns: "0"
+        output: ~
+
+      - function: config::export_json
+        description: "Export configuration as JSON"
+        arguments: ~
+        returns: "0"
+        output: "JSON"
+
+      - function: config::self_test
+        description: "Test configuration system"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_curl - HTTP client utilities
+  #=============================================================================
+  util_curl:
+    description: "HTTP client utilities"
+    functions:
+      - function: curl::is_available
+        description: "Check if curl command is available"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: curl::get
+        description: "Perform HTTP GET request"
+        arguments: "url"
+        returns: "0/1"
+        output: "response body"
+
+      - function: curl::post
+        description: "Perform HTTP POST request"
+        arguments: "url [data]"
+        returns: "0/1"
+        output: "response body"
+
+      - function: curl::put
+        description: "Perform HTTP PUT request"
+        arguments: "url [data]"
+        returns: "0/1"
+        output: "response body"
+
+      - function: curl::delete
+        description: "Perform HTTP DELETE request"
+        arguments: "url"
+        returns: "0/1"
+        output: "response body"
+
+      - function: curl::download
+        description: "Download file from URL"
+        arguments: "url dest"
+        returns: "0/1"
+        output: ~
+
+      - function: curl::upload
+        description: "Upload file to URL"
+        arguments: "file url"
+        returns: "0/1"
+        output: "response body"
+
+      - function: curl::check_url
+        description: "Check if URL is accessible"
+        arguments: "url"
+        returns: "0/1"
+        output: ~
+
+      - function: curl::get_status_code
+        description: "Get HTTP status code for URL"
+        arguments: "url"
+        returns: "0/1"
+        output: "HTTP status"
+
+      - function: curl::get_headers
+        description: "Retrieve HTTP response headers only"
+        arguments: "url"
+        returns: "0/1"
+        output: "headers"
+
+      - function: curl::get_response_time
+        description: "Get response time for URL"
+        arguments: "url"
+        returns: "0/1"
+        output: "time in seconds"
+
+      - function: curl::get_with_retry
+        description: "Perform HTTP GET with automatic retry on failure"
+        arguments: "url [max_retries]"
+        returns: "0/1"
+        output: "response body"
+
+      - function: curl::follow_redirects
+        description: "Follow redirects and return final URL"
+        arguments: "url"
+        returns: "0/1"
+        output: "final URL"
+
+      - function: curl::with_auth
+        description: "Perform request with basic authentication"
+        arguments: "user:pass url"
+        returns: "0/1"
+        output: "response body"
+
+      - function: curl::with_headers
+        description: "Perform request with custom headers"
+        arguments: "\"Header: val\" url"
+        returns: "0/1"
+        output: "response body"
+
+      - function: curl::self_test
+        description: "Run self-test for util_curl.sh"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_dir - Directory operations
+  #=============================================================================
+  util_dir:
+    description: "Directory operations"
+    functions:
+      - function: dir::exists
+        description: "Check if one or more directories exist"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::is_readable
+        description: "Check if one or more directories are readable"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::is_writable
+        description: "Check if one or more directories are writable"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::is_empty
+        description: "Check if a directory is empty (contains no files or subdirectories)"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::create
+        description: "Create a directory and all parents if necessary, with safety checks"
+        arguments: "path [mode]"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::delete
+        description: "Delete a directory recursively with Home-Safe protections"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::copy
+        description: "Copy a directory recursively to a destination, preserving permissions"
+        arguments: "src dest"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::move
+        description: "Move or rename a directory"
+        arguments: "src dest"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::get_size
+        description: "Get the size of a directory in bytes"
+        arguments: "path"
+        returns: "0/1"
+        output: "size in bytes"
+
+      - function: dir::list_files
+        description: "List files in a directory (non-recursive)"
+        arguments: "path"
+        returns: "0/1"
+        output: "file list"
+
+      - function: dir::list_dirs
+        description: "List subdirectories (non-recursive)"
+        arguments: "path"
+        returns: "0/1"
+        output: "dir list"
+
+      - function: dir::find_files
+        description: "Find files by pattern recursively under a directory"
+        arguments: "path pattern"
+        returns: "0/1"
+        output: "file list"
+
+      - function: dir::backup
+        description: "Create a timestamped backup of a directory (copied alongside original)"
+        arguments: "path [dest]"
+        returns: "0/1"
+        output: "backup path"
+
+      - function: dir::cleanup_old
+        description: "Remove files and directories older than N days under a path"
+        arguments: "path days"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::get_absolute_path
+        description: "Get the absolute path for a directory"
+        arguments: "path"
+        returns: "0/1"
+        output: "absolute path"
+
+      - function: dir::get_relative_path
+        description: "Get the relative path from one directory to another"
+        arguments: "path [base]"
+        returns: "0/1"
+        output: "relative path"
+
+      - function: dir::push
+        description: "Push a directory onto the directory stack (like pushd)"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::pop
+        description: "Pop a directory from the directory stack (like popd)"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: dir::in_path
+        description: "Check if directory is in PATH"
+        arguments: "dir"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::ensure_exists
+        description: "Ensure directory exists, create if missing"
+        arguments: "path [mode]"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::ensure_writable
+        description: "Ensure directory is writable"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::tempdir
+        description: "Create a temporary directory"
+        arguments: "[prefix]"
+        returns: "0/1"
+        output: "temp path"
+
+      - function: dir::empty
+        description: "Empty a directory without deleting it"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::rotate
+        description: "Rotate directory backups"
+        arguments: "path [count]"
+        returns: "0/1"
+        output: ~
+
+      - function: dir::count_files
+        description: "Count files in directory"
+        arguments: "path"
+        returns: "0/1"
+        output: "count"
+
+      - function: dir::count_dirs
+        description: "Count subdirectories"
+        arguments: "path"
+        returns: "0/1"
+        output: "count"
+
+      - function: dir::self_test
+        description: "Run self-test for util_dir.sh"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_env - Environment variable management
+  #=============================================================================
+  util_env:
+    description: "Environment variable management"
+    functions:
+      - function: env::get_xdg_config_home
+        description: "Get XDG config directory (with fallback)"
+        arguments: ~
+        returns: "0"
+        output: "config path"
+
+      - function: env::get_xdg_data_home
+        description: "Get XDG data directory (with fallback)"
+        arguments: ~
+        returns: "0"
+        output: "data path"
+
+      - function: env::get_xdg_cache_home
+        description: "Get XDG cache directory (with fallback)"
+        arguments: ~
+        returns: "0"
+        output: "cache path"
+
+      - function: env::get_xdg_state_home
+        description: "Get XDG state directory (with fallback)"
+        arguments: ~
+        returns: "0"
+        output: "state path"
+
+      - function: env::exists
+        description: "Check if an environment variable is defined (set or empty)"
+        arguments: "name"
+        returns: "0/1"
+        output: ~
+
+      - function: env::check
+        description: "Check that an environment variable exists and is non-empty"
+        arguments: "names..."
+        returns: "0/1"
+        output: ~
+
+      - function: env::get
+        description: "Retrieve an env variable's value, with optional default fallback"
+        arguments: "name [default]"
+        returns: "0/1"
+        output: "value"
+
+      - function: env::set
+        description: "Set an environment variable to a value"
+        arguments: "name value"
+        returns: "0"
+        output: ~
+
+      - function: env::unset
+        description: "Remove an environment variable"
+        arguments: "name"
+        returns: "0"
+        output: ~
+
+      - function: env::require
+        description: "Require an environment variable to be set; exit if missing"
+        arguments: "name [msg]"
+        returns: "0/exit"
+        output: "value"
+
+      - function: env::remove_from_path
+        description: "Remove a directory from PATH safely"
+        arguments: "dir"
+        returns: "0"
+        output: ~
+
+      - function: env::validate_env_file
+        description: "Validate .env file format"
+        arguments: "filepath"
+        returns: "0/1"
+        output: ~
+
+      - function: env::diff_files
+        description: "Show differences between two .env files"
+        arguments: "file1 file2"
+        returns: "0/1"
+        output: "diff output"
+
+      - function: env::export_file
+        description: "Load environment variables from a .env file (KEY=VALUE)"
+        arguments: "filepath"
+        returns: "0/1"
+        output: ~
+
+      - function: env::save_to_file
+        description: "Save selected environment variables to a file"
+        arguments: "filepath vars..."
+        returns: "0/1"
+        output: ~
+
+      - function: env::is_ci
+        description: "Detect continuous integration environments"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: env::is_container
+        description: "Detect Docker/Podman/container environments"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: env::get_user
+        description: "Print current username"
+        arguments: ~
+        returns: "0"
+        output: "username"
+
+      - function: env::get_home
+        description: "Print user home directory"
+        arguments: ~
+        returns: "0"
+        output: "home path"
+
+      - function: env::get_temp_dir
+        description: "Print temp directory"
+        arguments: ~
+        returns: "0"
+        output: "temp path"
+
+      - function: env::is_tmux
+        description: "Detect if inside tmux session"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: env::is_screen
+        description: "Detect if inside GNU screen"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: env::self_test
+        description: "Self-test for util_env.sh functionality"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_file - File operations
+  #=============================================================================
+  util_file:
+    description: "File operations"
+    functions:
+      - function: file::exists
+        description: "Check if a file exists"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: file::is_readable
+        description: "Check if a file is readable"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: file::is_writable
+        description: "Check if a file is writable"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: file::is_executable
+        description: "Check if a file is executable"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: file::get_size
+        description: "Get file size in bytes"
+        arguments: "path"
+        returns: "0/1"
+        output: "size in bytes"
+
+      - function: file::is_non_empty
+        description: "Check if a file exists and is non-empty"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: file::get_extension
+        description: "Get file extension (text after last dot)"
+        arguments: "path"
+        returns: "0"
+        output: "extension"
+
+      - function: file::get_basename
+        description: "Get filename component without directory path"
+        arguments: "path"
+        returns: "0"
+        output: "basename"
+
+      - function: file::get_dirname
+        description: "Get directory component of a file path"
+        arguments: "path"
+        returns: "0"
+        output: "dirname"
+
+      - function: file::generate_filename
+        description: "Generate unique timestamped filename"
+        arguments: "prefix [ext]"
+        returns: "0"
+        output: "filename"
+
+      - function: file::backup
+        description: "Create a timestamped .bak backup of a file"
+        arguments: "path [suffix]"
+        returns: "0/1"
+        output: "backup path"
+
+      - function: file::copy
+        description: "Copy file with optional backup rotation if destination exists"
+        arguments: "src dest"
+        returns: "0/1"
+        output: ~
+
+      - function: file::copy_list_from_array
+        description: "Copy a list of files from array by name"
+        arguments: "array_name dest"
+        returns: "0/1"
+        output: ~
+
+      - function: file::move
+        description: "Move (rename) a file with Home-Safe checks"
+        arguments: "src dest"
+        returns: "0/1"
+        output: ~
+
+      - function: file::delete
+        description: "Delete a file safely with Home-Safe enforcement"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: file::touch
+        description: "Create file if it doesn't exist (or update mtime)"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: file::append
+        description: "Append content to a file"
+        arguments: "path content"
+        returns: "0/1"
+        output: ~
+
+      - function: file::mktemp
+        description: "Create a temporary file and print its path"
+        arguments: "[template]"
+        returns: "0/1"
+        output: "temp path"
+
+      - function: file::prepend
+        description: "Prepend content to a file"
+        arguments: "path content"
+        returns: "0/1"
+        output: ~
+
+      - function: file::replace_line
+        description: "Replace occurrences of a pattern with new content (global)"
+        arguments: "path pattern replacement"
+        returns: "0/1"
+        output: ~
+
+      - function: file::replace_env_vars
+        description: "Replace placeholders (--VAR_NAME--) with env variable values"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: file::contains
+        description: "Check if file contains a string or pattern"
+        arguments: "path pattern"
+        returns: "0/1"
+        output: ~
+
+      - function: file::count_lines
+        description: "Count the number of lines in a file"
+        arguments: "path"
+        returns: "0/1"
+        output: "count"
+
+      - function: file::get_checksum
+        description: "Compute a file checksum using specified algorithm"
+        arguments: "path [algo]"
+        returns: "0/1"
+        output: "checksum"
+
+      - function: file::compare
+        description: "Compare two files for byte-for-byte equality"
+        arguments: "file1 file2"
+        returns: "0/1"
+        output: ~
+
+      - function: file::restore_old_backup
+        description: "Restore the highest-numbered <filename>.old-N backup"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: file::self_test
+        description: "Run basic self-tests for util_file.sh functionality"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_git - Git and GitHub utilities
+  #=============================================================================
+  util_git:
+    description: "Git and GitHub utilities"
+    functions:
+      - function: git::is_available
+        description: "Check if git is installed and accessible"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: git::is_repo
+        description: "Check if current directory is a git repository"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: git::set_config
+        description: "Set a git configuration value"
+        arguments: "key value [scope]"
+        returns: "0/1"
+        output: ~
+
+      - function: git::stash_save
+        description: "Stash current changes with optional message"
+        arguments: "[message]"
+        returns: "0/1"
+        output: ~
+
+      - function: git::stash_pop
+        description: "Apply and remove most recent stash"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: git::submodule_update
+        description: "Initialize and update submodules"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: git::create_branch
+        description: "Create and checkout a new branch"
+        arguments: "name"
+        returns: "0/1"
+        output: ~
+
+      - function: git::delete_branch
+        description: "Delete a local branch"
+        arguments: "name [--force]"
+        returns: "0/1"
+        output: ~
+
+      - function: git::get_branch
+        description: "Get the current branch name"
+        arguments: ~
+        returns: "0/1"
+        output: "branch name"
+
+      - function: git::get_commit
+        description: "Get current commit hash"
+        arguments: ~
+        returns: "0/1"
+        output: "commit hash"
+
+      - function: git::get_remote_url
+        description: "Get the remote URL for the origin"
+        arguments: ~
+        returns: "0/1"
+        output: "URL"
+
+      - function: git::has_changes
+        description: "Check if there are uncommitted changes"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: git::is_clean
+        description: "Check if working directory is clean"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: git::clone
+        description: "Clone a repository"
+        arguments: "url [dest] [args...]"
+        returns: "0/1"
+        output: ~
+
+      - function: git::pull
+        description: "Pull latest changes from remote"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: git::push
+        description: "Push changes to remote"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: git::commit
+        description: "Commit changes with a message"
+        arguments: "message [args...]"
+        returns: "0/1"
+        output: ~
+
+      - function: git::tag
+        description: "Create or list tags"
+        arguments: "[name]"
+        returns: "0/1"
+        output: "tag list if no name"
+
+      - function: git::checkout
+        description: "Checkout a branch or commit"
+        arguments: "ref"
+        returns: "0/1"
+        output: ~
+
+      - function: git::get_root
+        description: "Get root directory of current git repo"
+        arguments: ~
+        returns: "0/1"
+        output: "root path"
+
+      - function: git::get_config
+        description: "Get Git configuration value"
+        arguments: "key"
+        returns: "0/1"
+        output: "value"
+
+      - function: git::get_latest_release_info
+        description: "Fetch latest GitHub release info and expose values via nameref vars"
+        arguments: "owner/repo os arch [tag_var] [name_var] [asset_var]"
+        returns: "0/1"
+        output: "sets nameref vars"
+
+      - function: git::get_release
+        description: "Download the latest GitHub release asset matching OS/Arch"
+        arguments: "owner/repo os arch dest"
+        returns: "0/1"
+        output: ~
+
+      - function: git::self_test
+        description: "Run basic self-tests for util_git.sh"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_go - Go language utilities
+  #=============================================================================
+  util_go:
+    description: "Go language utilities"
+    functions:
+      - function: go::is_available
+        description: "Check if Go is installed"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: go::get_version
+        description: "Get installed Go version"
+        arguments: ~
+        returns: "0/1"
+        output: "version"
+
+      - function: go::install
+        description: "Install Go (cross-platform: Linux/macOS)"
+        arguments: "[version]"
+        returns: "0/1"
+        output: ~
+
+      - function: go::set_module_proxy
+        description: "Configure Go module proxy (for corporate/restricted environments)"
+        arguments: "url"
+        returns: "0"
+        output: ~
+
+      - function: go::build_cross
+        description: "Build Go binary for different OS/architecture"
+        arguments: "os arch [target]"
+        returns: "0/1"
+        output: ~
+
+      - function: go::work_init
+        description: "Initialize Go workspace (Go 1.18+)"
+        arguments: "[modules...]"
+        returns: "0/1"
+        output: ~
+
+      - function: go::get_gopath
+        description: "Get the GOPATH value"
+        arguments: ~
+        returns: "0"
+        output: "GOPATH"
+
+      - function: go::get_goroot
+        description: "Get the GOROOT path"
+        arguments: ~
+        returns: "0"
+        output: "GOROOT"
+
+      - function: go::mod_init
+        description: "Initialize a new Go module"
+        arguments: "module_name"
+        returns: "0/1"
+        output: ~
+
+      - function: go::mod_tidy
+        description: "Clean and sync go.mod dependencies"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: go::build
+        description: "Build a Go project or package"
+        arguments: "[target]"
+        returns: "0/1"
+        output: ~
+
+      - function: go::test
+        description: "Run Go tests"
+        arguments: ~
+        returns: "0/1"
+        output: "test output"
+
+      - function: go::install_tool
+        description: "Install a Go-based tool/binary globally"
+        arguments: "package"
+        returns: "0/1"
+        output: ~
+
+      - function: go::fmt
+        description: "Format Go source files"
+        arguments: "[path]"
+        returns: "0/1"
+        output: ~
+
+      - function: go::vet
+        description: "Run go vet for static analysis"
+        arguments: "[path]"
+        returns: "0/1"
+        output: ~
+
+      - function: go::lint
+        description: "Run Go linter if available"
+        arguments: "[path]"
+        returns: "0/1"
+        output: ~
+
+      - function: go::self_test
+        description: "Self-test for util_go.sh functionality"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_menu - Dialog-backed menu utilities
+  #=============================================================================
+  util_menu:
+    description: "Dialog-backed menu utilities"
+    functions:
+      - function: menu::select_single
+        description: "Display a single-select menu"
+        arguments: "title prompt options..."
+        returns: "0/1"
+        output: "selected option"
+
+      - function: menu::select_multi
+        description: "Display a multi-select checklist"
+        arguments: "title prompt options..."
+        returns: "0/1"
+        output: "selected options"
+
+      - function: menu::select_or_input
+        description: "Select from options or enter custom value"
+        arguments: "title prompt options..."
+        returns: "0/1"
+        output: "value"
+
+      - function: menu::confirm_action
+        description: "Display yes/no confirmation"
+        arguments: "prompt"
+        returns: "0/1"
+        output: ~
+
+      - function: menu::pause
+        description: "Pause execution until user continues"
+        arguments: ~
+        returns: "0"
+        output: ~
+
+      - function: menu::dynamic_from_file
+        description: "Build menu from file contents"
+        arguments: "title prompt timestamps filepath"
+        returns: "0/1"
+        output: "selected option"
+
+      - function: menu::tree
+        description: "Default menu renderer for all menus (tree-based navigation)"
+        arguments: "title prompt timestamps nodes..."
+        returns: "0"
+        output: "return value"
+
+      - function: menu::self_test
+        description: "Self-test for util_menu.sh functionality"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_net - Network utilities
+  #=============================================================================
+  util_net:
+    description: "Network utilities"
+    functions:
+      - function: net::is_online
+        description: "Check basic network connectivity (local or internet)"
+        arguments: "[target]"
+        returns: "0/1"
+        output: ~
+
+      - function: net::resolve_target_ipv6
+        description: "Resolve FQDN to IPv6 address"
+        arguments: "hostname"
+        returns: "0/1"
+        output: "IPv6 address"
+
+      - function: net::get_dns_servers
+        description: "List configured DNS servers"
+        arguments: ~
+        returns: "0/1"
+        output: "DNS IPs"
+
+      - function: net::resolve_target
+        description: "Resolve an FQDN or IP to an IPv4 address"
+        arguments: "hostname"
+        returns: "0/1"
+        output: "IPv4 address"
+
+      - function: net::is_local_ip
+        description: "Determine if an IP is local/non-routable"
+        arguments: "ip"
+        returns: "0/1"
+        output: ~
+
+      - function: net::get_gateway
+        description: "Get the system's default gateway IP"
+        arguments: ~
+        returns: "0/1"
+        output: "gateway IP"
+
+      - function: net::list_interfaces
+        description: "List all active (non-virtual) network interfaces"
+        arguments: ~
+        returns: "0/1"
+        output: "interface names"
+
+      - function: net::get_interface_info
+        description: "Display detailed info for a specific interface"
+        arguments: "interface"
+        returns: "0/1"
+        output: "interface details"
+
+      - function: net::check_port
+        description: "Check if a remote or local port is open (TCP)"
+        arguments: "host port"
+        returns: "0/1"
+        output: ~
+
+      - function: net::get_ip_method
+        description: "Determine if an interface uses DHCP or static IP assignment"
+        arguments: "interface"
+        returns: "0/1"
+        output: "DHCP/Static/Unknown"
+
+      - function: net::get_local_ips
+        description: "Retrieve all active local interfaces with IPs and DHCP/static info"
+        arguments: ~
+        returns: "0/1"
+        output: "interface list"
+
+      - function: net::get_external_ip
+        description: "Retrieve external IP address (cached and proxy-aware)"
+        arguments: ~
+        returns: "0/1"
+        output: "external IP"
+
+      - function: net::repair_connectivity
+        description: "Attempt self-healing of network issues (cross-platform)"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: net::full_diagnostic
+        description: "Perform a complete diagnostic check on network connectivity"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: net::self_test
+        description: "Self-test for util_net.sh functionality"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_os - Operating system detection
+  #=============================================================================
+  util_os:
+    description: "Operating system detection and information utilities"
+    functions:
+      - function: os::detect
+        description: "Detect the current operating system"
+        arguments: ~
+        returns: "0"
+        output: "linux/macos/wsl/windows/unknown"
+
+      - function: os::is_linux
+        description: "Check if running on Linux"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: os::is_macos
+        description: "Check if running on macOS"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: os::is_wsl
+        description: "Check if running under Windows Subsystem for Linux"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: os::get_distro
+        description: "Get Linux distribution name"
+        arguments: ~
+        returns: "0"
+        output: "distro name"
+
+      - function: os::get_version
+        description: "Get OS version"
+        arguments: ~
+        returns: "0"
+        output: "version string"
+
+      - function: os::get_arch
+        description: "Get normalized CPU architecture"
+        arguments: ~
+        returns: "0"
+        output: "amd64/arm64/386/etc"
+
+      - function: os::is_arm
+        description: "Check if system architecture is ARM-based"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: os::is_x86
+        description: "Check if system architecture is x86-based"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: os::get_shell
+        description: "Get current shell name"
+        arguments: ~
+        returns: "0"
+        output: "shell name"
+
+      - function: os::is_root
+        description: "Check if running as root user"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: os::require_root
+        description: "Require root privileges, exit if not root"
+        arguments: "[message]"
+        returns: "0/exit"
+        output: ~
+
+      - function: os::get_kernel_version
+        description: "Get the kernel version string"
+        arguments: ~
+        returns: "0"
+        output: "kernel version"
+
+      - function: os::get_hostname
+        description: "Get the system hostname"
+        arguments: ~
+        returns: "0"
+        output: "hostname"
+
+      - function: os::get_uptime
+        description: "Get system uptime in seconds"
+        arguments: ~
+        returns: "0/1"
+        output: "uptime seconds"
+
+      - function: os::get_memory_total
+        description: "Get total system memory in bytes"
+        arguments: ~
+        returns: "0/1"
+        output: "memory bytes"
+
+      - function: os::get_cpu_count
+        description: "Get number of CPU cores"
+        arguments: ~
+        returns: "0/1"
+        output: "cpu count"
+
+      - function: os::str
+        description: "Print a concise OS descriptor string: \"<OS> <Version> <Arch>\""
+        arguments: ~
+        returns: "0"
+        output: "os string"
+
+      - function: os::self_test
+        description: "Self-test for util_os.sh functionality"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_platform - Platform abstraction utilities
+  #=============================================================================
+  util_platform:
+    description: "Platform abstraction utilities for cross-platform compatibility"
+    functions:
+      - function: platform::detect_os
+        description: "Detect operating system type (cached)"
+        arguments: ~
+        returns: "0"
+        output: "os type"
+
+      - function: platform::detect_variant
+        description: "Detect command variant (GNU, BSD, BusyBox, etc.)"
+        arguments: "command"
+        returns: "0"
+        output: "variant name"
+
+      - function: platform::find_command
+        description: "Find best available version of a command"
+        arguments: "command"
+        returns: "0/1"
+        output: "command path"
+
+      - function: platform::setup_commands
+        description: "Initialize platform-specific command mappings"
+        arguments: ~
+        returns: "0"
+        output: ~
+
+      - function: platform::stat
+        description: "Get file statistics in platform-independent way"
+        arguments: "path format"
+        returns: "0/1"
+        output: "stat value"
+
+      - function: platform::date
+        description: "Format date in platform-independent way"
+        arguments: "format [timestamp]"
+        returns: "0"
+        output: "formatted date"
+
+      - function: platform::sed_inplace
+        description: "Perform in-place sed editing (handles BSD vs GNU differences)"
+        arguments: "pattern file"
+        returns: "0/1"
+        output: ~
+
+      - function: platform::readlink_canonical
+        description: "Get canonical/absolute path (handles BSD vs GNU differences)"
+        arguments: "path"
+        returns: "0/1"
+        output: "canonical path"
+
+      - function: platform::mktemp
+        description: "Create temporary file/directory (handles differences)"
+        arguments: "[options]"
+        returns: "0/1"
+        output: "temp path"
+
+      - function: platform::timeout
+        description: "Run a command with timeout (handles GNU timeout vs macOS)"
+        arguments: "seconds command..."
+        returns: "cmd exit"
+        output: "command output"
+
+      - function: platform::dns_flush
+        description: "Flush DNS cache (cross-platform)"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: platform::network_restart
+        description: "Restart network services (cross-platform)"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: platform::checksum
+        description: "Calculate file checksum (handles md5/sha256 differences)"
+        arguments: "algo file"
+        returns: "0/1"
+        output: "checksum"
+
+      - function: platform::get_interface_ip
+        description: "Get IP address of a network interface (cross-platform)"
+        arguments: "interface"
+        returns: "0/1"
+        output: "IP address"
+
+      - function: platform::get_interface_mac
+        description: "Get MAC address of a network interface (cross-platform)"
+        arguments: "interface"
+        returns: "0/1"
+        output: "MAC address"
+
+      - function: platform::info
+        description: "Display platform detection information"
+        arguments: ~
+        returns: "0"
+        output: "platform info"
+
+      - function: platform::check_gnu_tools
+        description: "Check if GNU tools are available (useful for macOS)"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: platform::self_test
+        description: "Test platform abstraction functions"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_py - Python utilities
+  #=============================================================================
+  util_py:
+    description: "Python environment and package management utilities"
+    functions:
+      - function: py::is_available
+        description: "Check if Python is installed (python3 preferred)"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: py::is_version_available
+        description: "Check if a specific Python version is installed"
+        arguments: "version"
+        returns: "0/1"
+        output: ~
+
+      - function: py::get_major_version
+        description: "Get major Python version (2 or 3)"
+        arguments: ~
+        returns: "0"
+        output: "2 or 3"
+
+      - function: py::pyenv_available
+        description: "Check if pyenv is installed"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: py::pyenv_install_version
+        description: "Install specific Python version via pyenv"
+        arguments: "version"
+        returns: "0/1"
+        output: ~
+
+      - function: py::get_path
+        description: "Get the path to the active Python binary"
+        arguments: ~
+        returns: "0/1"
+        output: "python path"
+
+      - function: py::get_version
+        description: "Get current Python version"
+        arguments: ~
+        returns: "0"
+        output: "version string"
+
+      - function: py::pip_supports_break_system_packages
+        description: "Check if pip supports --break-system-packages flag"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: py::get_pip_args
+        description: "Build pip arguments array with auto-detected flags"
+        arguments: ~
+        returns: "0"
+        output: ~
+
+      - function: py::install_build_dependencies
+        description: "Install dependencies required for compiling Python from source"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: py::get_latest_patch_version
+        description: "Get the latest patch version for a minor Python version"
+        arguments: "minor_version"
+        returns: "0/1"
+        output: "patch version"
+
+      - function: py::download_source
+        description: "Download Python source tarball"
+        arguments: "version"
+        returns: "0/1"
+        output: "tarball path"
+
+      - function: py::compile_from_source
+        description: "Compile and install Python from source"
+        arguments: "version [prefix]"
+        returns: "0/1"
+        output: ~
+
+      - function: py::install_python
+        description: "Install a specific version of Python (package manager or source)"
+        arguments: "version"
+        returns: "0/1"
+        output: ~
+
+      - function: py::install_pip
+        description: "Install pip if missing"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: py::install_uv
+        description: "Install uv package manager for Python"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: py::install_pipx
+        description: "Install pipx globally for isolated package installs"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: py::uv_install
+        description: "Install packages using uv"
+        arguments: "packages..."
+        returns: "0/1"
+        output: ~
+
+      - function: py::pipx_install
+        description: "Install pipx-managed package"
+        arguments: "package"
+        returns: "0/1"
+        output: ~
+
+      - function: py::create_venv
+        description: "Create a Python virtual environment"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: py::activate_venv
+        description: "Activate an existing virtual environment"
+        arguments: "path"
+        returns: "0/1"
+        output: ~
+
+      - function: py::freeze_requirements
+        description: "Export current environment to requirements.txt with versions pinned"
+        arguments: "[output_file]"
+        returns: "0/1"
+        output: ~
+
+      - function: py::pip_install
+        description: "Install packages using pip (with auto --break-system-packages)"
+        arguments: "packages..."
+        returns: "0/1"
+        output: ~
+
+      - function: py::pip_install_for_version
+        description: "Install packages for a specific Python version"
+        arguments: "version packages..."
+        returns: "0/1"
+        output: ~
+
+      - function: py::pip_upgrade
+        description: "Upgrade pip itself"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: py::requirements_install
+        description: "Install from requirements.txt"
+        arguments: "[requirements_file]"
+        returns: "0/1"
+        output: ~
+
+      - function: py::is_package_installed
+        description: "Check if a Python package is installed"
+        arguments: "package"
+        returns: "0/1"
+        output: ~
+
+      - function: py::get_package_version
+        description: "Get version of an installed Python package"
+        arguments: "package"
+        returns: "0/1"
+        output: "version"
+
+      - function: py::get_site_packages
+        description: "Get Python site-packages directory path"
+        arguments: ~
+        returns: "0/1"
+        output: "site-packages path"
+
+      - function: py::run_script
+        description: "Execute a Python script"
+        arguments: "script [args...]"
+        returns: "script exit"
+        output: "script output"
+
+      - function: py::self_test
+        description: "Self-test for util_py.sh functionality"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_py_multi - Multi-version Python management
+  #=============================================================================
+  util_py_multi:
+    description: "Multi-version Python management utilities"
+    functions:
+      - function: py_multi::set_versions
+        description: "Set the list of Python versions to manage"
+        arguments: "versions..."
+        returns: "0"
+        output: ~
+
+      - function: py_multi::get_versions
+        description: "Get the list of configured Python versions"
+        arguments: ~
+        returns: "0"
+        output: "version list"
+
+      - function: py_multi::add_version
+        description: "Add a version to the managed list"
+        arguments: "version"
+        returns: "0/1"
+        output: ~
+
+      - function: py_multi::remove_version
+        description: "Remove a version from the managed list"
+        arguments: "version"
+        returns: "0/1"
+        output: ~
+
+      - function: py_multi::find_latest
+        description: "Find the highest version in the managed list"
+        arguments: ~
+        returns: "0/1"
+        output: "latest version"
+
+      - function: py_multi::set_default
+        description: "Set the default Python version"
+        arguments: "[version]"
+        returns: "0/1"
+        output: ~
+
+      - function: py_multi::get_default
+        description: "Get the default Python version"
+        arguments: ~
+        returns: "0"
+        output: "default version"
+
+      - function: py_multi::install_all
+        description: "Install all configured Python versions"
+        arguments: "[--compile]"
+        returns: "0/1"
+        output: ~
+
+      - function: py_multi::install_pip_all
+        description: "Install pip for all configured Python versions"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: py_multi::upgrade_pip_all
+        description: "Upgrade pip for all configured Python versions"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: py_multi::pip_install_all
+        description: "Install packages for all configured Python versions"
+        arguments: "packages..."
+        returns: "0/1"
+        output: ~
+
+      - function: py_multi::requirements_install_all
+        description: "Install from requirements.txt for all Python versions"
+        arguments: "[requirements_file]"
+        returns: "0/1"
+        output: ~
+
+      - function: py_multi::verify_package_all
+        description: "Verify a package is installed for all Python versions"
+        arguments: "package"
+        returns: "0/1"
+        output: "status per version"
+
+      - function: py_multi::pipx_install_batch
+        description: "Install multiple pipx packages with optional version overrides"
+        arguments: "array_name"
+        returns: "0/1"
+        output: ~
+
+      - function: py_multi::status
+        description: "Display status of all configured Python versions"
+        arguments: ~
+        returns: "0"
+        output: "status table"
+
+      - function: py_multi::list_installed
+        description: "List all Python versions currently installed on the system"
+        arguments: ~
+        returns: "0"
+        output: "installed versions"
+
+      - function: py_multi::cleanup_cache
+        description: "Clear pip caches for all Python versions"
+        arguments: ~
+        returns: "0"
+        output: ~
+
+      - function: py_multi::self_test
+        description: "Self-test for util_py_multi.sh functionality"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_ruby - Ruby utilities
+  #=============================================================================
+  util_ruby:
+    description: "Ruby environment and gem management utilities"
+    functions:
+      - function: ruby::is_available
+        description: "Check if Ruby is installed"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::gem_available
+        description: "Check if gem command is available"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::get_version
+        description: "Get the current Ruby version"
+        arguments: ~
+        returns: "0"
+        output: "version"
+
+      - function: ruby::get_path
+        description: "Get the path to the Ruby executable"
+        arguments: ~
+        returns: "0/1"
+        output: "ruby path"
+
+      - function: ruby::rbenv_available
+        description: "Check if rbenv is installed"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::rvm_available
+        description: "Check if RVM is installed"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::gem_install
+        description: "Install one or more gems globally (simple names only)"
+        arguments: "gems..."
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::gem_install_spec
+        description: "Install a gem with version specification"
+        arguments: "spec"
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::gem_install_batch
+        description: "Install gems from an array of specifications"
+        arguments: "array_name"
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::gem_install_with_version
+        description: "Install a specific version of a gem"
+        arguments: "gem version"
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::gem_update
+        description: "Update all installed gems"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::install_rbenv
+        description: "Install rbenv for Ruby version management"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::rbenv_install_version
+        description: "Install a specific Ruby version via rbenv"
+        arguments: "version"
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::get_bundler_version
+        description: "Get Bundler major version (1 or 2)"
+        arguments: ~
+        returns: "0"
+        output: "bundler version"
+
+      - function: ruby::gem_cleanup
+        description: "Remove old gem versions"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::is_gem_installed
+        description: "Check if a specific gem is installed"
+        arguments: "gem"
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::get_gem_version
+        description: "Get the version of a specific installed gem"
+        arguments: "gem"
+        returns: "0/1"
+        output: "gem version"
+
+      - function: ruby::gem_uninstall
+        description: "Uninstall a gem"
+        arguments: "gem"
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::bundler_install
+        description: "Install Bundler if not already installed"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::bundle_install
+        description: "Install project dependencies via Bundler"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: ruby::bundle_exec
+        description: "Execute a command in bundle context"
+        arguments: "command..."
+        returns: "cmd exit"
+        output: "command output"
+
+      - function: ruby::run_script
+        description: "Execute a Ruby script"
+        arguments: "script [args...]"
+        returns: "script exit"
+        output: "script output"
+
+      - function: ruby::list_gems
+        description: "List all installed gems"
+        arguments: ~
+        returns: "0"
+        output: "gem list"
+
+      - function: ruby::gem_outdated
+        description: "List outdated gems"
+        arguments: ~
+        returns: "0"
+        output: "outdated gems"
+
+      - function: ruby::env_info
+        description: "Display Ruby environment information"
+        arguments: ~
+        returns: "0"
+        output: "env info"
+
+      - function: ruby::self_test
+        description: "Self-test for util_ruby.sh functionality"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_str - String manipulation utilities
+  #=============================================================================
+  util_str:
+    description: "String manipulation utilities"
+    functions:
+      - function: str::length
+        description: "Get the length of a string"
+        arguments: "string"
+        returns: "0"
+        output: "length"
+
+      - function: str::is_empty
+        description: "Check if a string is empty or unset"
+        arguments: "string"
+        returns: "0/1"
+        output: ~
+
+      - function: str::is_not_empty
+        description: "Check if a string is not empty"
+        arguments: "string"
+        returns: "0/1"
+        output: ~
+
+      - function: str::is_blank
+        description: "Check if a string is empty or contains only whitespace"
+        arguments: "string"
+        returns: "0/1"
+        output: ~
+
+      - function: str::to_upper
+        description: "Convert string to uppercase"
+        arguments: "string"
+        returns: "0"
+        output: "uppercase string"
+
+      - function: str::to_lower
+        description: "Convert string to lowercase"
+        arguments: "string"
+        returns: "0"
+        output: "lowercase string"
+
+      - function: str::capitalize
+        description: "Capitalize first character of string"
+        arguments: "string"
+        returns: "0"
+        output: "capitalized string"
+
+      - function: str::to_title_case
+        description: "Convert string to title case (capitalize each word)"
+        arguments: "string"
+        returns: "0"
+        output: "title case string"
+
+      - function: str::trim
+        description: "Remove leading and trailing whitespace"
+        arguments: "string"
+        returns: "0"
+        output: "trimmed string"
+
+      - function: str::trim_left
+        description: "Remove leading whitespace only"
+        arguments: "string"
+        returns: "0"
+        output: "trimmed string"
+
+      - function: str::trim_right
+        description: "Remove trailing whitespace only"
+        arguments: "string"
+        returns: "0"
+        output: "trimmed string"
+
+      - function: str::pad_left
+        description: "Pad string on the left to specified length"
+        arguments: "string length [char]"
+        returns: "0"
+        output: "padded string"
+
+      - function: str::pad_right
+        description: "Pad string on the right to specified length"
+        arguments: "string length [char]"
+        returns: "0"
+        output: "padded string"
+
+      - function: str::substring
+        description: "Extract substring from string"
+        arguments: "string start [length]"
+        returns: "0"
+        output: "substring"
+
+      - function: str::contains
+        description: "Check if string contains a substring"
+        arguments: "string substring"
+        returns: "0/1"
+        output: ~
+
+      - function: str::starts_with
+        description: "Check if string starts with a prefix"
+        arguments: "string prefix"
+        returns: "0/1"
+        output: ~
+
+      - function: str::ends_with
+        description: "Check if string ends with a suffix"
+        arguments: "string suffix"
+        returns: "0/1"
+        output: ~
+
+      - function: str::replace
+        description: "Replace first occurrence of pattern in string"
+        arguments: "string pattern replacement"
+        returns: "0"
+        output: "modified string"
+
+      - function: str::replace_all
+        description: "Replace all occurrences of pattern in string"
+        arguments: "string pattern replacement"
+        returns: "0"
+        output: "modified string"
+
+      - function: str::remove
+        description: "Remove first occurrence of pattern from string"
+        arguments: "string pattern"
+        returns: "0"
+        output: "modified string"
+
+      - function: str::remove_all
+        description: "Remove all occurrences of pattern from string"
+        arguments: "string pattern"
+        returns: "0"
+        output: "modified string"
+
+      - function: str::split
+        description: "Split string by delimiter into array"
+        arguments: "string delimiter array_name"
+        returns: "0"
+        output: ~
+
+      - function: str::join
+        description: "Join array elements with delimiter"
+        arguments: "delimiter array_name"
+        returns: "0"
+        output: "joined string"
+
+      - function: str::is_integer
+        description: "Check if string is a valid integer (positive or negative)"
+        arguments: "string"
+        returns: "0/1"
+        output: ~
+
+      - function: str::is_positive_integer
+        description: "Check if string is a positive integer"
+        arguments: "string"
+        returns: "0/1"
+        output: ~
+
+      - function: str::is_float
+        description: "Check if string is a valid floating-point number"
+        arguments: "string"
+        returns: "0/1"
+        output: ~
+
+      - function: str::is_alpha
+        description: "Check if string contains only alphabetic characters"
+        arguments: "string"
+        returns: "0/1"
+        output: ~
+
+      - function: str::is_alphanumeric
+        description: "Check if string contains only alphanumeric characters"
+        arguments: "string"
+        returns: "0/1"
+        output: ~
+
+      - function: str::matches
+        description: "Check if string matches a regex pattern"
+        arguments: "string pattern"
+        returns: "0/1"
+        output: ~
+
+      - function: str::repeat
+        description: "Repeat a string n times"
+        arguments: "string count"
+        returns: "0"
+        output: "repeated string"
+
+      - function: str::reverse
+        description: "Reverse a string"
+        arguments: "string"
+        returns: "0"
+        output: "reversed string"
+
+      - function: str::count
+        description: "Count occurrences of substring in string"
+        arguments: "string substring"
+        returns: "0"
+        output: "count"
+
+      - function: str::truncate
+        description: "Truncate string to specified length with optional suffix"
+        arguments: "string length [suffix]"
+        returns: "0"
+        output: "truncated string"
+
+      - function: str::in_list
+        description: "Check if a value exists in a list/array"
+        arguments: "value array_name"
+        returns: "0/1"
+        output: ~
+
+      - function: str::self_test
+        description: "Self-test for util_str.sh functionality"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_tools - Tool installation utilities
+  #=============================================================================
+  util_tools:
+    description: "Tool installation and management utilities"
+    functions:
+      - function: tools::add_function
+        description: "Add a wrapper function to the tools alias file"
+        arguments: "name body"
+        returns: "0/1"
+        output: ~
+
+      - function: tools::remove_function
+        description: "Remove a wrapper function from the tools alias file"
+        arguments: "name"
+        returns: "0/1"
+        output: ~
+
+      - function: tools::list_functions
+        description: "List all tool functions defined in the alias file"
+        arguments: ~
+        returns: "0"
+        output: "function list"
+
+      - function: tools::install_git_python
+        description: "Clone a Git repo, create venv, install requirements, add alias"
+        arguments: "repo_url [name]"
+        returns: "0/1"
+        output: ~
+
+      - function: tools::install_git_tool
+        description: "Clone a Git repo and optionally add alias (no Python venv)"
+        arguments: "repo_url [name]"
+        returns: "0/1"
+        output: ~
+
+      - function: tools::test
+        description: "Test if a tool is installed and working"
+        arguments: "tool_name"
+        returns: "0/1"
+        output: ~
+
+      - function: tools::test_batch
+        description: "Run multiple tool tests from an associative array"
+        arguments: "array_name"
+        returns: "0/1"
+        output: "test results"
+
+      - function: tools::apply_fixes
+        description: "Apply fixes for tools from a fixes array"
+        arguments: "array_name"
+        returns: "0/1"
+        output: ~
+
+      - function: tools::get_install_status
+        description: "Get the installation status of a tool"
+        arguments: "tool_name"
+        returns: "0/1"
+        output: "status"
+
+      - function: tools::list_installed
+        description: "List tools that have been installed in this session"
+        arguments: ~
+        returns: "0"
+        output: "installed tools"
+
+      - function: tools::run_command
+        description: "Run a tool command (helper for alias wrappers)"
+        arguments: "tool_name args..."
+        returns: "cmd exit"
+        output: "command output"
+
+      - function: tools::self_test
+        description: "Self-test for util_tools.sh functionality"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_trap - Cleanup and trap utilities
+  #=============================================================================
+  util_trap:
+    description: "Cleanup and trap management utilities"
+    functions:
+      - function: trap::add_cleanup
+        description: "Add a cleanup FUNCTION to the exit trap stack"
+        arguments: "function_name"
+        returns: "0"
+        output: ~
+
+      - function: trap::add_temp_file
+        description: "Register a temporary file for automatic cleanup"
+        arguments: "filepath"
+        returns: "0"
+        output: ~
+
+      - function: trap::add_temp_dir
+        description: "Register a temporary directory for automatic cleanup"
+        arguments: "dirpath"
+        returns: "0"
+        output: ~
+
+      - function: trap::with_cleanup
+        description: "Execute a command with automatic temp file cleanup"
+        arguments: "command..."
+        returns: "cmd exit"
+        output: "command output"
+
+      - function: trap::clear_all
+        description: "Clear all registered cleanup functions and temp files/dirs"
+        arguments: ~
+        returns: "0"
+        output: ~
+
+      - function: trap::list
+        description: "List all registered cleanup items (for debugging)"
+        arguments: ~
+        returns: "0"
+        output: "cleanup list"
+
+      - function: trap::self_test
+        description: "Self-test for util_trap.sh functionality"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+  #=============================================================================
+  # util_tui - Terminal user interface utilities
+  #=============================================================================
+  util_tui:
+    description: "Terminal user interface utilities"
+    functions:
+      - function: tui::prompt_yes_no
+        description: "Display a yes/no prompt"
+        arguments: "question [default]"
+        returns: "0/1"
+        output: ~
+
+      - function: tui::prompt_input
+        description: "Prompt for text input with optional default"
+        arguments: "prompt [default]"
+        returns: "0/1"
+        output: "user input"
+
+      - function: tui::prompt_select
+        description: "Display a single-select menu"
+        arguments: "prompt options..."
+        returns: "0/1"
+        output: "selected option"
+
+      - function: tui::prompt_multiselect
+        description: "Display a multi-select checklist"
+        arguments: "prompt options..."
+        returns: "0/1"
+        output: "selected options"
+
+      - function: tui::msg
+        description: "Display a message box"
+        arguments: "message"
+        returns: "0"
+        output: ~
+
+      - function: tui::show_spinner
+        description: "Display spinner animation while a command or PID runs"
+        arguments: "message command..."
+        returns: "cmd exit"
+        output: ~
+
+      - function: tui::show_dots
+        description: "Display simple animated dots while command or PID runs"
+        arguments: "message command..."
+        returns: "cmd exit"
+        output: ~
+
+      - function: tui::show_progress_bar
+        description: "Display a progress bar for percentage completion"
+        arguments: "percent message"
+        returns: "0"
+        output: ~
+
+      - function: tui::show_timer
+        description: "Run a command and display elapsed time upon completion"
+        arguments: "command..."
+        returns: "cmd exit"
+        output: ~
+
+      - function: tui::is_terminal
+        description: "Check if running in an interactive terminal"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: tui::supports_color
+        description: "Check if terminal supports color output"
+        arguments: ~
+        returns: "0/1"
+        output: ~
+
+      - function: tui::get_terminal_width
+        description: "Return the width of the terminal in columns"
+        arguments: ~
+        returns: "0"
+        output: "column count"
+
+      - function: tui::clear_line
+        description: "Clear the current terminal line"
+        arguments: ~
+        returns: "0"
+        output: ~
+
+      - function: tui::pause
+        description: "Pause execution until user presses ENTER"
+        arguments: ~
+        returns: "0"
+        output: ~
+
+      - function: tui::strip_color
+        description: "Remove ANSI color codes from input or file"
+        arguments: "[text]"
+        returns: "0"
+        output: "stripped text"
+
+      - function: tui::self_test
+        description: "Self-test for util_tui.sh functionality"
+        arguments: ~
+        returns: "0/1"
+        output: ~
