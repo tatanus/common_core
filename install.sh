@@ -29,16 +29,7 @@ INSTALL_DIR="${DEFAULT_INSTALL_DIR}"
 
 # Flags
 RUN_TESTS=true
-VERBOSE=false
 FORCE=false
-
-# Colors for output
-readonly RED='\033[0;31m'
-readonly GREEN='\033[0;32m'
-readonly YELLOW='\033[1;33m'
-readonly BLUE='\033[0;34m'
-readonly CYAN='\033[0;36m'
-readonly NC='\033[0m'
 
 #===============================================================================
 # Logging Fallbacks
@@ -203,7 +194,6 @@ OPTIONS:
                                (default: ${DEFAULT_INSTALL_DIR})
     -f, --force                Force installation (overwrite existing files)
     -s, --skip-tests           Skip self-tests after installation
-    -v, --verbose              Enable verbose output
     -h, --help                 Display this help message
 
 EXAMPLES:
@@ -222,7 +212,6 @@ DESCRIPTION:
     4. Set appropriate permissions on shell scripts
     5. Configure ~/.bashrc to automatically load the library
     6. Run self-tests to verify installation (unless --skip-tests)
-    7. Create/update ~/.config/bash/update.sh for future updates
 
     The library will be installed to: ${DEFAULT_INSTALL_DIR}
     Unless you specify a different directory with --dir
@@ -246,7 +235,7 @@ EOF
 # Returns  : PASS (0) on success, exits with FAIL (1) on error
 # Outputs  : Error messages and usage on invalid arguments
 # Requires:
-#   Variables: INSTALL_DIR, FORCE, RUN_TESTS, VERBOSE (all modified)
+#   Variables: INSTALL_DIR, FORCE, RUN_TESTS (all modified)
 #   Functions: usage, error
 # Notes    : Exits script on invalid arguments
 ###############################################################################
@@ -268,10 +257,6 @@ function parse_arguments() {
                 ;;
             -s | --skip-tests)
                 RUN_TESTS=false
-                shift
-                ;;
-            -v | --verbose)
-                VERBOSE=true
                 shift
                 ;;
             -h | --help)
@@ -662,7 +647,7 @@ function set_permissions() {
 ###############################################################################
 function configure_bashrc() {
     local bashrc="${HOME}/.bashrc"
-    local source_line="source \"${INSTALL_DIR}/util.sh\""
+    #local source_line="source \"${INSTALL_DIR}/util.sh\""
     local marker="# common_core library"
 
     info "Configuring shell integration..."
@@ -701,114 +686,6 @@ function configure_bashrc() {
 
     pass "Added common_core to ${bashrc}"
     info "Run 'source ~/.bashrc' or start a new terminal to activate"
-    return "${PASS}"
-}
-
-###############################################################################
-# install_update_script
-#------------------------------------------------------------------------------
-# Purpose  : Install universal update.sh script
-# Usage    : install_update_script
-# Arguments: None
-# Returns  : PASS (0) on success, FAIL (1) on error
-# Outputs  : Status messages to stderr
-# Requires:
-#   Commands: cp, chmod
-#   Variables: SCRIPT_DIR, HOME
-#   Functions: info, pass, warn, error
-# Notes    : Installs to ~/.config/bash/update.sh, creates backup if exists
-###############################################################################
-function install_update_script() {
-    local update_src="${SCRIPT_DIR}/tools/update.sh"
-    local update_dest="${HOME}/.config/bash/update.sh"
-    local update_dir
-    update_dir="$(dirname "${update_dest}")"
-
-    # Check if source update.sh exists
-    if [[ ! -f "${update_src}" ]]; then
-        warn "update.sh not found in source, skipping updater installation"
-        return "${PASS}"
-    fi
-
-    info "Installing update script..."
-
-    # Create directory if needed
-    if [[ ! -d "${update_dir}" ]]; then
-        if ! mkdir -p "${update_dir}"; then
-            error "Failed to create directory: ${update_dir}"
-            return "${FAIL}"
-        fi
-    fi
-
-    # Backup existing if present
-    if [[ -f "${update_dest}" ]]; then
-        local backup
-        backup="${update_dest}.backup.$(date +%Y%m%d_%H%M%S)"
-        if cp "${update_dest}" "${backup}"; then
-            debug "Created backup: ${backup}"
-        else
-            warn "Failed to create backup (non-fatal)"
-        fi
-    fi
-
-    # Copy update.sh
-    if ! cp "${update_src}" "${update_dest}"; then
-        error "Failed to install update script"
-        return "${FAIL}"
-    fi
-
-    # Make executable
-    if ! chmod +x "${update_dest}"; then
-        warn "Failed to make update script executable (non-fatal)"
-    fi
-
-    pass "Update script installed to ${update_dest}"
-    return "${PASS}"
-}
-
-###############################################################################
-# register_with_updater
-#------------------------------------------------------------------------------
-# Purpose  : Register common_core with the update system
-# Usage    : register_with_updater
-# Arguments: None
-# Returns  : PASS (0) on success, FAIL (1) on error
-# Outputs  : Status messages to stderr
-# Requires:
-#   Variables: HOME, INSTALL_DIR
-#   Functions: info, pass, warn, error
-# Notes    : Calls update::register function from update.sh
-###############################################################################
-function register_with_updater() {
-    local update_script="${HOME}/.config/bash/update.sh"
-
-    if [[ ! -f "${update_script}" ]]; then
-        warn "Update script not found, skipping registration"
-        return "${PASS}"
-    fi
-
-    info "Registering with update system..."
-
-    # Source update.sh to get registration function
-    # shellcheck disable=SC1090
-    if ! source "${update_script}" 2> /dev/null; then
-        warn "Failed to source update script (non-fatal)"
-        return "${PASS}"
-    fi
-
-    # Register this project
-    if update::register \
-        "common_core" \
-        "https://github.com/tatanus/common_core" \
-        "main" \
-        "${INSTALL_DIR}" \
-        "${INSTALL_DIR}/VERSION" \
-        "./install.sh --force"; then
-        pass "Registered with update system"
-    else
-        warn "Failed to register with update system (non-fatal)"
-    fi
-
     return "${PASS}"
 }
 
@@ -887,9 +764,6 @@ function show_completion_message() {
     printf '\n'
     info "To use common_core in standalone scripts, add:"
     printf '  source "%s/util.sh"\n' "${INSTALL_DIR}"
-    printf '\n'
-    info "To update common_core in the future:"
-    printf '  %s/.config/bash/update.sh\n' "${HOME}"
     printf '\n'
 
     return "${PASS}"
@@ -979,16 +853,6 @@ function main() {
     if ! configure_bashrc; then
         warn "Failed to configure .bashrc (non-fatal)"
         warn "You may need to manually add: source \"${INSTALL_DIR}/util.sh\""
-    fi
-
-    # Install update script
-    if ! install_update_script; then
-        warn "Failed to install update script (non-fatal)"
-    fi
-
-    # Register with update system
-    if ! register_with_updater; then
-        warn "Failed to register with updater (non-fatal)"
     fi
 
     printf '\n'

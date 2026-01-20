@@ -59,6 +59,8 @@ test-results/
 
 # Claude System Workspace
 .claude/
+CLAUDE.md
+CLAUDE_HUMAN.md
 
 # Patch & diff artifacts
 *.diff
@@ -89,4 +91,3 @@ secrets.json
 
 # macOS quarantine
 *.DS_Store
-
