@@ -37,7 +37,7 @@ readonly NC='\033[0m'
 #------------------------------------------------------------------------------
 # Purpose  : Display informational message
 ###############################################################################
-info() {
+function info() {
     printf '[INFO] %s\n' "$*"
 }
 
@@ -46,7 +46,7 @@ info() {
 #------------------------------------------------------------------------------
 # Purpose  : Display warning message with color
 ###############################################################################
-warn_msg() {
+function warn_msg() {
     printf '%b⚠%b  %s\n' "${YELLOW}" "${NC}" "$*"
 }
 
@@ -55,7 +55,7 @@ warn_msg() {
 #------------------------------------------------------------------------------
 # Purpose  : Display error message with color
 ###############################################################################
-error_msg() {
+function error_msg() {
     printf '%b✗%b %s\n' "${RED}" "${NC}" "$*" >&2
 }
 
@@ -70,7 +70,7 @@ error_msg() {
 # Arguments: $1 - Directory to check
 # Returns  : PASS if tests found, FAIL otherwise
 ###############################################################################
-has_bats_tests() {
+function has_bats_tests() {
     local test_dir="${1}"
 
     if [[ ! -d "${test_dir}" ]]; then
@@ -91,7 +91,7 @@ has_bats_tests() {
 # Purpose  : Run unit tests if they exist
 # Returns  : PASS if tests pass or don't exist, FAIL if tests fail
 ###############################################################################
-run_unit_tests() {
+function run_unit_tests() {
     local test_dir="${PROJECT_ROOT}/tests/unit"
 
     info "Checking for unit tests..."
@@ -117,7 +117,7 @@ run_unit_tests() {
 # Purpose  : Run integration tests if they exist
 # Returns  : PASS if tests pass or don't exist, FAIL if tests fail
 ###############################################################################
-run_integration_tests() {
+function run_integration_tests() {
     local test_dir="${PROJECT_ROOT}/tests/integration"
 
     info "Checking for integration tests..."
@@ -143,7 +143,7 @@ run_integration_tests() {
 # Purpose  : Run all tests recursively
 # Returns  : PASS if tests pass, FAIL if tests fail or none found
 ###############################################################################
-run_all_tests() {
+function run_all_tests() {
     local test_dir="${PROJECT_ROOT}/tests"
 
     info "Checking for any tests..."
@@ -171,7 +171,7 @@ run_all_tests() {
 # Arguments: $1 - Test type (unit|integration|all), default: all
 # Returns  : PASS if tests pass, FAIL otherwise
 ###############################################################################
-main() {
+function main() {
     local test_type="${1:-all}"
     local exit_code="${PASS}"
 

@@ -43,7 +43,7 @@ function error() { printf '[ERROR] %s\n' "$*" >&2; }
 # Usage     : run_shellcheck
 # Returns   : Sets STYLE_FAIL=1 if ShellCheck reports errors
 ###############################################################################
-run_shellcheck() {
+function run_shellcheck() {
     info "Running ShellCheck..."
     # Use -prune to skip the excluded directory entirely
     if ! find . -type d -name "${EXCLUDE_DIR}" -prune -o -type f -name "*.sh" -print0 |
@@ -60,7 +60,7 @@ run_shellcheck() {
 # Usage     : run_shfmt
 # Returns   : Sets STYLE_FAIL=1 if formatting issues found
 ###############################################################################
-run_shfmt() {
+function run_shfmt() {
     info "Checking formatting with shfmt..."
     # Use -prune to skip the excluded directory entirely
     if ! find . -type d -name "${EXCLUDE_DIR}" -prune -o -type f -name "*.sh" -print0 |
@@ -78,7 +78,7 @@ run_shfmt() {
 # Returns   : Sets STYLE_FAIL=1 if prohibited patterns found
 # Checks    : set -e, echo -e, backticks, for f in $(ls)
 ###############################################################################
-run_custom_checks() {
+function run_custom_checks() {
     info "Running custom regex style checks..."
 
     # Helper: filter out comment lines while keeping filename:line prefix
@@ -120,7 +120,7 @@ run_custom_checks() {
 # Usage     : main "$@"
 # Returns   : PASS (0) if all checks pass, FAIL (1) otherwise
 ###############################################################################
-main() {
+function main() {
     run_shellcheck
     run_shfmt
     run_custom_checks

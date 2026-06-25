@@ -42,7 +42,7 @@ CHECK_ONLY=false
 # Arguments: $* - Message to display
 # Outputs  : Formatted message to stdout
 ###############################################################################
-info() {
+function info() {
     printf '[INFO] %s\n' "$*"
 }
 
@@ -54,7 +54,7 @@ info() {
 # Arguments: $* - Message to display
 # Outputs  : Colored success message to stdout
 ###############################################################################
-pass_msg() {
+function pass_msg() {
     printf '%b✓%b %s\n' "${GREEN}" "${NC}" "$*"
 }
 
@@ -66,7 +66,7 @@ pass_msg() {
 # Arguments: $* - Message to display
 # Outputs  : Colored error message to stderr
 ###############################################################################
-error_msg() {
+function error_msg() {
     printf '%b✗%b %s\n' "${RED}" "${NC}" "$*" >&2
 }
 
@@ -81,7 +81,7 @@ error_msg() {
 # Arguments: $@ - Command line arguments
 # Returns  : PASS on success
 ###############################################################################
-parse_arguments() {
+function parse_arguments() {
     while [[ $# -gt 0 ]]; do
         case "${1}" in
             --check | -c)
@@ -106,7 +106,7 @@ parse_arguments() {
 # Returns  : Array of script paths via stdout (one per line)
 # Notes    : Excludes .git, common_core, and node_modules directories
 ###############################################################################
-find_shell_scripts() {
+function find_shell_scripts() {
     find "${PROJECT_ROOT}" -type f -name "*.sh" \
         ! -path "*/.git/*" \
         ! -path "*/lib/common_core/*" \
@@ -121,7 +121,7 @@ find_shell_scripts() {
 # Purpose  : Run shfmt on all found scripts
 # Returns  : PASS if all checks pass, FAIL otherwise
 ###############################################################################
-run_shfmt() {
+function run_shfmt() {
     local -a files=()
     local file
     local exit_code=0
@@ -168,7 +168,7 @@ run_shfmt() {
 # Purpose  : Main entry point
 # Returns  : PASS if all checks pass, FAIL otherwise
 ###############################################################################
-main() {
+function main() {
     local exit_code
 
     # Parse arguments

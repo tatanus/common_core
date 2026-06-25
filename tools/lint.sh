@@ -12,7 +12,7 @@ IFS=$'\n\t'
 # DATE       | EDITED BY      | DESCRIPTION
 # -----------|----------------|----------------------------------------------
 # 2025-01-04 | Adam Compton   | Initial creation
-# 2025-01-04 | Adam COmpton   | Style compliance fixes - array usage, IFS
+# 2025-01-04 | Adam Compton   | Style compliance fixes - array usage, IFS
 ###############################################################################
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -39,7 +39,7 @@ readonly NC='\033[0m'
 # Arguments: $* - Message to display
 # Outputs  : Formatted message to stdout
 ###############################################################################
-info() {
+function info() {
     printf '[INFO] %s\n' "$*"
 }
 
@@ -51,7 +51,7 @@ info() {
 # Arguments: $* - Message to display
 # Outputs  : Colored success message to stdout
 ###############################################################################
-pass_msg() {
+function pass_msg() {
     printf '%b✓%b %s\n' "${GREEN}" "${NC}" "$*"
 }
 
@@ -63,7 +63,7 @@ pass_msg() {
 # Arguments: $* - Message to display
 # Outputs  : Colored error message to stderr
 ###############################################################################
-error_msg() {
+function error_msg() {
     printf '%b✗%b %s\n' "${RED}" "${NC}" "$*" >&2
 }
 
@@ -78,7 +78,7 @@ error_msg() {
 # Returns  : Array of script paths via stdout (one per line)
 # Notes    : Excludes .git, common_core, and node_modules directories
 ###############################################################################
-find_shell_scripts() {
+function find_shell_scripts() {
     find "${PROJECT_ROOT}" -type f -name "*.sh" \
         ! -path "*/.git/*" \
         ! -path "*/lib/common_core/*" \
@@ -93,7 +93,7 @@ find_shell_scripts() {
 # Purpose  : Run ShellCheck on all found scripts
 # Returns  : PASS if all checks pass, FAIL otherwise
 ###############################################################################
-run_shellcheck() {
+function run_shellcheck() {
     local -a files=()
     local file
     local exit_code=0
@@ -129,7 +129,7 @@ run_shellcheck() {
 # Purpose  : Main entry point
 # Returns  : PASS if all checks pass, FAIL otherwise
 ###############################################################################
-main() {
+function main() {
     local exit_code
 
     if run_shellcheck; then
