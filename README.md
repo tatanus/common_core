@@ -8,7 +8,7 @@
 
 ![Bash >=4.0](https://img.shields.io/badge/Bash-%3E%3D4.0-4EAA25?logo=gnu-bash&logoColor=white)
 
-**common_core** is the single, shared Bash **core** for varius projects:
+**common_core** is the single, shared Bash **core** for various projects:
 
 A comprehensive, modular bash utility library providing cross-platform support for Linux, macOS, and WSL. This library follows strict coding standards for security, maintainability, and portability.
 

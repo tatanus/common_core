@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `Makefile` exposing the documented `make ci` workflow plus `help`, `fmt`,
+  `fmt-check`, `lint`, `test`, `style`, `install`, `version`, `set-version`,
+  `tag`, `release`, `check-version`, `clean` targets. All quality targets
+  delegate to `tools/*.sh` so they remain the single source of truth.
+- `.github/workflows/main.yml` CI pipeline (Ubuntu) installing pinned
+  `shfmt` v3.8.0, running `make lint`, `make fmt-check`, `make test`.
+  Resolves the previously broken `main.yml` build-status badge in
+  `README.md`.
+- BATS unit-test suite under `tests/unit/`:
+  - `test_util_str.bats` (43 tests, `str::` helpers)
+  - `test_util_env.bats` (16 tests, `env::` helpers)
+  - `test_util_file.bats` (18 tests, `file::` helpers)
+  - `test_util_dir.bats`  (15 tests, `dir::` helpers)
+  - `test_util_cmd.bats`  (16 tests, `cmd::` helpers + `cmd::exists`)
+  - Total: 108 tests, all passing locally.
+- `tests/helpers/load_lib.bash` BATS helper that bootstraps `lib/util.sh`
+  with logging silenced.
+
+### Changed
+
+- `tools/lint.sh` and `tools/format.sh` now exclude `.claude/` from
+  discovery (matching `tools/check_bash_style.sh`). The `.claude/`
+  directory is agent toolchain scaffolding maintained externally.
+- `tools/check_bash_style.sh`, `tools/format.sh`, `tools/lint.sh`,
+  `tools/test.sh`: converted bare `name() {` declarations to the
+  mandated `function name() {` form (matching `lib/`).
+- `docs/CHANGELOG.md` is now a one-line pointer to the canonical root
+  `CHANGELOG.md` to eliminate drift between the two copies.
+
+### Fixed
+
+- **`str::to_title_case`** (lib/utils/util_str.sh): only the first word
+  was being capitalized because the function relied on space-splitting,
+  but `util.sh` sets `IFS=$'\n\t'`. Restored a local `IFS=$' \t\n'` so
+  word-splitting actually splits on spaces.
+- **Fallback log functions in `lib/util.sh`** (`info`/`warn`/`error`/
+  `debug`/`pass`/`fail`): each was implemented as
+  `_util_should_log <lvl> && printf …`. When the configured log level
+  filtered the message, the `&&` chain short-circuited and the function
+  returned 1, causing callers under `set -e` to abort silently. Each
+  fallback now ends with `return 0`.
+- `tools/lint.sh`: fixed "Adam COmpton" typo in file header.
+- `README.md`: fixed "varius" typo (now "various"); broken `main.yml`
+  build-status badge now resolves to the new CI workflow.
+- ShellCheck cleanup across the library and tooling:
+  - `lib/utils/util_cmd.sh:735` and `lib/utils/util_tools.sh:468`:
+    removed dead `output=$(…)` captures that were never read; replaced
+    with silent execution (`> /dev/null 2>&1`).
+  - `lib/utils/util_file.sh:1254`: dropped unused `test_file` local.
+  - `lib/utils/util_platform.sh`: brace-quoted `$key` array indices
+    (`${arr_ref[$key]}` → `${arr_ref[${key}]}`).
+  - Reserved-but-unused color palettes, exposed config defaults, and
+    nameref-accessed arrays now carry explicit
+    `# shellcheck disable=…` directives with rationale.
+
+### Removed
+
+- `tests/unit/test_example.{sh,bats}` scaffolding (the in-file note said
+  "delete when adding your own tests").
+
 ## [2026.01.19.0] - 2026-01-19
 
 

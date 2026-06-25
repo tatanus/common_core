@@ -33,6 +33,9 @@ test: ## Run bats tests (unit + integration)
 style: ## Run comprehensive style checks
 	@bash tools/check_bash_style.sh
 
+check-docs: ## Detect drift between docs/util_*.md and lib/utils/util_*.sh
+	@bash tools/check_docs.sh
+
 ci: fmt-check lint test ## Format check + lint + test (non-mutating)
 
 # --------------------------------------------------------------------
