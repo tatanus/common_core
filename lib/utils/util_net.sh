@@ -72,6 +72,7 @@ fi
 : "${PASS:=0}"
 : "${FAIL:=1}"
 DEFAULT_PING_TARGET="8.8.8.8"
+# shellcheck disable=SC2034  # DEFAULT_DNS_TARGET exposed as overridable default for callers
 DEFAULT_DNS_TARGET="google.com"
 DEFAULT_IP_SERVICES=("https://ifconfig.me/ip" "https://api.ipify.org" "https://ipecho.net/plain")
 

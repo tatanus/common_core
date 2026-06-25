@@ -31,6 +31,7 @@ if [[ -z "${LOGGER_SH_LOADED:-}" ]]; then
     # =============================================================================
 
     # Check if `tput` is available; otherwise, use ANSI escape codes as fallback
+    # shellcheck disable=SC2034  # palette constants reserved for caller styling
     if [[ -t 1 && -n "$(command -v tput)" ]]; then
         light_green=$(tput setaf 2)
         light_blue=$(tput setaf 6)

@@ -46,15 +46,17 @@ readonly REQUIRED_BASH_VERSION=4
 # Registry location
 readonly REGISTRY_FILE="${HOME}/.config/bash/update-registry"
 
-# Colors for output
-readonly RED='\033[0;31m'
-readonly GREEN='\033[0;32m'
-readonly YELLOW='\033[1;33m'
-readonly BLUE='\033[0;34m'
-readonly CYAN='\033[0;36m'
-readonly NC='\033[0m'
+# Colors for output (palette constants reserved for future styling)
+# shellcheck disable=SC2034
+readonly RED='\033[0;31m' \
+    GREEN='\033[0;32m' \
+    YELLOW='\033[1;33m' \
+    BLUE='\033[0;34m' \
+    CYAN='\033[0;36m' \
+    NC='\033[0m'
 
 # Flags
+# shellcheck disable=SC2034  # VERBOSE reserved for future verbose-logging hook
 VERBOSE=false
 DRY_RUN=false
 UPDATE_ALL=true
@@ -461,6 +463,7 @@ function parse_arguments() {
                 shift
                 ;;
             -v | --verbose)
+                # shellcheck disable=SC2034  # VERBOSE reserved for future verbose-logging hook
                 VERBOSE=true
                 shift
                 ;;

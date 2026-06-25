@@ -730,9 +730,8 @@ function cmd::test() {
 
     debug "Testing command: $* (expecting exit ${expected_code})"
 
-    # Execute command and capture exit code
-    local output
-    output=$("$@" 2>&1)
+    # Execute command silently and capture exit code
+    "$@" > /dev/null 2>&1
     local actual_code=$?
 
     if [[ "${actual_code}" -eq "${expected_code}" ]]; then

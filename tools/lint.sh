@@ -76,11 +76,14 @@ function error_msg() {
 #------------------------------------------------------------------------------
 # Purpose  : Find all .sh files in the project
 # Returns  : Array of script paths via stdout (one per line)
-# Notes    : Excludes .git, common_core, and node_modules directories
+# Notes    : Excludes .git, .claude, common_core, and node_modules.
+#            .claude/ is agent toolchain scaffolding maintained externally;
+#            check_bash_style.sh excludes it for the same reason.
 ###############################################################################
 function find_shell_scripts() {
     find "${PROJECT_ROOT}" -type f -name "*.sh" \
         ! -path "*/.git/*" \
+        ! -path "*/.claude/*" \
         ! -path "*/lib/common_core/*" \
         ! -path "*/node_modules/*" \
         ! -name "._*" \

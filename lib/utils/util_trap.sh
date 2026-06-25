@@ -385,6 +385,7 @@ function trap::self_test() {
     ###############################################################################
     # _trap_test_cleanup_func - Test helper for trap::add_cleanup validation
     ###############################################################################
+    # shellcheck disable=SC2329  # invoked indirectly by trap::add_cleanup below
     function _trap_test_cleanup_func() { true; }
     if trap::add_cleanup _trap_test_cleanup_func; then
         pass "trap::add_cleanup accepts declared functions"

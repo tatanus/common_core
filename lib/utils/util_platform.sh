@@ -94,7 +94,8 @@ declare -gA PLATFORM_CMD=(
     [timeout]=""
 )
 
-# Command-specific flag mappings
+# Command-specific flag mappings.
+# shellcheck disable=SC2034  # accessed via `local -n arr_ref=PLATFORM_FLAGS`; shellcheck can't track namerefs
 declare -gA PLATFORM_FLAGS=(
     # stat flags
     [stat_size]=""
@@ -147,7 +148,7 @@ function _platform_get_flag() {
         eval 'printf "%s" "${PLATFORM_FLAGS[$key]:-}"'
         return
     }
-    printf "%s" "${arr_ref[$key]:-}"
+    printf "%s" "${arr_ref[${key}]:-}"
 }
 
 ###############################################################################
@@ -176,7 +177,7 @@ function _platform_get_cmd() {
         fi
         return
     }
-    result="${arr_ref[$key]:-}"
+    result="${arr_ref[${key}]:-}"
     if [[ -n "${result}" ]]; then
         printf "%s" "${result}"
     else
@@ -453,6 +454,7 @@ function platform::setup_commands() {
             PLATFORM_FLAGS[stat_mtime]="-c%Y"
             PLATFORM_FLAGS[date_epoch]="+%s"
             PLATFORM_FLAGS[sed_inplace]="-i"
+            # shellcheck disable=SC2034  # PLATFORM_FLAGS read via `local -n` nameref; shellcheck can't track
             PLATFORM_FLAGS[readlink_canonical]="-f"
             ;;
 
@@ -1273,6 +1275,7 @@ function platform::self_test() {
 
     # Use trap to ensure cleanup on any exit path
     # Note: Double quotes ensure test_file is expanded NOW, not when trap fires
+    # shellcheck disable=SC2064  # intentional: expand test_file at trap-set time, not when fired
     trap "rm -f -- '${test_file}' 2>/dev/null" RETURN
 
     printf 'test\n' > "${test_file}"

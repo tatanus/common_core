@@ -96,6 +96,7 @@ function _curl_get_config() {
         CURL_MAX_RETRIES=$(config::get_int "curl.max_retries" 3)
         CURL_RETRY_DELAY=$(config::get_int "curl.retry_delay" 2)
 
+        # shellcheck disable=SC2034  # CURL_MAX_RETRIES/CURL_RETRY_DELAY are exposed to callers
         readonly CURL_TIMEOUT CURL_MAX_REDIRECTS CURL_USER_AGENT \
             CURL_MAX_RETRIES CURL_RETRY_DELAY
         _CURL_CONFIG_LOADED=1

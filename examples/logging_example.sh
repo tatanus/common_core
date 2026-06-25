@@ -57,9 +57,11 @@ function check_prereq() {
     local cmd="$1"
     if cmd::exists "${cmd}"; then
         pass "Found: ${cmd}"
+        # shellcheck disable=SC2154  # PASS/FAIL are exported by lib/util.sh sourced above
         return "${PASS}"
     else
         fail "Missing: ${cmd}"
+        # shellcheck disable=SC2154  # PASS/FAIL are exported by lib/util.sh sourced above
         return "${FAIL}"
     fi
 }

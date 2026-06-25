@@ -1251,7 +1251,7 @@ function file::restore_old_backup() {
 function file::self_test() {
     info "Running util_file.sh self-test..."
 
-    local tmp base test_file backup_file rc="${PASS}"
+    local tmp base backup_file rc="${PASS}"
 
     base="util_file_test_$$"
     tmp="/tmp/${base}.txt"

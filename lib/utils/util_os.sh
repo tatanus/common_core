@@ -83,6 +83,7 @@ fi
 function os::detect() {
     # Delegate to platform module
     platform::detect_os
+    # shellcheck disable=SC2154  # PLATFORM_OS is set by platform::detect_os in util_platform.sh
     printf '%s\n' "${PLATFORM_OS}"
     return "${PASS}"
 }

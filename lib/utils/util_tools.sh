@@ -461,11 +461,10 @@ function tools::test() {
     # Enable aliases in case tool is aliased
     shopt -s expand_aliases 2> /dev/null || true
 
-    # Execute test command
+    # Execute test command silently and capture exit code.
     # SECURITY: test_command originates from hardcoded TESTS arrays in source
     # code, not from runtime user input. Callers must never pass untrusted input.
-    local output
-    output=$(eval "${test_command}" 2>&1)
+    eval "${test_command}" > /dev/null 2>&1
     local actual_code=$?
 
     if [[ "${actual_code}" -eq "${expected_code}" ]]; then
