@@ -67,9 +67,10 @@ setup() {
     [[ "${output}" == "Hello world" ]]
 }
 
-# NOTE: str::to_title_case has a known bug — it relies on word-splitting via
-# IFS=' ' but util.sh sets IFS=$'\n\t', so only the first word gets capitalized.
-# Test omitted intentionally; bug should be tracked separately.
+@test "str::to_title_case capitalizes each word" {
+    run str::to_title_case "hello world foo"
+    [[ "${output}" == "Hello World Foo" ]]
+}
 
 #===============================================================================
 # Trim / pad

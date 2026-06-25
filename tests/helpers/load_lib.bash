@@ -19,17 +19,5 @@ export COMMON_CORE_ROOT
 # warn messages stay out of bats output).
 export UTIL_LOG_LEVEL="error"
 
-# Pre-declare logging functions as no-ops so util.sh's fallback definitions
-# (which return non-zero when filtered by log level) don't propagate failures
-# under bats's `set -e`. Sourced functions inherit caller errexit semantics,
-# and the lib's fallback `pass`/`fail` short-circuit via `&&` — that returns 1
-# when filtered, which trips set -e in test bodies.
-function info()  { :; }
-function warn()  { :; }
-function error() { :; }
-function debug() { :; }
-function pass()  { :; }
-function fail()  { :; }
-
 # shellcheck source=/dev/null
 source "${COMMON_CORE_ROOT}/lib/util.sh"

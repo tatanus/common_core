@@ -190,6 +190,9 @@ function str::to_title_case() {
     local str="${1:-}"
     local result=""
     local word
+    # util.sh sets IFS=$'\n\t'; restore space-splitting locally so word loop
+    # actually splits the input on spaces.
+    local IFS=$' \t\n'
 
     for word in ${str}; do
         result+="${word^} "

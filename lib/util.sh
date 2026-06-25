@@ -112,28 +112,49 @@ function _util_should_log() {
 # All util_*.sh files will use these if no color logging is available.
 # Fallbacks respect the configured log level.
 #===============================================================================
+# Note: each fallback ends with `return 0` so that a filtered log call (where
+# _util_should_log short-circuits the && chain) does not propagate a non-zero
+# exit to callers running under `set -e`.
 if ! declare -F info > /dev/null 2>&1; then
-    function info() { _util_should_log info && printf '[INFO ] %s\n' "${*}" >&2; }
+    function info() {
+        _util_should_log info && printf '[INFO ] %s\n' "${*}" >&2
+        return 0
+    }
 fi
 
 if ! declare -F warn > /dev/null 2>&1; then
-    function warn() { _util_should_log warn && printf '[WARN ] %s\n' "${*}" >&2; }
+    function warn() {
+        _util_should_log warn && printf '[WARN ] %s\n' "${*}" >&2
+        return 0
+    }
 fi
 
 if ! declare -F error > /dev/null 2>&1; then
-    function error() { _util_should_log error && printf '[ERROR] %s\n' "${*}" >&2; }
+    function error() {
+        _util_should_log error && printf '[ERROR] %s\n' "${*}" >&2
+        return 0
+    }
 fi
 
 if ! declare -F debug > /dev/null 2>&1; then
-    function debug() { _util_should_log debug && printf '[DEBUG] %s\n' "${*}" >&2; }
+    function debug() {
+        _util_should_log debug && printf '[DEBUG] %s\n' "${*}" >&2
+        return 0
+    }
 fi
 
 if ! declare -F pass > /dev/null 2>&1; then
-    function pass() { _util_should_log pass && printf '[PASS ] %s\n' "${*}" >&2; }
+    function pass() {
+        _util_should_log pass && printf '[PASS ] %s\n' "${*}" >&2
+        return 0
+    }
 fi
 
 if ! declare -F fail > /dev/null 2>&1; then
-    function fail() { _util_should_log fail && printf '[FAIL ] %s\n' "${*}" >&2; }
+    function fail() {
+        _util_should_log fail && printf '[FAIL ] %s\n' "${*}" >&2
+        return 0
+    }
 fi
 
 #===============================================================================
