@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026.06.25.0] - 2026-06-25
+
 ### Added
 
 - `Makefile` exposing the documented `make ci` workflow plus `help`, `fmt`,

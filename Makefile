@@ -5,7 +5,7 @@ SHFMT_OPTS := -i 4 -ci -sr
 
 # Versioning
 VERSION_FILE ?= VERSION
-SEMVER_RE    := ^[0-9]+\.[0-9]+\.[0-9]+$
+SEMVER_RE    := ^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$
 
 # --------------------------------------------------------------------
 # Help
@@ -56,9 +56,10 @@ set-version: ## Set VERSION file (V=MAJOR.MINOR.PATCH)
 
 tag: ## Create annotated git tag from VERSION
 	@test -f $(VERSION_FILE) || (echo "Missing $(VERSION_FILE)"; exit 2)
-	@v=$$(cat $(VERSION_FILE)); echo "$$v" | grep -Eq '$(SEMVER_RE)' || (echo "Invalid version: $$v"; exit 2)
-	@git tag -a "v$$v" -m "Release v$$v"
-	@echo "Tagged v$$v"
+	@v=$$(cat $(VERSION_FILE)); \
+		echo "$$v" | grep -Eq '$(SEMVER_RE)' || { echo "Invalid version: $$v"; exit 2; }; \
+		git tag -a "v$$v" -m "Release v$$v"; \
+		echo "Tagged v$$v"
 
 release: ## Bump VERSION, tag, and push with tags (V=1.2.3)
 	@test -n "$(V)" || (echo "Usage: make release V=1.2.3" && exit 2)
@@ -68,8 +69,9 @@ release: ## Bump VERSION, tag, and push with tags (V=1.2.3)
 
 check-version: ## Validate VERSION file format
 	@test -f $(VERSION_FILE) || (echo "Missing $(VERSION_FILE)"; exit 2)
-	@v=$$(cat $(VERSION_FILE)); echo "$$v" | grep -Eq '$(SEMVER_RE)' || (echo "Invalid version: $$v"; exit 2)
-	@echo "VERSION OK: $$v"
+	@v=$$(cat $(VERSION_FILE)); \
+		echo "$$v" | grep -Eq '$(SEMVER_RE)' || { echo "Invalid version: $$v"; exit 2; }; \
+		echo "VERSION OK: $$v"
 
 # --------------------------------------------------------------------
 # Install
