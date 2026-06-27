@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Four ShellCheck disable directives extended from `SC2329` to
+  `SC2317,SC2329` so they cover both older and newer ShellCheck
+  versions. ShellCheck 0.10 split the original SC2317
+  ("Command appears to be unreachable") into SC2317 (general
+  unreachable code) and SC2329 (function never invoked). My local
+  ShellCheck 0.11 reports SC2329 for log-fallback declarations and
+  trap-callback helpers; the Ubuntu LTS apt-installed ShellCheck used
+  by CI (older than 0.10) still reports SC2317 for the same condition,
+  so the SC2329-only disables silenced nothing on CI. Affected sites:
+    - `install.sh:53` — `fail()` log-fallback declaration
+    - `lib/utils/util_trap.sh:388` — `_trap_test_cleanup_func` (invoked
+      indirectly by `trap::add_cleanup` in the same self-test)
+    - `tests/run_self_tests.sh:74,79` — `error()` and `debug()`
+      log-fallback declarations
+  No behavior change. The disable comments now also explicitly note
+  why both rule numbers are listed so future readers do not strip one.
+
 ## [2026.06.25.0] - 2026-06-25
 
 ### Added

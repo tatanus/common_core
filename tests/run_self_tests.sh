@@ -71,12 +71,12 @@ if ! declare -F warn > /dev/null 2>&1; then
 fi
 
 if ! declare -F error > /dev/null 2>&1; then
-    # shellcheck disable=SC2329  # fallback log fn; may be invoked by sourced modules
+    # shellcheck disable=SC2317,SC2329  # fallback log fn; may be invoked by sourced modules (SC2317 = older shellcheck, SC2329 = newer)
     function error() { printf '[ERROR] %s\n' "${*}" >&2; }
 fi
 
 if ! declare -F debug > /dev/null 2>&1; then
-    # shellcheck disable=SC2329  # fallback log fn; may be invoked by sourced modules
+    # shellcheck disable=SC2317,SC2329  # fallback log fn; may be invoked by sourced modules (SC2317 = older shellcheck, SC2329 = newer)
     function debug() { printf '[DEBUG] %s\n' "${*}" >&2; }
 fi
 

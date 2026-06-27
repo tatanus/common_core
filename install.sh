@@ -50,7 +50,7 @@ if ! declare -F pass > /dev/null 2>&1; then
     function pass() { printf '[PASS ] %s\n' "${*}" >&2; }
 fi
 if ! declare -F fail > /dev/null 2>&1; then
-    # shellcheck disable=SC2329  # fallback declared for parity with other log fns; may be called by sourced modules
+    # shellcheck disable=SC2317,SC2329  # fallback declared for parity with other log fns; may be called by sourced modules (SC2317 = older shellcheck, SC2329 = newer)
     function fail() { printf '[FAIL ] %s\n' "${*}" >&2; }
 fi
 
