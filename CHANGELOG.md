@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026.06.28.0] - 2026-06-28
+
 ### Added
 
 - `install.sh` flags `-q, --quiet` and `-n, --dry-run`. Brings the
