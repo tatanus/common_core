@@ -30,12 +30,20 @@ INSTALL_DIR="${DEFAULT_INSTALL_DIR}"
 # Flags
 RUN_TESTS=true
 FORCE=false
+QUIET=false
+DRY_RUN=false
 
 #===============================================================================
 # Logging Fallbacks
+#-------------------------------------------------------------------------------
+# Defined only when common_core has not already provided richer versions.
+# Honors the -q/--quiet flag for non-error levels (info, debug, pass).
 #===============================================================================
 if ! declare -F info > /dev/null 2>&1; then
-    function info() { printf '[INFO ] %s\n' "${*}" >&2; }
+    function info() {
+        [[ "${QUIET}" == "true" ]] && return 0
+        printf '[INFO ] %s\n' "${*}" >&2
+    }
 fi
 if ! declare -F warn > /dev/null 2>&1; then
     function warn() { printf '[WARN ] %s\n' "${*}" >&2; }
@@ -44,10 +52,16 @@ if ! declare -F error > /dev/null 2>&1; then
     function error() { printf '[ERROR] %s\n' "${*}" >&2; }
 fi
 if ! declare -F debug > /dev/null 2>&1; then
-    function debug() { printf '[DEBUG] %s\n' "${*}" >&2; }
+    function debug() {
+        [[ "${QUIET}" == "true" ]] && return 0
+        printf '[DEBUG] %s\n' "${*}" >&2
+    }
 fi
 if ! declare -F pass > /dev/null 2>&1; then
-    function pass() { printf '[PASS ] %s\n' "${*}" >&2; }
+    function pass() {
+        [[ "${QUIET}" == "true" ]] && return 0
+        printf '[PASS ] %s\n' "${*}" >&2
+    }
 fi
 if ! declare -F fail > /dev/null 2>&1; then
     # shellcheck disable=SC2317,SC2329  # fallback declared for parity with other log fns; may be called by sourced modules (SC2317 = older shellcheck, SC2329 = newer)
@@ -195,6 +209,8 @@ OPTIONS:
                                (default: ${DEFAULT_INSTALL_DIR})
     -f, --force                Force installation (overwrite existing files)
     -s, --skip-tests           Skip self-tests after installation
+    -q, --quiet                Suppress non-error output
+    -n, --dry-run              Show what would be done without making changes
     -h, --help                 Display this help message
 
 EXAMPLES:
@@ -258,6 +274,14 @@ function parse_arguments() {
                 ;;
             -s | --skip-tests)
                 RUN_TESTS=false
+                shift
+                ;;
+            -q | --quiet)
+                QUIET=true
+                shift
+                ;;
+            -n | --dry-run)
+                DRY_RUN=true
                 shift
                 ;;
             -h | --help)
@@ -832,6 +856,19 @@ function main() {
     fi
 
     printf '\n'
+
+    # Dry-run: report what we would do and stop before any mutation.
+    if [[ "${DRY_RUN}" == "true" ]]; then
+        info "[DRY-RUN] would create install directory: ${INSTALL_DIR}"
+        info "[DRY-RUN] would copy lib/* into ${INSTALL_DIR}"
+        info "[DRY-RUN] would write VERSION marker to ${INSTALL_DIR}"
+        info "[DRY-RUN] would set executable permissions on installed files"
+        if [[ "${RUN_TESTS}" == "true" ]]; then
+            info "[DRY-RUN] would run self-tests after install"
+        fi
+        pass "Dry run complete (no changes made)"
+        return "${PASS}"
+    fi
 
     # Installation
     if ! create_install_directory; then

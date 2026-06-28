@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `install.sh` flags `-q, --quiet` and `-n, --dry-run`. Brings the
+  universal flag set in line with `bash_setup`, `pentest_setup`, and
+  `scripts`. `--quiet` is wired into the fallback log functions
+  (suppresses `info` / `pass` / `debug`; keeps `warn` / `error` / `fail`).
+  `--dry-run` reports what the install would do (create directory,
+  copy `lib/*`, write VERSION marker, set permissions, run self-tests)
+  and exits before any mutation.
+
+### Changed
+
+- `tools/check_bash_style.sh` updated from `scripts`' canonical version.
+  Adds a filter that skips backslash-escaped backticks (`\\\``) when
+  searching for command-substitution backticks. Heredocs that emit
+  Markdown READMEs use escaped backticks for inline-code formatting;
+  the previous check would have false-positive on those. The four
+  repos in the stack (`common_core`, `bash_setup`, `pentest_setup`,
+  `scripts`) now share a byte-identical `tools/check_bash_style.sh`.
+
 ## [2026.06.27.0] - 2026-06-27
 
 ### Fixed
