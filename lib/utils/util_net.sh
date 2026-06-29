@@ -196,6 +196,117 @@ function net::is_online() {
     return "${FAIL}"
 }
 
+#===============================================================================
+# net::has_direct_internet
+#------------------------------------------------------------------------------
+# Purpose  : Silently probe direct (no-proxy) Internet reachability with a
+#            short timeout. Tries a small set of stable anycast endpoints on
+#            TCP/443; bails on the first success.
+# Usage    : if net::has_direct_internet; then ... fi
+# Arguments: $1 (optional): per-host timeout in seconds (default 2)
+# Returns  : PASS if any probe succeeded, FAIL otherwise.
+# Notes    : Designed for fast pre-flight detection (e.g. PROXY auto-select).
+#            Does not log at INFO level so callers can decide their own
+#            output. Uses bash's /dev/tcp/ via platform::timeout for
+#            cross-platform behaviour, matching net::check_port.
+###############################################################################
+function net::has_direct_internet() {
+    local per_host_timeout="${1:-2}"
+    local host
+    for host in 1.1.1.1 8.8.8.8 9.9.9.9; do
+        if platform::timeout "${per_host_timeout}" bash -c ">/dev/tcp/${host}/443" 2> /dev/null; then
+            debug "Direct Internet reachable via ${host}:443"
+            return "${PASS}"
+        fi
+    done
+    debug "Direct Internet probe failed against 1.1.1.1 / 8.8.8.8 / 9.9.9.9 on TCP/443"
+    return "${FAIL}"
+}
+
+#===============================================================================
+# net::proxychains_usable
+#------------------------------------------------------------------------------
+# Purpose  : Decide whether `proxychains4` is actually USABLE -- i.e. the
+#            binary is on PATH AND a config file with at least one real
+#            ProxyList entry can be found. A distro-default config that only
+#            has the commented-out example lines does not count.
+# Usage    : if net::proxychains_usable; then PROXY="proxychains4 -q"; fi
+# Returns  : PASS if usable, FAIL otherwise.
+# Globals  : PROXYCHAINS_CONFIG (optional override for the config path).
+###############################################################################
+function net::proxychains_usable() {
+    if ! cmd::exists proxychains4; then
+        debug "proxychains4 not found on PATH"
+        return "${FAIL}"
+    fi
+
+    local conf
+    for conf in \
+        "${PROXYCHAINS_CONFIG:-}" \
+        /etc/proxychains4.conf \
+        /etc/proxychains.conf \
+        "${HOME}/.proxychains/proxychains.conf"; do
+        [[ -n "${conf}" && -r "${conf}" ]] || continue
+        # Look for at least one non-blank, non-comment line in [ProxyList].
+        # A real entry begins with one of the supported types: socks4 / socks5
+        # / http / raw. Distro-default configs only carry commented-out
+        # examples (lines starting with `#`).
+        if awk '
+            /^\s*\[ProxyList\]/ { in_list = 1; next }
+            in_list && /^\s*\[/ { in_list = 0; next }
+            in_list && /^\s*(socks4|socks5|http|raw)\b/ { print; exit 0 }
+        ' "${conf}" | grep -q .; then
+            debug "proxychains4 usable; config has a ProxyList entry in ${conf}"
+            return "${PASS}"
+        fi
+    done
+
+    debug "proxychains4 installed but no config has a real ProxyList entry"
+    return "${FAIL}"
+}
+
+#===============================================================================
+# net::proxy_auto_detect
+#------------------------------------------------------------------------------
+# Purpose  : Decide the right value of `${PROXY}` for the current host based
+#            on actual reachability, not just whether `proxychains4` exists.
+#            Algorithm:
+#              1. If PROXY is explicitly set (even to empty) -> honor it.
+#              2. If a direct TCP probe succeeds -> PROXY=""
+#              3. Else if proxychains4 is installed AND has a real ProxyList
+#                 entry -> PROXY="proxychains4 -q"
+#              4. Else -> PROXY="" with a warn (downstream calls likely to
+#                 fail; surface this loudly).
+# Usage    : net::proxy_auto_detect ; run-something
+# Returns  : PASS always.
+# Side effects: exports PROXY. The export is intentional so the value is
+#            visible to child processes (e.g. apt::, ruby::, the various
+#            installer pipelines).
+###############################################################################
+function net::proxy_auto_detect() {
+    if [[ -n "${PROXY+x}" ]]; then
+        debug "PROXY explicitly set to '${PROXY}'; auto-detect skipped"
+        export PROXY
+        return "${PASS}"
+    fi
+
+    if net::has_direct_internet; then
+        export PROXY=""
+        info "Direct Internet reachable; PROXY left empty"
+        return "${PASS}"
+    fi
+
+    if net::proxychains_usable; then
+        export PROXY="proxychains4 -q"
+        info "Direct Internet unreachable; using PROXY='${PROXY}'"
+        return "${PASS}"
+    fi
+
+    warn "Direct Internet unreachable AND proxychains4 not usable; continuing with PROXY='' (downstream network calls may fail)"
+    export PROXY=""
+    return "${PASS}"
+}
+
 ###############################################################################
 # net::resolve_target_ipv6
 #------------------------------------------------------------------------------

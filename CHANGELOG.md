@@ -7,7 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2026.06.29.3] - 2026-06-29
+### Added
+
+- `lib/utils/util_net.sh`: three new helpers for proxy auto-detection
+  based on actual reachability, not just whether `proxychains4`
+  happens to be on PATH.
+  - `net::has_direct_internet [timeout=2]` — silent TCP/443 probe
+    against `1.1.1.1`, `8.8.8.8`, `9.9.9.9`. Returns PASS on the
+    first endpoint that responds. Uses `platform::timeout` +
+    bash's `/dev/tcp/` (matching `net::check_port`).
+  - `net::proxychains_usable` — verifies `proxychains4` is on PATH
+    AND a config file at `${PROXYCHAINS_CONFIG:-/etc/proxychains4.conf}`
+    (or `/etc/proxychains.conf` or `${HOME}/.proxychains/proxychains.conf`)
+    contains at least one real `socks4|socks5|http|raw` entry inside
+    its `[ProxyList]` section. Rules out the common false-positive
+    where the binary is installed but the dist-default config only
+    has commented-out examples.
+  - `net::proxy_auto_detect` — the high-level helper. Honors an
+    explicitly-set `PROXY` (even an empty string) without probing,
+    otherwise sets and exports `PROXY=""` when direct Internet
+    works, `PROXY="proxychains4 -q"` when direct fails and
+    proxychains4 is usable, or `PROXY=""` with a warn when neither
+    is true (downstream calls likely to fail, surfaced loudly).
+  Both downstream installers (`bash_setup/install_extras.sh`,
+  `pentest_setup/config/config.sh`) now call
+  `net::proxy_auto_detect` at startup instead of assuming
+  `proxychains4` is correct just because it is installed.
+
+
 
 ### Fixed
 
