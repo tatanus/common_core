@@ -211,6 +211,7 @@ OPTIONS:
     -s, --skip-tests           Skip self-tests after installation
     -q, --quiet                Suppress non-error output
     -n, --dry-run              Show what would be done without making changes
+    -v, --version              Print version information and exit
     -h, --help                 Display this help message
 
 EXAMPLES:
@@ -283,6 +284,10 @@ function parse_arguments() {
             -n | --dry-run)
                 DRY_RUN=true
                 shift
+                ;;
+            -v | --version)
+                printf '%s %s\n' "${0##*/}" "${VERSION}"
+                exit "${PASS}"
                 ;;
             -h | --help)
                 usage

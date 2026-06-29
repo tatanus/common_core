@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `install.sh` flag `-v, --version`. Prints the installer name and
+  version (sourced from the `VERSION` global, which is loaded from the
+  `VERSION` file at startup) and exits. Closes the last gap in the
+  universal flag taxonomy across the four-repo stack — `common_core`
+  now exposes the same `-h / -v / -q / -n / -f` set as `bash_setup`,
+  `scripts`, and `pentest_setup`.
+
+### Changed
+
+- `README.md` rewritten end-to-end. The previous version was 52 lines
+  with a duplicate `# H1` (`# Common Core` followed by
+  `# Project Badges`), a stale "Last Commit" badge URL pointing at
+  `/commits/main` (this repo's default branch is `master`), and no
+  structured sections beyond a one-paragraph "Features" list. The new
+  version mirrors the layout the other 3 repos in the stack adopted
+  during their rewrites: overview, requirements, quick start (with
+  every install.sh flag), repository layout (every `lib/utils/*.sh`
+  module annotated), make-targets table, cross-repo contract, release
+  workflow, style conventions.
+- `.github/workflows/codacy.yml`: trigger branches `main` → `master`
+  to match this repo's default branch. The workflow had never run
+  because GitHub Actions silently no-ops when the `branches:` filter
+  excludes every push / PR target. Same workflow body, same schedule
+  (cron `39 20 * * 6`), same Codacy CLI pinned digest — only the
+  branch filter changed.
+
 ## [2026.06.28.0] - 2026-06-28
 
 ### Added
