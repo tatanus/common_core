@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `_apt_run`, `_brew_run` (homebrew install + general brew calls),
+  and `net::get_external_ip` were using `read -ra cmd <<< "${PROXY}"`
+  to split a multi-token PROXY prefix like `"proxychains4 -q"` into
+  argv elements. `read` honors IFS, and the project-wide
+  `IFS=$'\n\t'` does NOT include a space, so PROXY ended up as a
+  single token (`cmd[0]="proxychains4 -q "` — with the trailing
+  space). Bash then tried to exec that literal string as a binary
+  name, producing the cascading error:
+
+      util_tui.sh: line 303: proxychains4 -q : command not found
+
+  on every apt / brew call. Switched the four sites to
+  `IFS=$' \t\n' read -ra cmd <<< "${PROXY}"` so the read uses the
+  default field splitter only for that one command, leaving the
+  rest of the calling shell's IFS untouched.
+
+
 ## [2026.06.29.6] - 2026-06-29
 
 ### Fixed

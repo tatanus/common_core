@@ -795,10 +795,12 @@ function net::get_external_ip() {
 
     info "Fetching external IP via proxy chain..."
     for url in "${DEFAULT_IP_SERVICES[@]}"; do
-        # Build command array with optional PROXY
+        # Build command array with optional PROXY. Default-IFS read so a
+        # multi-token prefix ("proxychains4 -q") word-splits correctly
+        # under the project-wide IFS=$'\n\t'.
         local -a cmd=()
         if [[ -n "${PROXY:-}" ]]; then
-            read -ra cmd <<< "${PROXY}"
+            IFS=$' \t\n' read -ra cmd <<< "${PROXY}"
         fi
         cmd+=(curl -4 -fsSL --max-time 5 "${url}")
 

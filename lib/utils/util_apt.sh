@@ -111,11 +111,16 @@ function _apt_run() {
 
     info "${description}..."
 
-    # Build command array with optional PROXY
+    # Build command array with optional PROXY.
+    # Use default IFS for the read so a multi-token prefix like
+    # "proxychains4 -q" is actually word-split. The project-wide
+    # `IFS=$'\n\t'` does not include space, so without this override
+    # PROXY would end up as a single token (cmd[0]="proxychains4 -q "
+    # WITH the trailing space) that bash then tries to exec verbatim,
+    # producing "proxychains4 -q : command not found".
     local -a cmd=()
     if [[ -n "${PROXY:-}" ]]; then
-        # Split PROXY into array elements
-        read -ra cmd <<< "${PROXY}"
+        IFS=$' \t\n' read -ra cmd <<< "${PROXY}"
     fi
     cmd+=("$@")
 

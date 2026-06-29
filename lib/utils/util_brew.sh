@@ -92,10 +92,13 @@ function _brew_run() {
 
     info "${description}..."
 
-    # Build command array with optional PROXY
+    # Build command array with optional PROXY. See util_apt.sh::_apt_run
+    # for why `IFS=$' \t\n'` is needed -- the strict-mode IFS does not
+    # include space, so a multi-token PROXY prefix would otherwise stay
+    # as one quoted token and fail exec lookup.
     local -a cmd=()
     if [[ -n "${PROXY:-}" ]]; then
-        read -ra cmd <<< "${PROXY}"
+        IFS=$' \t\n' read -ra cmd <<< "${PROXY}"
     fi
     cmd+=(brew "$@")
 
@@ -213,10 +216,10 @@ function brew::install_self() {
         return "${FAIL}"
     }
 
-    # Build command array with optional PROXY
+    # Build command array with optional PROXY (see _apt_run for IFS rationale).
     local -a cmd=()
     if [[ -n "${PROXY:-}" ]]; then
-        read -ra cmd <<< "${PROXY}"
+        IFS=$' \t\n' read -ra cmd <<< "${PROXY}"
     fi
     cmd+=(/bin/bash -c "${install_script}")
 
