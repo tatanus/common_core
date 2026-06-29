@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026.06.29.8] - 2026-06-29
+
 ### Fixed
 
 - `py::install_pipx` now prefers `apt install pipx` on systems where
