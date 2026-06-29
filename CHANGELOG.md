@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `net::proxy_auto_detect` at startup instead of assuming
   `proxychains4` is correct just because it is installed.
 
-
+## [2026.06.29.3] - 2026-06-29
 
 ### Fixed
 
