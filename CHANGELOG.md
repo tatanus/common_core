@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026.06.29.7] - 2026-06-29
+
 ### Fixed
 
 - `_apt_run`, `_brew_run` (homebrew install + general brew calls),
