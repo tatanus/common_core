@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `py::install_pipx` now prefers `apt install pipx` on systems where
+  apt is available, falling back to `python3 -m pip install -U pipx`
+  with `--break-system-packages` if apt cannot deliver. Previously
+  it went straight to pip, which fails with
+  `error: externally-managed-environment` on Ubuntu 24+ and Debian
+  bookworm+ (PEP 668). The new ordering matches what those distros
+  document as the supported install path. The `--break-system-packages`
+  flag is harmless on older pip releases that do not recognise PEP
+  668.
+
+
 ## [2026.06.29.7] - 2026-06-29
 
 ### Fixed

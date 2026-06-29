@@ -777,14 +777,37 @@ function py::install_pipx() {
 
     info "Installing pipx..."
 
+    # Strategy 1: prefer the distro package. Ubuntu 22.04+, Debian
+    # bookworm+, and most modern derivatives ship pipx in the apt
+    # archive. Using apt sidesteps PEP 668's
+    # `externally-managed-environment` refusal that blocks system-wide
+    # `pip install` on Ubuntu 24.
+    if cmd::exists apt-get && apt::is_available; then
+        if apt::install pipx; then
+            if cmd::exists pipx; then
+                python3 -m pipx ensurepath 2> /dev/null || true
+                pass "pipx installed via apt"
+                return "${PASS}"
+            fi
+            debug "apt install pipx succeeded but pipx not on PATH; falling back"
+        else
+            debug "apt install pipx failed (package may not be available); falling back to pip"
+        fi
+    fi
+
+    # Strategy 2: fall back to `python3 -m pip install -U pipx`. On PEP
+    # 668 systems pip refuses without `--break-system-packages`, so add
+    # the flag unconditionally -- it is a no-op on older pip releases
+    # that do not recognize PEP 668. Use default IFS for the read so a
+    # multi-token pip-args string word-splits correctly under the
+    # project-wide `IFS=$'\n\t'`.
     local -a pip_args
-    read -ra pip_args <<< "$(py::get_pip_args "" "install")"
-    pip_args+=("-U" "pipx")
+    IFS=$' \t\n' read -ra pip_args <<< "$(py::get_pip_args "" "install")"
+    pip_args+=("--break-system-packages" "-U" "pipx")
 
     if cmd::run python3 -m pip "${pip_args[@]}"; then
-        # Ensure pipx is in PATH
         python3 -m pipx ensurepath 2> /dev/null || true
-        pass "pipx installed successfully"
+        pass "pipx installed via pip"
         return "${PASS}"
     fi
     fail "pipx installation failed"
