@@ -24,6 +24,13 @@ IFS=$'\n\t'
 
 #===============================================================================
 # Library Guard
+#------------------------------------------------------------------------------
+# Use a NON-exported global. Earlier revisions used `export UTILS_SH_LOADED=1`
+# here, which leaked the flag into every child process. Combined with a parent
+# shell that had `set -a` (allexport) on, a child `./install.sh` would inherit
+# UTILS_SH_LOADED=1, hit this guard, return immediately, and never declare its
+# fallback log functions or config arrays. Keep the guard shell-local so each
+# new shell initialises cleanly even when allexport leaks across the boundary.
 #===============================================================================
 if [[ -n "${UTILS_SH_LOADED:-}" ]]; then
     if (return 0 2> /dev/null); then
@@ -32,7 +39,7 @@ if [[ -n "${UTILS_SH_LOADED:-}" ]]; then
         exit 0
     fi
 else
-    export UTILS_SH_LOADED=1
+    declare -g UTILS_SH_LOADED=1
 fi
 
 #===============================================================================

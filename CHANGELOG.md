@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `util.sh` source-guard no longer exports `UTILS_SH_LOADED`.
+  Previously `export UTILS_SH_LOADED=1` was the only `export`-style
+  source-guard in the five-repo stack (every other dotfile uses
+  `declare -g X_LOADED=true`). Combined with a parent shell that had
+  `set -a` (`allexport`) on, the flag leaked into the env for every
+  child process. SHELLOPTS is itself auto-exported by bash, so a
+  child `./install.sh` would inherit `allexport`, then inherit
+  `UTILS_SH_LOADED=1`, hit this guard, return immediately, and never
+  define its fallback log functions (`info` / `pass` / `debug` /
+  `warn` / `error` / `fail`) or declare its associative-array
+  config registry (`UTIL_CONFIG`). The user-visible symptoms were
+  `pass: command not found` / `debug: command not found` cascading
+  through `install.sh`, and `file.safe_mode: syntax error: invalid
+  arithmetic operator` -- the latter because `${UTIL_CONFIG[key]}`
+  fell back to indexed-array semantics (arithmetic-evaluated
+  subscript) when the associative-array declaration was missing.
+  Changed to `declare -g UTILS_SH_LOADED=1`. The guard still works
+  within a single shell (no double-source) but no longer poisons
+  child processes that legitimately need a fresh init.
+
 ## [2026.06.29.2] - 2026-06-29
 
 ### Fixed
