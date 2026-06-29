@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026.06.29.6] - 2026-06-29
+
 ### Fixed
 
 - Log messages no longer split multi-arg commands onto separate lines.
