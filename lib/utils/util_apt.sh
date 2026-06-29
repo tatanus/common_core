@@ -114,13 +114,29 @@ function _apt_run() {
     fi
     cmd+=("$@")
 
-    # Run with spinner, redirecting output to /dev/null
-    if tui::show_spinner -- "${cmd[@]}" > /dev/null 2>&1; then
+    # Run with spinner, capturing stderr/stdout so we can surface the
+    # underlying apt error on failure (previously redirected to /dev/null,
+    # which made apt-get update failures look like silent breakage).
+    local log
+    log="$(mktemp -t apt_run.XXXXXX 2> /dev/null)" || log="/tmp/apt_run.$$.log"
+    if tui::show_spinner -- "${cmd[@]}" > "${log}" 2>&1; then
         debug "APT command succeeded: ${cmd[*]}"
+        rm -f "${log}"
         return "${PASS}"
     fi
 
-    debug "APT command failed: ${cmd[*]}"
+    local rc=$?
+    error "APT command failed (exit ${rc}): ${cmd[*]}"
+    if [[ -s "${log}" ]]; then
+        error "--- apt output (last 40 lines) ---"
+        tail -40 "${log}" | while IFS= read -r _apt_line; do
+            error "  ${_apt_line}"
+        done
+        error "--- end apt output ---"
+        debug "Full apt log retained at: ${log}"
+    else
+        rm -f "${log}"
+    fi
     return "${FAIL}"
 }
 

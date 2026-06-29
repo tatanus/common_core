@@ -859,7 +859,12 @@ function dir::ensure_exists() {
         return "${FAIL}"
     fi
 
-    if dir::exists "${dir}"; then
+    # Silent existence check -- do not call dir::exists() here, since that
+    # function emits a WARN when the path is missing. Callers (e.g.
+    # pentest_setup/menus/01_environment.sh) often call dir::exists FIRST
+    # and dir::ensure_exists SECOND, so the cascade produces double warnings.
+    if [[ -d "${dir}" ]]; then
+        debug "Directory exists: ${dir}"
         return "${PASS}"
     fi
 

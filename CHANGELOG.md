@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `_apt_run` (lib/utils/util_apt.sh) no longer swallows stderr.
+  Previously `tui::show_spinner -- "${cmd[@]}" > /dev/null 2>&1`
+  threw away apt-get's actual error output, so a failed
+  `apt-get update` surfaced as a generic "APT update failed" line
+  with no underlying diagnostic. Captures combined stdout+stderr to
+  a tempfile during the spinner run; on failure, dumps the last 40
+  lines through the project logger at ERROR level so the real cause
+  (network, sources.list, GPG, etc.) is visible. On success the
+  tempfile is removed silently.
+- `_curl_validate_proxy` / `_curl_build_proxy_args`
+  (lib/utils/util_curl.sh) handle the project's dual PROXY
+  convention without shouting. The downstream stack (bash_setup's
+  bash.env.sh, pentest_setup's config.sh, scripts/bash/wireless.sh
+  and pentest_setup/modules/tools/*.sh) uses `${PROXY}` as a
+  command prefix ("proxychains4 -q "). common_core's curl helpers
+  expect a URL form ("http://host:port"). On a fresh install with
+  proxychains-style PROXY, `_curl_validate_proxy` was logging two
+  ERROR lines for every curl operation and `_curl_build_proxy_args`
+  was warning "Invalid PROXY format ignored". Added
+  `_curl_proxy_is_url` heuristic: when `${PROXY}` does NOT contain
+  `://`, it is treated as a command prefix and curl helpers skip
+  `--proxy` injection silently (single debug line). URL form
+  continues to be validated and injected as before.
+- `dir::ensure_exists` (lib/utils/util_dir.sh) replaced the internal
+  `dir::exists` call with a direct `[[ -d … ]]` test. `dir::exists`
+  emits a WARN when a path is missing -- which is correct for an
+  *existence query* -- but `dir::ensure_exists`'s only job is to
+  create the path if missing, so callers that first probe with
+  `dir::exists` and then call `dir::ensure_exists` were getting
+  paired "Directory not found:" warnings for every required path.
+  Affected callers include `pentest_setup/menus/01_environment.sh`,
+  which iterates ~30 required directories and previously emitted ~60
+  warnings on a fresh install.
+
 ## [2026.06.29.1] - 2026-06-29
 
 ### Added

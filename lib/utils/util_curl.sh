@@ -110,6 +110,26 @@ _curl_get_config
 #===============================================================================
 
 ###############################################################################
+# _curl_proxy_is_url
+#------------------------------------------------------------------------------
+# Purpose  : Decide whether PROXY is a URL (Convention B) versus a command
+#            prefix like "proxychains4 -q" (Convention A used by downstream
+#            repos in this stack: bash_setup/dotfiles/bash.env.sh,
+#            pentest_setup/config/config.sh, scripts/bash/wireless.sh).
+# Usage    : _curl_proxy_is_url
+# Returns  : PASS if PROXY contains "://" (URL form), FAIL otherwise
+# Notes    : curl --proxy only accepts URL form. When PROXY is a command
+#            prefix, curl helpers skip --proxy injection silently; the
+#            caller will still pick up PROXY as a command-prefix where
+#            appropriate (apt::, brew::, ruby::).
+###############################################################################
+function _curl_proxy_is_url() {
+    local proxy="${PROXY:-}"
+    [[ -n "${proxy}" && "${proxy}" == *"://"* ]] && return "${PASS}"
+    return "${FAIL}"
+}
+
+###############################################################################
 # _curl_validate_proxy
 #------------------------------------------------------------------------------
 # Purpose  : Validate PROXY environment variable format
@@ -123,6 +143,15 @@ function _curl_validate_proxy() {
     # Empty proxy is valid (no proxy)
     if [[ -z "${proxy}" ]]; then
         return "${PASS}"
+    fi
+
+    # PROXY in command-prefix form (no "://", e.g. "proxychains4 -q") is the
+    # convention used by apt::/brew::/ruby:: and by downstream repos. It is
+    # not a valid curl --proxy value, but it is not an error either; the
+    # caller (_curl_build_proxy_args) will simply skip --proxy injection.
+    if ! _curl_proxy_is_url; then
+        debug "_curl_validate_proxy: PROXY is a command prefix, not a URL; curl --proxy not used"
+        return "${FAIL}"
     fi
 
     # Validate proxy format: protocol://host[:port] or user:pass@host[:port]
@@ -197,13 +226,16 @@ function _curl_validate_url() {
 function _curl_build_proxy_args() {
     local -n _cmd_ref="${1}"
 
-    if [[ -n "${PROXY:-}" ]]; then
+    # Only inject --proxy when PROXY is in URL form. Command-prefix PROXY
+    # (e.g. "proxychains4 -q ") is silently skipped here; downstream
+    # callers run that prefix in front of curl invocations themselves.
+    if _curl_proxy_is_url; then
         if _curl_validate_proxy; then
             # SECURITY FIX: Use --proxy with validated PROXY as single argument
             # This prevents word-splitting attacks
             _cmd_ref+=(--proxy "${PROXY}")
         else
-            warn "_curl_build_proxy_args: Invalid PROXY format ignored"
+            warn "_curl_build_proxy_args: Invalid PROXY URL ignored"
         fi
     fi
 
