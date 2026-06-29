@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `install_extras.sh` (top-level, sibling to `install.sh`). One-shot
+  system-side helper that installs the optional tools the
+  `bash_setup` interactive shell expects (`eza`, `fzf`, `freeze`,
+  `bat`, `duf`, `btop`), adds the eza-community signed apt repository
+  under `/etc/apt/keyrings/gierens.gpg` +
+  `/etc/apt/sources.list.d/gierens.list`, sweeps known-stale
+  `/pentest/*` directory remnants, and runs apt cleanup.
+  Previously lived at `bash_setup/install_extras.sh` (added in
+  bash_setup v2026.06.29.2); moved here so it sits alongside the
+  `net::proxy_auto_detect` helper it consumes. Prefers the in-repo
+  `lib/util.sh` copy (works on a fresh `git clone` before
+  `./install.sh` has been run), falls back to the deployed copy at
+  `~/.config/bash/lib/common_core/util.sh`, and finally to inline
+  log fallbacks if neither is reachable. Proxy detection delegates
+  to `net::proxy_auto_detect` (added v2026.06.29.4) so installs
+  pick the right transport by actual reachability, not by
+  `command -v proxychains4`. CLI flags `--no-proxy`, `--proxy CMD`,
+  and `--dry-run`; env vars `PROXY`, `DRY_RUN` honored.
+
 ## [2026.06.29.4] - 2026-06-29
 
 ### Added
