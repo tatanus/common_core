@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026.06.29.4] - 2026-06-29
+
 ### Added
 
 - `lib/utils/util_net.sh`: three new helpers for proxy auto-detection
