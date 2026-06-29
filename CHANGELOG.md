@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Log messages no longer split multi-arg commands onto separate lines.
+  Under the project-mandated `IFS=$'\n\t'`, expansions like
+  `${cmd[*]}` and `$*` join with a newline (the first character of
+  IFS), so a call such as
+
+      cp -p /root/bash_setup/dotfiles/bashrc /root/.bashrc
+
+  was being logged as four lines instead of one:
+
+      [DEBUG] Silent command succeeded: cp
+      -p
+      /root/bash_setup/dotfiles/bashrc
+      /root/.bashrc
+
+  Added `local IFS=' '` to the helper functions that build such log
+  messages so the join uses a space without changing the caller's
+  strict-mode IFS. Affected:
+    - `lib/util.sh`: fallback `info` / `warn` / `error` / `debug` /
+      `pass` / `fail`.
+    - `lib/utils/util_cmd.sh::cmd::run_silent` (the function whose
+      output the user reported).
+    - `lib/utils/util_apt.sh::_apt_run`, `apt::install`.
+    - `lib/utils/util_brew.sh::_brew_run`, `brew::install`,
+      `brew::install_cask`.
+    - `lib/utils/util_py_multi.sh::py_multi::set_versions`,
+      `py_multi::pip_install_all`.
+    - `lib/utils/util_tui.sh::tui::show_timer`.
+
+
 ## [2026.06.29.5] - 2026-06-29
 
 ### Added

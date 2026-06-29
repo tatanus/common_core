@@ -237,6 +237,10 @@ function cmd::run_silent() {
     "$@" > /dev/null 2>&1
     local rc=$?
 
+    # Render `$*` with spaces in the debug message regardless of the
+    # caller's `IFS=$'\n\t'`. Without this, a 4-arg command would print
+    # one token per line.
+    local IFS=' '
     if [[ "${rc}" -eq 0 ]]; then
         debug "Silent command succeeded: $*"
         return "${PASS}"

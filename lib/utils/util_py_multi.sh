@@ -87,6 +87,7 @@ declare -gA PY_MULTI_INSTALL_STATUS=()
 ###############################################################################
 function py_multi::set_versions() {
     PY_MULTI_VERSIONS=("$@")
+    local IFS=' '
     debug "Configured Python versions: ${PY_MULTI_VERSIONS[*]}"
     return "${PASS}"
 }
@@ -385,6 +386,10 @@ function py_multi::upgrade_pip_all() {
 # Returns  : PASS if all successful, FAIL if any failed
 ###############################################################################
 function py_multi::pip_install_all() {
+    # Render `${packages[*]}` with spaces in log messages regardless of
+    # IFS=$'\n\t'.
+    local IFS=' '
+
     if [[ $# -eq 0 ]]; then
         error "py_multi::pip_install_all requires at least one package"
         return "${FAIL}"

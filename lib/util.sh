@@ -122,8 +122,16 @@ function _util_should_log() {
 # Note: each fallback ends with `return 0` so that a filtered log call (where
 # _util_should_log short-circuits the && chain) does not propagate a non-zero
 # exit to callers running under `set -e`.
+#
+# Each fallback also pins `local IFS=' '` so that `"${*}"` (which joins args
+# using the first character of IFS) renders space-separated. The project-wide
+# `IFS=$'\n\t'` would otherwise join multi-arg log calls with newlines, e.g.:
+#     debug "cmd: ${cmd[*]}"   # cmd=(cp -p src dst)
+# would print each token on its own line. The local IFS keeps the original
+# strict-mode setting for the rest of the calling shell.
 if ! declare -F info > /dev/null 2>&1; then
     function info() {
+        local IFS=' '
         _util_should_log info && printf '[INFO ] %s\n' "${*}" >&2
         return 0
     }
@@ -131,6 +139,7 @@ fi
 
 if ! declare -F warn > /dev/null 2>&1; then
     function warn() {
+        local IFS=' '
         _util_should_log warn && printf '[WARN ] %s\n' "${*}" >&2
         return 0
     }
@@ -138,6 +147,7 @@ fi
 
 if ! declare -F error > /dev/null 2>&1; then
     function error() {
+        local IFS=' '
         _util_should_log error && printf '[ERROR] %s\n' "${*}" >&2
         return 0
     }
@@ -145,6 +155,7 @@ fi
 
 if ! declare -F debug > /dev/null 2>&1; then
     function debug() {
+        local IFS=' '
         _util_should_log debug && printf '[DEBUG] %s\n' "${*}" >&2
         return 0
     }
@@ -152,6 +163,7 @@ fi
 
 if ! declare -F pass > /dev/null 2>&1; then
     function pass() {
+        local IFS=' '
         _util_should_log pass && printf '[PASS ] %s\n' "${*}" >&2
         return 0
     }
@@ -159,6 +171,7 @@ fi
 
 if ! declare -F fail > /dev/null 2>&1; then
     function fail() {
+        local IFS=' '
         _util_should_log fail && printf '[FAIL ] %s\n' "${*}" >&2
         return 0
     }

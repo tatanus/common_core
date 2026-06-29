@@ -104,6 +104,11 @@ function _apt_run() {
         return "${FAIL}"
     fi
 
+    # Render `${cmd[*]}` with spaces in debug/error messages regardless of
+    # the caller's IFS=$'\n\t'. Without this, a multi-arg apt command
+    # would print one token per line in the log.
+    local IFS=' '
+
     info "${description}..."
 
     # Build command array with optional PROXY
@@ -404,6 +409,10 @@ function apt::is_installed() {
 # Globals  : None
 ###############################################################################
 function apt::install() {
+    # Render `${pkg_arr[*]}` with spaces in log messages regardless of
+    # IFS=$'\n\t' (the project-wide strict-mode setting).
+    local IFS=' '
+
     if ! apt::is_available; then
         error "APT not available"
         return "${FAIL}"

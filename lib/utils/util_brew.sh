@@ -81,6 +81,10 @@ function _brew_run() {
     local description="${1:-Brew operation}"
     shift
 
+    # Render `${cmd[*]}` with spaces in log messages regardless of the
+    # caller's IFS=$'\n\t' (strict-mode default).
+    local IFS=' '
+
     if [[ $# -eq 0 ]]; then
         error "_brew_run: no command provided"
         return "${FAIL}"
@@ -282,6 +286,10 @@ function brew::tap() {
 # Returns  : PASS on success, FAIL otherwise
 ###############################################################################
 function brew::install_cask() {
+    # Render `${valid_casks[*]}` / `${skipped_casks[*]}` with spaces in
+    # log messages regardless of IFS=$'\n\t'.
+    local IFS=' '
+
     brew::is_available || {
         error "Homebrew not available"
         return "${FAIL}"
@@ -438,6 +446,10 @@ function brew::is_installed() {
 # Globals  : None
 ###############################################################################
 function brew::install() {
+    # Render `${valid_pkgs[*]}` / `${skipped_pkgs[*]}` with spaces in
+    # log messages regardless of IFS=$'\n\t'.
+    local IFS=' '
+
     brew::is_available || {
         error "Homebrew not available"
         return "${FAIL}"

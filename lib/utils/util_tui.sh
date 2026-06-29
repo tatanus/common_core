@@ -456,6 +456,8 @@ function tui::show_timer() {
 
     local start_time
     start_time=$(date +%s)
+    # Render `$*` with spaces in the log message regardless of IFS=$'\n\t'.
+    local IFS=' '
     info "Running: $*"
 
     # Execute command directly in current environment
