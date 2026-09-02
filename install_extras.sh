@@ -16,10 +16,19 @@ IFS=$'\n\t'
 # =============================================================================
 # NAME        : install_extras.sh
 # DESCRIPTION : Installs the optional tools that bash_setup's interactive
-#               shell expects (eza, fzf, freeze, bat, duf, btop), adds the
-#               eza-community apt repository with a signed-by keyring, and
-#               sweeps stale /pentest/* directories. Complements install.sh
-#               (which deploys the dotfiles); this is the system-side setup.
+#               shell expects (eza, fzf, freeze, bat, duf, btop) and adds the
+#               eza-community apt repository with a signed-by keyring.
+#               Complements install.sh (which deploys the dotfiles); this is
+#               the system-side tool setup.
+#
+#               System MAINTENANCE (apt upgrade, stale /pentest/* sweep, apt
+#               cleanup, disk report) is NOT here -- see system_maintenance.sh.
+#
+#               NOTE: tool installation now overlaps install_tools.sh, which
+#               covers the same tools cross-platform (apt + Homebrew) from a
+#               single declarative table. install_tools.sh is the preferred
+#               entrypoint; this script is retained for the eza-community repo
+#               setup it still owns.
 # AUTHOR      : Adam Compton
 # DATE CREATED: 2026-06-29
 # =============================================================================
@@ -40,6 +49,12 @@ IFS=$'\n\t'
 #   --proxy CMD          set PROXY=CMD verbatim
 #   PROXY=... ./install_extras.sh   environment override (also honored)
 
+# Raise the default log level BEFORE sourcing util.sh. common_core defaults to
+# "warn" (see util.sh's _UTIL_CURRENT_LOG_LEVEL), which silently swallows every
+# info()/pass() call below -- this script previously ran to completion printing
+# nothing at all on success.
+export UTIL_LOG_LEVEL="${UTIL_LOG_LEVEL:-info}"
+
 DRY_RUN="${DRY_RUN:-false}"
 
 # Tools to install via apt (single batched call -> one cache scan, not six).
@@ -47,6 +62,8 @@ APT_TOOLS=(
     eza
     fzf
     bat
+    ncat # bash.aliases.sh aliases nc -> ncat; was declared in bash_setup's
+    # RECOMMENDED_TOOLS but never actually installed by anything.
     duf
     btop
 )
@@ -56,23 +73,8 @@ GO_TOOLS=(
     "github.com/charmbracelet/freeze@latest"
 )
 
-# Stale /pentest/ directories to remove. Sourced 1:1 from the legacy snippet;
-# the commented-out entries from the original list are deliberately omitted
-# here (matching what was intended to stay).
-STALE_PENTEST_DIRS=(
-    /pentest/wireless/
-    /pentest/exploitation/clusterd/
-    /pentest/exploitation/dhtest/
-    /pentest/exploitation/exploitdb/
-    /pentest/exploitation/jexboss/
-    /pentest/exploitation/tenable_poc/
-    /pentest/exploitation/Timeroast/
-    /pentest/intelligence-gathering/discover/
-    /pentest/intelligence-gathering/ldapperlinux-exploit-suggester/
-    /pentest/intelligence-gathering/linuxprivchecker/
-    /pentest/intelligence-gathering/rawr/
-    /pentest/intelligence-gathering/windows-exploit-suggester/
-)
+# NOTE: the STALE_PENTEST_DIRS list moved to system_maintenance.sh along with
+# the sweep that consumes it -- one canonical copy, no drift.
 
 # eza-community signed apt repo metadata
 EZA_KEY_URL="https://raw.githubusercontent.com/eza-community/eza/main/deb.asc"
@@ -223,6 +225,47 @@ function require_root() {
 }
 
 ###############################################################################
+# require_apt_platform
+#------------------------------------------------------------------------------
+# Purpose  : Refuse to run anywhere apt is not the package manager.
+#
+#            Every phase in this script is Debian-specific: apt update, a
+#            /etc/apt/keyrings GPG import, a /etc/apt/sources.list.d deb line,
+#            and apt tool installs. On macOS the first `apt update` would simply
+#            fail "command not found" after the script had already demanded a
+#            sudo password -- so fail fast, with a pointer to the cross-platform
+#            script instead.
+#
+# Returns  : PASS on an apt host; exits 1 otherwise
+###############################################################################
+function require_apt_platform() {
+    local host_os=""
+
+    if declare -F os::detect > /dev/null 2>&1; then
+        host_os="$(os::detect)"
+    else
+        case "$(uname -s 2> /dev/null)" in
+            Darwin) host_os="macos" ;;
+            Linux) host_os="linux" ;;
+            *) host_os="unknown" ;;
+        esac
+    fi
+
+    # WSL runs Debian userland under apt; treat it as linux.
+    [[ "${host_os}" == "wsl" ]] && host_os="linux"
+
+    if [[ "${host_os}" != "linux" ]] || ! command -v apt-get > /dev/null 2>&1; then
+        fail "install_extras.sh is Debian/Kali-only (detected: ${host_os})."
+        fail "For a cross-platform tool install, use:"
+        fail "    ./install_tools.sh --check     # see what is missing"
+        fail "    ./install_tools.sh             # install it"
+        exit 1
+    fi
+
+    return 0
+}
+
+###############################################################################
 # show_usage
 ###############################################################################
 function show_usage() {
@@ -230,8 +273,9 @@ function show_usage() {
 Usage: $(basename "$0") [OPTIONS]
 
 Installs the optional tools that bash_setup's interactive shell expects
-(eza, fzf, freeze, bat, duf, btop), adds the eza-community signed apt
-repository, sweeps stale /pentest/* directories, and runs apt cleanup.
+(eza, fzf, freeze, bat, duf, btop) and adds the eza-community signed apt
+repository. System maintenance (apt upgrade, stale /pentest/* sweep, apt
+cleanup) now lives in system_maintenance.sh.
 
 OPTIONS:
     -n, --dry-run     Print what would happen; do not modify the system
@@ -262,11 +306,9 @@ function update_system() {
         return 1
     }
 
-    info "Upgrading installed packages..."
-    run apt upgrade -y || {
-        fail "apt upgrade failed"
-        return 1
-    }
+    # NB: the `apt upgrade` pass moved to system_maintenance.sh. Provisioning
+    # tools should not silently upgrade every installed package as a side
+    # effect; that is a maintenance decision the operator makes explicitly.
 
     info "Ensuring gpg is installed (needed for keyring import)..."
     run apt install -y gpg || {
@@ -346,10 +388,22 @@ function install_go_tools() {
         return 0
     fi
 
+    # This script requires root, but `go install` writes to the *invoking*
+    # user's GOPATH. Running it as root drops the binary in /root/go/bin, off
+    # the user's PATH -- so freeze would report as installed yet be unusable.
+    # Drop back to the sudo caller when we know who they are.
+    local -a as_user=()
+    if [[ "${EUID:-65535}" -eq 0 && -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
+        info "Running go install as ${SUDO_USER} (keeps binaries in their GOPATH)"
+        as_user=(sudo -u "${SUDO_USER}" -H)
+    elif [[ "${EUID:-65535}" -eq 0 ]]; then
+        warn "Running go install as root; binaries will land in root's GOPATH"
+    fi
+
     local tool
     for tool in "${GO_TOOLS[@]}"; do
         info "go install ${tool}"
-        run go install "${tool}" || {
+        run "${as_user[@]}" go install "${tool}" || {
             fail "go install ${tool} failed"
             return 1
         }
@@ -357,45 +411,11 @@ function install_go_tools() {
     pass "Installed (go): ${GO_TOOLS[*]}"
 }
 
-function sweep_stale_pentest_dirs() {
-    info "Sweeping stale /pentest/ directories..."
-    local removed=0 skipped=0 d
-    for d in "${STALE_PENTEST_DIRS[@]}"; do
-        if [[ ! -e "${d}" ]]; then
-            ((skipped++))
-            continue
-        fi
-        if [[ "${DRY_RUN}" == "true" ]]; then
-            info "[DRY-RUN] rm -rf ${d}"
-            ((removed++))
-            continue
-        fi
-        rm -rf -- "${d}"
-        info "Removed: ${d}"
-        ((removed++))
-    done
-    pass "Sweep complete: ${removed} removed, ${skipped} not present"
-}
-
-function apt_cleanup() {
-    info "apt cleanup..."
-    run apt-get clean || warn "apt-get clean failed"
-    run apt-get autoremove -y || warn "apt-get autoremove failed"
-    run apt-get autoclean || warn "apt-get autoclean failed"
-}
-
-function show_disk_usage() {
-    info "Final disk-usage report (duf)..."
-    if [[ "${DRY_RUN}" == "true" ]]; then
-        info "[DRY-RUN] duf"
-        return 0
-    fi
-    if command -v duf > /dev/null 2>&1; then
-        duf
-    else
-        warn "duf not on PATH (was it installed in this run?). Skipping."
-    fi
-}
+# NOTE: The stale-/pentest/* sweep, the `apt upgrade` pass, apt cleanup, and
+# the disk-usage report used to live here. They are system MAINTENANCE, not
+# tool installation, and now live in a single-purpose sibling script,
+# system_maintenance.sh, so there is exactly one copy of the stale-dir list to
+# keep current. Run that after this if you want to patch and tidy the box.
 
 # -----------------------------------------------------------------------------
 # Main
@@ -432,6 +452,10 @@ function main() {
         esac
     done
 
+    # Platform gate first: checking the OS before demanding root means a macOS
+    # user gets a useful error instead of a sudo prompt followed by one.
+    require_apt_platform
+
     if [[ "${DRY_RUN}" != "true" ]]; then
         require_root
     fi
@@ -448,12 +472,10 @@ function main() {
     add_eza_repo
     install_apt_tools
     install_go_tools
-    sweep_stale_pentest_dirs
-    apt_cleanup
-    show_disk_usage
 
     echo ""
     pass "install_extras.sh completed."
+    info "For system maintenance (apt upgrade, /pentest sweep, cleanup) run: system_maintenance.sh"
 }
 
 main "$@"

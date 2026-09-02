@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `install_tools.sh` — OS-aware external-tool bootstrapper for the whole
+  stack. A single declarative table (`group | platforms | mode | commands |
+  apt | brew | description`) drives install and verification across both apt
+  (Debian/Kali) and Homebrew (macOS). It resolves the package manager from
+  the detected OS rather than from PATH-probe order (so a Linux host with
+  Homebrew installed still installs Debian package names), and never probes,
+  installs, or reports a tool that does not apply to the host — the GNU `g*`
+  tools are macOS-only, `xclip`/`wl-paste` are Linux-only. Supports
+  `--check` (audit, no privileges), `--list` (prints the table, marking rows
+  this host will skip), `--group`, `--dry-run`, and a `PROXY` prefix.
+  Consolidates the tool-install intent previously scattered across
+  `install_extras.sh`, `bash_setup`'s `RECOMMENDED_TOOLS`, and each repo's
+  `Makefile` gates.
+- `system_maintenance.sh` — standalone Debian/Kali maintenance pass extracted
+  from `install_extras.sh`: `apt update && apt upgrade`, removal of stale
+  `/pentest/*` tool checkouts, `apt` cleanup, and a disk-usage report. Phase
+  flags `--no-upgrade` / `--no-sweep` / `--no-cleanup`; OS-guarded,
+  root-required, proxy-aware, dry-run capable. Holds the single canonical
+  copy of the stale-directory list.
+
+### Changed
+
+- `install_extras.sh` is now OS-aware: `require_apt_platform` refuses to run
+  on non-apt hosts (before demanding a sudo password) with a pointer to
+  `install_tools.sh`. Raises the log level to `info` so success is no longer
+  silent, and adds `ncat` to the apt tool list (declared by `bash_setup` but
+  previously never installed by anything).
+- `install_extras.sh` no longer runs `go install` as root — it drops to the
+  invoking `SUDO_USER` so `freeze` lands in that user's `GOPATH/bin` instead
+  of `/root/go/bin`, off their PATH.
+- `install_extras.sh` no longer performs system maintenance: the `apt
+  upgrade` step, the `/pentest/*` sweep, `apt` cleanup, and the disk-usage
+  report moved to `system_maintenance.sh`. This removes a second copy of the
+  stale-directory list and keeps provisioning from silently upgrading every
+  installed package as a side effect.
+
 ## [2026.06.29.8] - 2026-06-29
 
 ### Fixed
