@@ -31,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `install.sh` now detects a previous install (via the `VERSION` marker at
+  `INSTALL_DIR`) and, when run interactively, prompts before overwriting or
+  updating it. `-f`/`--force` bypasses the prompt; `--dry-run` never prompts;
+  a non-interactive shell proceeds (the prompt is an interactive safety net).
 - `install_extras.sh` is now OS-aware: `require_apt_platform` refuses to run
   on non-apt hosts (before demanding a sudo password) with a pointer to
   `install_tools.sh`. Raises the log level to `info` so success is no longer

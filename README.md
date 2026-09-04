@@ -48,6 +48,7 @@ git clone https://github.com/tatanus/common_core.git
 cd common_core
 ./install.sh                    # default: install to ~/.config/bash/lib/common_core
 ./install.sh -d ~/.local/lib    # custom location
+./install.sh -f                 # update over an existing install without prompting
 ./install.sh -n                 # dry-run: report what would happen
 ./install.sh -v                 # print version and exit
 ./install.sh -h                 # full help
@@ -58,7 +59,9 @@ marker alongside it, sets executable permissions, configures `~/.bashrc`
 to source the library on shell start, and runs the self-tests
 (`--skip-tests` to skip). It refuses to install to system directories
 (`/`, `/usr`, `/etc`, …) and creates backups when updating an existing
-installation.
+installation. When it detects a prior install (via that `VERSION` marker)
+and is run interactively, it prompts before overwriting; `-f`/`--force`
+skips the prompt (a non-interactive run proceeds without asking).
 
 Source the library from your own script:
 

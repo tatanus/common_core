@@ -207,7 +207,7 @@ Install common_core library files to user directory
 OPTIONS:
     -d, --dir DIR              Install to specified directory
                                (default: ${DEFAULT_INSTALL_DIR})
-    -f, --force                Force installation (overwrite existing files)
+    -f, --force                Update over an existing install without prompting
     -s, --skip-tests           Skip self-tests after installation
     -q, --quiet                Suppress non-error output
     -n, --dry-run              Show what would be done without making changes
@@ -415,39 +415,57 @@ function validate_source() {
 # Notes    : Skips check if FORCE=true; requires curl for remote version
 ###############################################################################
 function check_if_update_needed() {
-    # If force flag set, always install
-    if [[ "${FORCE}" == "true" ]]; then
-        debug "Force mode enabled, skipping version check"
-        return "${PASS}"
-    fi
-
     local installed_version_file="${INSTALL_DIR}/VERSION"
 
-    # If not installed yet, update is needed
+    # Nothing installed yet -> always proceed with a fresh install.
     if [[ ! -f "${installed_version_file}" ]]; then
         info "common_core not currently installed"
         return "${PASS}"
     fi
 
-    # Get installed version
-    local installed_version
-    if ! installed_version=$(cat "${installed_version_file}" 2> /dev/null); then
-        warn "Could not read installed version, proceeding with installation"
-        return "${PASS}"
-    fi
+    local installed_version="unknown"
+    installed_version="$(cat "${installed_version_file}" 2> /dev/null || printf 'unknown')"
 
     info "Installed version: ${installed_version}"
     info "Source version:    ${VERSION}"
 
-    # Compare versions
-    if [[ "${installed_version}" == "${VERSION}" ]]; then
-        pass "Already at version ${VERSION}"
-        pass "Use --force to reinstall"
-        return "${FAIL}" # Already up to date
+    # --force skips the confirmation entirely.
+    if [[ "${FORCE}" == "true" ]]; then
+        info "Force mode: overwriting existing install (${installed_version} -> ${VERSION})"
+        return "${PASS}"
     fi
 
-    info "Update available: ${installed_version} → ${VERSION}"
-    return "${PASS}" # Update needed
+    # Dry-run: never prompt; the dry-run block downstream reports intent.
+    if [[ "${DRY_RUN}" == "true" ]]; then
+        info "[DRY-RUN] existing install detected (${installed_version}); would prompt to overwrite"
+        return "${PASS}"
+    fi
+
+    # No TTY: cannot prompt, so proceed (matching historical non-interactive
+    # behavior). An interactive run prompts; --force is the explicit skip.
+    if [[ ! -t 0 ]]; then
+        info "Non-interactive shell; updating existing install (${installed_version} -> ${VERSION})"
+        return "${PASS}"
+    fi
+
+    # Interactive confirmation.
+    local prompt reply
+    if [[ "${installed_version}" == "${VERSION}" ]]; then
+        prompt="common_core ${VERSION} is already installed at ${INSTALL_DIR}. Reinstall? [y/N] "
+    else
+        prompt="common_core ${installed_version} is installed at ${INSTALL_DIR}. Update to ${VERSION}? [y/N] "
+    fi
+    printf '%s' "${prompt}" >&2
+    read -r reply
+    case "${reply}" in
+        [yY] | [yY][eE][sS])
+            return "${PASS}"
+            ;;
+        *)
+            info "Left existing installation unchanged."
+            return "${FAIL}"
+            ;;
+    esac
 }
 
 ###############################################################################
