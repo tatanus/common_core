@@ -243,6 +243,31 @@ function _curl_build_proxy_args() {
 }
 
 ###############################################################################
+# _curl_prepend_proxy
+#------------------------------------------------------------------------------
+# Purpose  : Prepend a command-prefix PROXY (e.g. "proxychains4 -q") to the
+#            front of a curl command array, so curl:: helpers actually route
+#            through proxychains on hosts that need it. URL-form PROXY is
+#            handled separately by _curl_build_proxy_args (--proxy); this is
+#            the command-prefix convention. No-op when PROXY is empty or URL.
+# Usage    : _curl_prepend_proxy cmd_array_name   # call AFTER building cmd
+# Returns  : PASS always.
+###############################################################################
+function _curl_prepend_proxy() {
+    local -n _cmd_ref2="${1}"
+    local proxy="${PROXY:-}"
+    # Skip when empty or when it is a URL (that path uses --proxy instead).
+    [[ -n "${proxy}" && "${proxy}" != *"://"* ]] || return "${PASS}"
+    local -a _pfx=()
+    # Split on whitespace only for this read (the stack runs IFS=$'\n\t',
+    # which would otherwise keep "proxychains4 -q" as one bogus token).
+    IFS=$' \t\n' read -ra _pfx <<< "${proxy}"
+    [[ "${#_pfx[@]}" -gt 0 ]] || return "${PASS}"
+    _cmd_ref2=("${_pfx[@]}" "${_cmd_ref2[@]}")
+    return "${PASS}"
+}
+
+###############################################################################
 # _curl_exec_body
 #------------------------------------------------------------------------------
 # Purpose  : Execute curl command and return response body to stdout
@@ -272,6 +297,7 @@ function _curl_exec_body() {
     local -a cmd=(curl)
     _curl_build_proxy_args cmd
     cmd+=(--max-time "${CURL_TIMEOUT}" --max-redirs "${CURL_MAX_REDIRECTS}" -A "${CURL_USER_AGENT}" "$@" -o "${tmp}")
+    _curl_prepend_proxy cmd
 
     # Run with spinner
     if tui::show_spinner -- "${cmd[@]}" 2> /dev/null; then
@@ -314,6 +340,7 @@ function _curl_exec_file() {
     local -a cmd=(curl)
     _curl_build_proxy_args cmd
     cmd+=(-o "${dest}" "$@")
+    _curl_prepend_proxy cmd
 
     # Run with spinner
     if tui::show_spinner -- "${cmd[@]}" > /dev/null 2>&1; then

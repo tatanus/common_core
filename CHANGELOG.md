@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `curl::` helpers now route through a command-prefix `${PROXY}` (e.g.
+  `proxychains4 -q`). `_curl_exec_body`/`_curl_exec_file` previously only
+  honored URL-form PROXY (via `--proxy`) and silently ran `curl` directly for
+  the command-prefix form, so every `curl::download`/`curl::get` caller across
+  the stack (the pentest_setup tool installers, etc.) bypassed proxychains on
+  proxy-only hosts. New `_curl_prepend_proxy` prepends the prefix to the curl
+  command array.
+
 ### Added
 
 - `net::proxy_load` / `net::proxy_save` / `net::proxy_conf_path` in
