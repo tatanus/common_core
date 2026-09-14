@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `install_tools.sh` now configures the signed eza-community apt repository
+  (`/etc/apt/keyrings/gierens.gpg` + `/etc/apt/sources.list.d/gierens.list`)
+  on Debian/Kali before installing `eza`, since `eza` is not in the base apt
+  repos. The step is a no-op on macOS/Homebrew and when `eza` is already
+  present or not selected; it honors `--dry-run` and `${PROXY}`.
+
+### Removed
+
+- `install_extras.sh` — its tool installation duplicated `install_tools.sh`,
+  and the one thing it uniquely owned (the eza-community apt repo setup) is
+  now folded into `install_tools.sh`. System maintenance already lives in
+  `system_maintenance.sh`.
+
 ### Added
 
 - `install_tools.sh` — OS-aware external-tool bootstrapper for the whole

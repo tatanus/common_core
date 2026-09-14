@@ -53,6 +53,13 @@ CHECK_ONLY="false"
 # Package manager resolved in main(); one of: apt, brew
 PKG_MANAGER=""
 
+# eza-community signed apt repo. eza is not in the Debian/Kali base repos, so
+# on apt hosts the repo must be configured before `apt install eza` can work.
+# (macOS installs eza straight from Homebrew and needs none of this.)
+readonly EZA_KEY_URL="https://raw.githubusercontent.com/eza-community/eza/main/deb.asc"
+readonly EZA_KEYRING="/etc/apt/keyrings/gierens.gpg"
+readonly EZA_SOURCES_LIST="/etc/apt/sources.list.d/gierens.list"
+
 # Host OS resolved in main(); one of: linux, macos
 HOST_OS=""
 
@@ -846,6 +853,75 @@ function verify_tools() {
 #            does not trigger a cache scan per package.
 # Returns  : PASS on success, FAIL otherwise
 ###############################################################################
+###############################################################################
+# eza_wanted
+#------------------------------------------------------------------------------
+# Purpose  : True when eza is applicable + selected this run and not already
+#            installed -- i.e. we are actually about to install it.
+###############################################################################
+function eza_wanted() {
+    local record commands mode
+    for record in "${TOOL_SPECS[@]}"; do
+        commands="$(spec_field "${record}" 4)"
+        [[ "${commands}" == "eza" ]] || continue
+        record_applies "${record}" || return "${FAIL}"
+        mode="$(spec_field "${record}" 3)"
+        spec_satisfied "${mode}" "${commands}" && return "${FAIL}"
+        return "${PASS}"
+    done
+    return "${FAIL}"
+}
+
+###############################################################################
+# ensure_eza_repo
+#------------------------------------------------------------------------------
+# Purpose  : Configure the eza-community signed apt repository so `apt install
+#            eza` resolves on Debian/Kali. No-op unless the manager is apt and
+#            eza is actually being installed this run. Idempotent; honors
+#            DRY_RUN and ${PROXY}. Writing the repo here (before the package
+#            refresh in main) lets the subsequent `apt update` pick it up.
+# Returns  : PASS on success or no-op, FAIL if the key import failed
+###############################################################################
+function ensure_eza_repo() {
+    [[ "${PKG_MANAGER}" == "apt" ]] || return "${PASS}"
+    eza_wanted || return "${PASS}"
+
+    if [[ -f "${EZA_KEYRING}" && -f "${EZA_SOURCES_LIST}" ]]; then
+        debug "eza-community repo already configured"
+        return "${PASS}"
+    fi
+    if [[ "${DRY_RUN}" == "true" ]]; then
+        info "[DRY-RUN] add eza-community apt repo -> ${EZA_SOURCES_LIST}"
+        return "${PASS}"
+    fi
+    if ! have_command wget || ! have_command gpg; then
+        warn "wget/gpg not available yet; skipping eza-community repo setup"
+        return "${PASS}"
+    fi
+
+    info "Adding eza-community apt repository (eza is not in the base repos)..."
+    mkdir -p /etc/apt/keyrings || {
+        fail "mkdir /etc/apt/keyrings failed"
+        return "${FAIL}"
+    }
+    # Fetch the signing key over the optional proxy, then dearmor locally.
+    if [[ -n "${PROXY:-}" ]]; then
+        # shellcheck disable=SC2086
+        ${PROXY} wget -qO- "${EZA_KEY_URL}" | gpg --dearmor -o "${EZA_KEYRING}"
+    else
+        wget -qO- "${EZA_KEY_URL}" | gpg --dearmor -o "${EZA_KEYRING}"
+    fi
+    if [[ ! -s "${EZA_KEYRING}" ]]; then
+        fail "Failed to import eza GPG key (keyring empty)"
+        return "${FAIL}"
+    fi
+    printf 'deb [arch=amd64 signed-by=%s] http://deb.gierens.de stable main\n' "${EZA_KEYRING}" |
+        tee "${EZA_SOURCES_LIST}" > /dev/null
+    chmod 644 "${EZA_KEYRING}" "${EZA_SOURCES_LIST}"
+    pass "eza-community repo configured"
+    return "${PASS}"
+}
+
 function refresh_package_lists() {
     if [[ "${DRY_RUN}" == "true" ]]; then
         info "[DRY-RUN] refresh ${PKG_MANAGER} package lists"
@@ -1099,6 +1175,7 @@ function main() {
         exit "${rc}"
     fi
 
+    ensure_eza_repo || warn "eza-community repo setup failed; eza may not install"
     refresh_package_lists || exit 1
     install_tool_groups
     install_go_tools

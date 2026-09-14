@@ -15,7 +15,7 @@ IFS=$'\n\t'
 
 # =============================================================================
 # NAME        : system_maintenance.sh
-# DESCRIPTION : Debian/Kali system-maintenance pass, split out of the old
+# DESCRIPTION : Debian/Kali system-maintenance pass, split out of the former
 #               install_extras.sh so tool INSTALLATION (install_tools.sh) and
 #               system UPKEEP live in separate, single-purpose scripts.
 #
@@ -49,7 +49,7 @@ DO_UPGRADE="true"
 DO_SWEEP="true"
 DO_CLEANUP="true"
 
-# Stale /pentest/ directories to remove. Carried verbatim from install_extras.sh
+# Stale /pentest/ directories to remove. Carried verbatim from the former install_extras.sh
 # (the commented-out entries in the original legacy snippet stay omitted).
 STALE_PENTEST_DIRS=(
     /pentest/wireless/
@@ -95,7 +95,7 @@ if ! declare -F fail > /dev/null 2>&1; then
 fi
 
 # -----------------------------------------------------------------------------
-# Helpers (proxy / run / gating), mirrored from install_extras.sh so this
+# Helpers (proxy / run / gating), mirrored from the former install_extras.sh so this
 # script is self-contained.
 # -----------------------------------------------------------------------------
 

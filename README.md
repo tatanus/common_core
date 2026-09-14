@@ -81,8 +81,7 @@ never runs package-manager or filesystem operations that do not apply.
 
 | Script | Platform | What it does |
 |--------|----------|--------------|
-| `install_tools.sh`      | Linux **and** macOS | Installs (or `--check`s) the external commands the whole stack shells out to but does not ship — `git`, `jq`, `eza`, `fzf`, `bat`/`batcat`, `ncat`, `shellcheck`, `shfmt`, `freeze`, etc. Picks the package manager from the OS (apt on Debian/Kali, Homebrew on macOS), and only touches tools relevant to that OS — the GNU `g*` tools install on macOS only, `xclip`/`wl-paste` on Linux only. |
-| `install_extras.sh`     | Debian/Kali only    | Adds the signed eza-community apt repository and installs the optional interactive-shell tools. Overlaps `install_tools.sh`; retained for the eza-repo setup it uniquely owns. |
+| `install_tools.sh`      | Linux **and** macOS | Installs (or `--check`s) the external commands the whole stack shells out to but does not ship — `git`, `jq`, `eza`, `fzf`, `bat`/`batcat`, `ncat`, `shellcheck`, `shfmt`, `freeze`, etc. Picks the package manager from the OS (apt on Debian/Kali, Homebrew on macOS), and only touches tools relevant to that OS — the GNU `g*` tools install on macOS only, `xclip`/`wl-paste` on Linux only. On Debian/Kali it also configures the signed eza-community apt repository (since `eza` is not in the base repos) before installing `eza`. |
 | `system_maintenance.sh` | Debian/Kali only    | System upkeep, **not** tool install: `apt update && apt upgrade`, sweep of stale `/pentest/*` checkouts, `apt` cleanup, and a disk-usage report. Phase flags: `--no-upgrade`, `--no-sweep`, `--no-cleanup`. |
 
 ```bash
@@ -104,8 +103,7 @@ unsupported platform rather than failing mid-run.
 ```
 .
 ├── install.sh                  # one-shot installer (deploys lib/ to ${HOME}/.config/bash/lib/common_core/)
-├── install_tools.sh            # OS-aware external-tool bootstrapper (apt + Homebrew)
-├── install_extras.sh           # apt-only: eza-community repo + optional shell tools
+├── install_tools.sh            # OS-aware external-tool bootstrapper (apt + Homebrew; sets up the eza-community apt repo on Debian/Kali)
 ├── system_maintenance.sh       # apt-only: apt upgrade, stale /pentest/* sweep, cleanup
 ├── Makefile                    # quality gates + release automation
 ├── VERSION                     # date-based version: YYYY.MM.DD.N
