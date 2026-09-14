@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `net::proxy_load` / `net::proxy_save` / `net::proxy_conf_path` in
+  `lib/utils/util_net.sh`: a persisted `${PROXY}` default. `net::proxy_save`
+  auto-detects (via `net::proxy_auto_detect`) and writes `PROXY=...` to
+  `~/.config/bash/proxy.conf` (override with `PROXY_CONF`); `net::proxy_load`
+  reads it at shell/script startup without touching the network. Precedence:
+  an explicit `PROXY` in the environment wins, then the config file, then empty.
+
 ### Changed
 
 - `install_tools.sh` now configures the signed eza-community apt repository

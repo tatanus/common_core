@@ -307,6 +307,86 @@ function net::proxy_auto_detect() {
     return "${PASS}"
 }
 
+#===============================================================================
+# net::proxy_conf_path
+#------------------------------------------------------------------------------
+# Purpose  : Path of the persisted PROXY config, the single easy-to-edit
+#            override point for the whole stack. Override with PROXY_CONF.
+# Usage    : conf="$(net::proxy_conf_path)"
+###############################################################################
+function net::proxy_conf_path() {
+    printf '%s\n' "${PROXY_CONF:-${XDG_CONFIG_HOME:-${HOME}/.config}/bash/proxy.conf}"
+}
+
+#===============================================================================
+# net::proxy_load
+#------------------------------------------------------------------------------
+# Purpose  : Establish ${PROXY} from the persisted config WITHOUT touching the
+#            network. Precedence: an explicit PROXY in the environment wins;
+#            otherwise the config file (if present) provides the value;
+#            otherwise PROXY is left empty. Safe to call from shell startup.
+# Usage    : net::proxy_load
+# Returns  : PASS always; exports PROXY.
+###############################################################################
+function net::proxy_load() {
+    if [[ -n "${PROXY+x}" ]]; then
+        export PROXY
+        return "${PASS}"
+    fi
+    local conf
+    conf="$(net::proxy_conf_path)"
+    if [[ -r "${conf}" ]]; then
+        # shellcheck source=/dev/null
+        source "${conf}"
+    fi
+    export PROXY="${PROXY:-}"
+    return "${PASS}"
+}
+
+#===============================================================================
+# net::proxy_save
+#------------------------------------------------------------------------------
+# Purpose  : Persist a PROXY value to the config file so future shells and
+#            scripts default to it. With no argument it auto-detects via
+#            net::proxy_auto_detect (honoring any explicit PROXY). This is the
+#            "check if the proxy is needed and set it by default" step the
+#            installers run.
+# Usage    : net::proxy_save            # auto-detect and persist
+#            net::proxy_save "proxychains4 -q"
+#            net::proxy_save ""          # force direct
+# Returns  : PASS on success; exports PROXY.
+###############################################################################
+function net::proxy_save() {
+    local value conf dir
+    if [[ $# -ge 1 ]]; then
+        value="${1}"
+    else
+        net::proxy_auto_detect
+        value="${PROXY:-}"
+    fi
+    conf="$(net::proxy_conf_path)"
+    dir="$(dirname "${conf}")"
+    if declare -F dir::create > /dev/null 2>&1; then
+        dir::create "${dir}" > /dev/null 2>&1 || true
+    else
+        mkdir -p "${dir}" 2> /dev/null || true
+    fi
+    {
+        printf '# Persisted proxy prefix for the common_core / bash_setup /\n'
+        printf '# pentest_setup stack. Set PROXY to "proxychains4 -q" to route\n'
+        printf '# network calls through proxychains, or "" for direct Internet.\n'
+        printf '# Edit freely; an explicit PROXY in the environment still wins.\n'
+        printf '# Auto-written by net::proxy_save (installers run this).\n'
+        printf 'PROXY="%s"\n' "${value}"
+    } > "${conf}" || {
+        error "net::proxy_save: could not write ${conf}"
+        return "${FAIL}"
+    }
+    export PROXY="${value}"
+    info "Saved PROXY='${value}' to ${conf}"
+    return "${PASS}"
+}
+
 ###############################################################################
 # net::resolve_target_ipv6
 #------------------------------------------------------------------------------
