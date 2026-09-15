@@ -252,6 +252,20 @@ function tools::list_functions() {
 #   PYTHON          : Python interpreter to use (default: python3)
 #   TOOLS_ALIAS_FILE: File to add wrapper functions to
 ###############################################################################
+
+###############################################################################
+# tools::_pip
+#------------------------------------------------------------------------------
+# Purpose  : Run `${PYTHON} -m pip <args>` routed through ${PROXY} (proxychains)
+#            when set, so package installs work on proxy-only hosts. Callers
+#            append their own redirections after the call.
+###############################################################################
+function tools::_pip() {
+    local -a run=("${PYTHON:-python3}" -m pip "$@")
+    declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend run
+    "${run[@]}"
+}
+
 function tools::install_git_python() {
     local tool_name="${1:-}"
     local git_url="${2:-}"
@@ -314,12 +328,12 @@ function tools::install_git_python() {
     }
 
     # Upgrade pip in venv
-    "${PYTHON}" -m pip install --upgrade pip > /dev/null 2>&1 || true
+    tools::_pip install --upgrade pip > /dev/null 2>&1 || true
 
     # Install from requirements file if specified
     if [[ -n "${requirements_file}" && -f "${requirements_file}" ]]; then
         info "Installing from ${requirements_file}..."
-        if ! "${PYTHON}" -m pip install -r "${requirements_file}" > /dev/null 2>&1; then
+        if ! tools::_pip install -r "${requirements_file}" > /dev/null 2>&1; then
             fail "Failed to install requirements from ${requirements_file}"
             deactivate 2> /dev/null || true
             cd "${orig_dir}" || true
@@ -334,21 +348,23 @@ function tools::install_git_python() {
         for pkg in "${extra_packages[@]}"; do
             info "Installing ${pkg}..."
             if [[ "${pkg}" == "." ]]; then
-                if ! "${PYTHON}" -m pip install . > /dev/null 2>&1; then
+                if ! tools::_pip install . > /dev/null 2>&1; then
                     warn "Failed to install from current directory"
                 fi
             else
-                if ! "${PYTHON}" -m pip install "${pkg}" > /dev/null 2>&1; then
+                if ! tools::_pip install "${pkg}" > /dev/null 2>&1; then
                     warn "Failed to install ${pkg}"
                 fi
             fi
         done
     fi
 
-    # Run setup.py if present
+    # Run setup.py if present (routed through ${PROXY} when set)
     if [[ -f "setup.py" ]]; then
         info "Running setup.py install..."
-        if "${PYTHON}" setup.py install > /dev/null 2>&1; then
+        local -a _setup=("${PYTHON:-python3}" setup.py install)
+        declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _setup
+        if "${_setup[@]}" > /dev/null 2>&1; then
             pass "setup.py install completed"
         else
             warn "setup.py install failed (non-fatal)"

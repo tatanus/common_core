@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pip/pipx-based tool install failed to reach the network. `${PROXY}` empty
   (direct Internet) leaves the commands unchanged. Matches the earlier
   `curl::` fix; tools/scripts still only ever set `${PROXY}`.
+- `tools::install_git_python` (the helper behind ~58 pentest_setup tool
+  modules) now routes its in-venv `pip install` steps and `setup.py install`
+  through `${PROXY}` (new `tools::_pip`), matching the `git::clone` it already
+  uses. Previously the clone could be proxied but the package installs went
+  direct, so tools still failed to install on a proxy-only host.
 
 - `PROXYCHAINS_CMD` is now defined canonically in `lib/utils/util_net.sh` (the
   stack's base library), honoring an override: `: "${PROXYCHAINS_CMD:=proxychains4 -q }"`.
