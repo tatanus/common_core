@@ -261,7 +261,16 @@ function tools::list_functions() {
 #            append their own redirections after the call.
 ###############################################################################
 function tools::_pip() {
-    local -a run=("${PYTHON:-python3}" -m pip "$@")
+    # Route in-venv package installs through the selected backend. When
+    # PY_INSTALLER=uv and uv is available, use "uv pip <args>" (installs into
+    # the active venv via $VIRTUAL_ENV); otherwise "python -m pip <args>".
+    # Either way the fetch is prepended with ${PROXY} so proxy-only hosts work.
+    local -a run
+    if [[ "${PY_INSTALLER:-pip}" == "uv" ]] && cmd::exists uv; then
+        run=(uv pip "$@")
+    else
+        run=("${PYTHON:-python3}" -m pip "$@")
+    fi
     declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend run
     "${run[@]}"
 }

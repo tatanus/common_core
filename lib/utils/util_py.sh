@@ -835,7 +835,9 @@ function py::uv_install() {
         return "${FAIL}"
     fi
     info "Installing packages via uv: $*"
-    if cmd::run uv pip install "$@"; then
+    local -a run=(uv pip install "$@")
+    declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend run
+    if cmd::run "${run[@]}"; then
         pass "uv package installation complete"
         return "${PASS}"
     fi
@@ -860,6 +862,17 @@ function py::pipx_install() {
     if [[ -z "${package}" ]]; then
         error "py::pipx_install requires a package name"
         return "${FAIL}"
+    fi
+
+    if py::_use_uv; then
+        local -a uv_extra=()
+        if [[ -n "${python_version}" ]]; then
+            local uv_python
+            uv_python=$(py::_get_python_cmd "${python_version}")
+            [[ -n "${uv_python}" ]] && uv_extra+=(--python "${uv_python}")
+        fi
+        py::uv_tool_install "${package}" ${uv_extra[@]+"${uv_extra[@]}"}
+        return "$?"
     fi
 
     if ! cmd::exists pipx; then
@@ -988,10 +1001,70 @@ function py::freeze_requirements() {
 # Usage    : py::pip_install "requests" "flask"
 # Returns  : PASS if successful, FAIL otherwise.
 ###############################################################################
+#===============================================================================
+# Python installer backend selection
+#===============================================================================
+# PY_INSTALLER selects the package-manager backend the py:: install helpers
+# use: "pip" (default; python -m pip / pipx) or "uv" (uv pip / uv tool). It is
+# a single opt-in knob -- set it in the environment (or the deployed
+# pentest.env.sh) before sourcing, or answer the installer prompt. Any value
+# other than "uv" behaves as "pip".
+: "${PY_INSTALLER:=pip}"
+export PY_INSTALLER
+
+###############################################################################
+# function py::_use_uv()
+#------------------------------------------------------------------------------
+# Purpose  : Decide whether the uv backend should be used, ensuring uv is
+#            available (installing it on demand) when it is requested.
+# Usage    : if py::_use_uv; then ...uv path...; fi
+# Returns  : PASS when PY_INSTALLER=uv and uv is usable; FAIL otherwise.
+###############################################################################
+function py::_use_uv() {
+    [[ "${PY_INSTALLER:-pip}" == "uv" ]] || return "${FAIL}"
+    if ! cmd::exists uv; then
+        py::install_uv || return "${FAIL}"
+    fi
+    return "${PASS}"
+}
+
+###############################################################################
+# function py::uv_tool_install()
+#------------------------------------------------------------------------------
+# Purpose  : Install a Python application as an isolated uv tool (the uv
+#            equivalent of "pipx install"), routed through ${PROXY}.
+# Usage    : py::uv_tool_install <package> [--python <cmd>]
+# Returns  : PASS on success, FAIL on error.
+###############################################################################
+function py::uv_tool_install() {
+    if ! cmd::exists uv; then
+        error "uv not installed"
+        return "${FAIL}"
+    fi
+    if [[ $# -eq 0 ]]; then
+        error "py::uv_tool_install requires at least one package"
+        return "${FAIL}"
+    fi
+    info "Installing tool via uv: $*"
+    local -a run=(uv tool install --force "$@")
+    declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend run
+    if cmd::run "${run[@]}"; then
+        pass "uv tool installation complete: $1"
+        return "${PASS}"
+    fi
+    fail "uv tool installation failed: $1"
+    return "${FAIL}"
+}
+
 function py::pip_install() {
     if [[ $# -eq 0 ]]; then
         error "py::pip_install requires at least one package"
         return "${FAIL}"
+    fi
+
+    if py::_use_uv; then
+        py::uv_install "$@"
+        return "$?"
     fi
 
     local -a pip_args

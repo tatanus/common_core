@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   through `${PROXY}` (new `tools::_pip`), matching the `git::clone` it already
   uses. Previously the clone could be proxied but the package installs went
   direct, so tools still failed to install on a proxy-only host.
+- Python installer backend selection via `PY_INSTALLER` (`pip` default | `uv`).
+  `py::pip_install`/`py::pipx_install` and `tools::install_git_python`'s
+  `tools::_pip` now route through `uv pip` / `uv tool` when `PY_INSTALLER=uv`
+  (auto-installing uv if missing); `py::uv_install` gained a `py::uv_tool_install`
+  sibling. All uv paths are proxied via `${PROXY}` like the pip paths.
 
 - `PROXYCHAINS_CMD` is now defined canonically in `lib/utils/util_net.sh` (the
   stack's base library), honoring an override: `: "${PROXYCHAINS_CMD:=proxychains4 -q }"`.
