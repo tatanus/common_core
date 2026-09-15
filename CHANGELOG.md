@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Unified persistent env API in `lib/utils/util_env.sh`: `env::file` (the one
+  sourceable env file, `~/.config/bash/pentest.env.sh`, override `PENTEST_ENV_FILE`),
+  `env::persist KEY VALUE` (upsert a value into the file's MANAGED block and
+  export it, so new shells inherit it), and `env::reload` (re-source the file
+  now). Complements the existing in-shell `env::set`/`get`/`unset`.
+
 ### Fixed
 
 - `curl::` helpers now route through a command-prefix `${PROXY}` (e.g.

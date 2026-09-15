@@ -458,6 +458,111 @@ function env::save_to_file() {
 }
 
 #===============================================================================
+# Unified persistent env file (single source of truth)
+#------------------------------------------------------------------------------
+# One sourceable file holds the whole stack's ENV (BASH + PENTEST + MISC).
+# Repos own the defaults/derived section; operators and scripts add/override
+# values in a MANAGED block via env::persist. New shells source the file, so
+# persisted changes appear automatically; env::reload re-sources it now.
+#===============================================================================
+
+# Markers that delimit the machine-managed override block in the env file.
+readonly ENV_MANAGED_BEGIN="# >>> ENV::MANAGED (edited by env::persist; hand-edits ok) >>>"
+readonly ENV_MANAGED_END="# <<< ENV::MANAGED <<<"
+
+###############################################################################
+# env::file
+#------------------------------------------------------------------------------
+# Purpose  : Path of the unified env file. Override with PENTEST_ENV_FILE.
+# Usage    : f="$(env::file)"
+###############################################################################
+function env::file() {
+    printf '%s\n' "${PENTEST_ENV_FILE:-${XDG_CONFIG_HOME:-${HOME}/.config}/bash/pentest.env.sh}"
+}
+
+###############################################################################
+# env::reload
+#------------------------------------------------------------------------------
+# Purpose  : Re-source the unified env file into the current shell so the
+#            latest persisted values take effect without opening a new shell.
+# Usage    : env::reload   (the `reload_env` command wraps this)
+# Returns  : PASS if sourced, FAIL if the file is missing.
+###############################################################################
+function env::reload() {
+    local f
+    f="$(env::file)"
+    if [[ ! -r "${f}" ]]; then
+        error "env::reload: env file not found: ${f}"
+        return "${FAIL}"
+    fi
+    # shellcheck source=/dev/null
+    source "${f}"
+    debug "Reloaded environment from ${f}"
+    return "${PASS}"
+}
+
+###############################################################################
+# env::persist
+#------------------------------------------------------------------------------
+# Purpose  : Add or update ONE variable in the env file's MANAGED block and
+#            export it in the current shell, so the change survives into new
+#            shells. The defaults/derived section (repo-owned) is never touched.
+# Usage    : env::persist DC_IP 10.0.0.5
+#            env::persist DATA_DIR /engagements/acme
+# Returns  : PASS on success, FAIL on error.
+###############################################################################
+function env::persist() {
+    local var="${1:-}" value="${2:-}" f tmp
+    if [[ -z "${var}" ]]; then
+        error "Usage: env::persist <VAR> <value>"
+        return "${FAIL}"
+    fi
+    if ! [[ "${var}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+        error "env::persist: invalid variable name: ${var}"
+        return "${FAIL}"
+    fi
+    f="$(env::file)"
+    if declare -F dir::create > /dev/null 2>&1; then
+        dir::create "$(dirname "${f}")" > /dev/null 2>&1 || true
+    else
+        mkdir -p "$(dirname "${f}")" 2> /dev/null || true
+    fi
+    [[ -f "${f}" ]] || printf '#!/usr/bin/env bash\n' > "${f}"
+
+    # Ensure the managed block exists.
+    if ! grep -qF "${ENV_MANAGED_BEGIN}" "${f}" 2> /dev/null; then
+        {
+            printf '\n%s\n' "${ENV_MANAGED_BEGIN}"
+            printf '%s\n' "${ENV_MANAGED_END}"
+        } >> "${f}"
+    fi
+
+    # Upsert the line inside the managed block (awk: replace if present, else
+    # insert before the end marker).
+    tmp="$(mktemp)"
+    awk -v b="${ENV_MANAGED_BEGIN}" -v e="${ENV_MANAGED_END}" \
+        -v var="${var}" -v val="${value}" '
+        BEGIN { inblk = 0; done = 0 }
+        $0 == b { inblk = 1; print; next }
+        $0 == e {
+            if (inblk && !done) { printf "export %s=%s\n", var, qq(val) }
+            inblk = 0; print; next
+        }
+        inblk && $0 ~ ("^export[[:space:]]+" var "=") {
+            if (!done) { printf "export %s=%s\n", var, qq(val); done = 1 }
+            next
+        }
+        { print }
+        function qq(s,  r) { r = s; gsub(/"/, "\\\"", r); return "\"" r "\"" }
+    ' "${f}" > "${tmp}" && mv "${tmp}" "${f}"
+    rm -f "${tmp}" 2> /dev/null || true
+
+    export "${var}=${value}"
+    pass "Persisted ${var} to ${f}"
+    return "${PASS}"
+}
+
+#===============================================================================
 # Environment Detection Helpers
 #===============================================================================
 
