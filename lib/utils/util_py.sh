@@ -754,7 +754,9 @@ function py::install_uv() {
     read -ra pip_args <<< "$(py::get_pip_args "" "install")"
     pip_args+=("-U" "uv")
 
-    if cmd::run python3 -m pip "${pip_args[@]}"; then
+    local -a _pip_run=(python3 -m pip "${pip_args[@]}")
+    declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _pip_run
+    if cmd::run "${_pip_run[@]}"; then
         pass "uv installed successfully"
         return "${PASS}"
     fi
@@ -805,7 +807,9 @@ function py::install_pipx() {
     IFS=$' \t\n' read -ra pip_args <<< "$(py::get_pip_args "" "install")"
     pip_args+=("--break-system-packages" "-U" "pipx")
 
-    if cmd::run python3 -m pip "${pip_args[@]}"; then
+    local -a _pip_run=(python3 -m pip "${pip_args[@]}")
+    declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _pip_run
+    if cmd::run "${_pip_run[@]}"; then
         python3 -m pipx ensurepath 2> /dev/null || true
         pass "pipx installed via pip"
         return "${PASS}"
@@ -873,7 +877,9 @@ function py::pipx_install() {
     fi
 
     info "Installing pipx package: ${package}"
-    if cmd::run pipx "${args[@]}"; then
+    local -a run=(pipx "${args[@]}")
+    declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend run
+    if cmd::run "${run[@]}"; then
         pass "pipx installation successful: ${package}"
         return "${PASS}"
     fi
@@ -993,7 +999,9 @@ function py::pip_install() {
     pip_args+=("-U" "$@")
 
     info "Installing packages via pip: $*"
-    if PIP_ROOT_USER_ACTION=ignore cmd::run python3 -m pip "${pip_args[@]}"; then
+    local -a _pip_run=(python3 -m pip "${pip_args[@]}")
+    declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _pip_run
+    if PIP_ROOT_USER_ACTION=ignore cmd::run "${_pip_run[@]}"; then
         pass "Package installation complete"
         return "${PASS}"
     fi

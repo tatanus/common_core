@@ -496,6 +496,9 @@ function git::clone() {
     cmd+=("${repo}")
     [[ -n "${dest}" ]] && cmd+=("${dest}")
 
+    # Route through ${PROXY} (e.g. proxychains4 -q) on hosts that need it.
+    declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend cmd
+
     if "${cmd[@]}"; then
         pass "Cloned repository: ${repo}"
         return "${PASS}"
@@ -523,14 +526,18 @@ function git::pull() {
         return "${FAIL}"
     fi
 
-    # Auto-fetch if configured
+    # Auto-fetch if configured (routed through ${PROXY} when set).
     if config::get_bool "git.auto_fetch"; then
         info "Auto-fetch enabled, fetching latest..."
-        cmd::run git fetch || warn "Auto-fetch failed"
+        local -a fcmd=(git fetch)
+        declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend fcmd
+        cmd::run "${fcmd[@]}" || warn "Auto-fetch failed"
     fi
 
     info "Pulling latest changes..."
-    if cmd::run git pull --rebase; then
+    local -a pcmd=(git pull --rebase)
+    declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend pcmd
+    if cmd::run "${pcmd[@]}"; then
         pass "Repository updated"
         return "${PASS}"
     fi

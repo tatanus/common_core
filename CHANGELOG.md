@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `git::` and `py::` helpers now route through `${PROXY}` on hosts that need
+  proxychains, via a new shared `net::proxy_prepend`. Previously `git::clone`
+  (used by ~24 pentest_setup tool modules), `git::pull`, `py::pipx_install`,
+  `py::pip_install`, `py::install_pipx`, and `py::install_uv` shelled out to
+  `git`/`pipx`/`pip` directly, so on a proxy-only host every git-clone and
+  pip/pipx-based tool install failed to reach the network. `${PROXY}` empty
+  (direct Internet) leaves the commands unchanged. Matches the earlier
+  `curl::` fix; tools/scripts still only ever set `${PROXY}`.
+
 - `PROXYCHAINS_CMD` is now defined canonically in `lib/utils/util_net.sh` (the
   stack's base library), honoring an override: `: "${PROXYCHAINS_CMD:=proxychains4 -q }"`.
   `net::proxy_auto_detect` now BUILDS `PROXY` from it (`PROXY="${PROXYCHAINS_CMD% }"`,

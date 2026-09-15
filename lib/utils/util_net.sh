@@ -208,6 +208,29 @@ function net::is_online() {
 : "${PROXYCHAINS_CMD:=proxychains4 -q }"
 export PROXYCHAINS_CMD
 
+###############################################################################
+# net::proxy_prepend
+#------------------------------------------------------------------------------
+# Purpose  : Prepend a command-prefix ${PROXY} (e.g. "proxychains4 -q") to the
+#            FRONT of a command array so any helper that shells out (git::,
+#            py::, …) routes through proxychains on hosts that need it. No-op
+#            when PROXY is empty or a URL (that form is a curl --proxy value,
+#            handled in util_curl). Whitespace-split with a local IFS so it
+#            survives the stack-wide IFS=$'\n\t'.
+# Usage    : local -a cmd=(git clone "$url"); net::proxy_prepend cmd; "${cmd[@]}"
+# Returns  : PASS always.
+###############################################################################
+function net::proxy_prepend() {
+    local -n _pp_arr="${1}"
+    local proxy="${PROXY:-}"
+    [[ -n "${proxy}" && "${proxy}" != *"://"* ]] || return "${PASS}"
+    local -a _pfx=()
+    IFS=$' \t\n' read -ra _pfx <<< "${proxy}"
+    [[ "${#_pfx[@]}" -gt 0 ]] || return "${PASS}"
+    _pp_arr=("${_pfx[@]}" "${_pp_arr[@]}")
+    return "${PASS}"
+}
+
 #===============================================================================
 # net::has_direct_internet
 #------------------------------------------------------------------------------
