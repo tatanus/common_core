@@ -197,6 +197,18 @@ function net::is_online() {
 }
 
 #===============================================================================
+# Canonical proxychains command
+#------------------------------------------------------------------------------
+# The one source of truth for the proxychains invocation, defined here (the
+# stack's base library) so every repo, script, and the unified env file can
+# find it. Honors an explicit override. The trailing space is intentional so it
+# concatenates cleanly when used literally as a prefix (`${PROXYCHAINS_CMD}cmd`);
+# net::proxy_auto_detect trims it when BUILDING ${PROXY} from this value.
+#===============================================================================
+: "${PROXYCHAINS_CMD:=proxychains4 -q }"
+export PROXYCHAINS_CMD
+
+#===============================================================================
 # net::has_direct_internet
 #------------------------------------------------------------------------------
 # Purpose  : Silently probe direct (no-proxy) Internet reachability with a
@@ -297,7 +309,11 @@ function net::proxy_auto_detect() {
     fi
 
     if net::proxychains_usable; then
-        export PROXY="proxychains4 -q"
+        # Build PROXY from the canonical PROXYCHAINS_CMD so there is one source
+        # of truth for the proxychains invocation. Trim a trailing space so the
+        # value word-splits cleanly (PROXYCHAINS_CMD carries one for literal
+        # concatenation).
+        export PROXY="${PROXYCHAINS_CMD% }"
         info "Direct Internet unreachable; using PROXY='${PROXY}'"
         return "${PASS}"
     fi

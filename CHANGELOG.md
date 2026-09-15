@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `PROXYCHAINS_CMD` is now defined canonically in `lib/utils/util_net.sh` (the
+  stack's base library), honoring an override: `: "${PROXYCHAINS_CMD:=proxychains4 -q }"`.
+  `net::proxy_auto_detect` now BUILDS `PROXY` from it (`PROXY="${PROXYCHAINS_CMD% }"`,
+  trailing space trimmed) instead of a separate hardcoded literal, so there is
+  one source of truth for the proxychains invocation.
+
 - Unified persistent env API in `lib/utils/util_env.sh`: `env::file` (the one
   sourceable env file, `~/.config/bash/pentest.env.sh`, override `PENTEST_ENV_FILE`),
   `env::persist KEY VALUE` (upsert a value into the file's MANAGED block and
