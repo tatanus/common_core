@@ -758,16 +758,39 @@ function py::install_pip() {
 # Returns  : PASS if installed successfully, FAIL otherwise.
 ###############################################################################
 function py::install_uv() {
+    if cmd::exists uv; then
+        debug "uv already installed"
+        return "${PASS}"
+    fi
+
     info "Installing uv package manager..."
 
+    # Strategy 1: pipx -- PEP 668-safe (isolated venv). Avoids the
+    # externally-managed-environment refusal that blocks system-wide
+    # `pip install` on Ubuntu 24+. pipx places uv in ~/.local/bin.
+    if cmd::exists pipx || py::install_pipx; then
+        local -a _uvx=(pipx install uv --force)
+        declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _uvx
+        if cmd::run "${_uvx[@]}"; then
+            python3 -m pipx ensurepath 2> /dev/null || true
+            if cmd::exists uv || [[ -x "${HOME}/.local/bin/uv" ]]; then
+                pass "uv installed via pipx"
+                return "${PASS}"
+            fi
+        fi
+        debug "pipx install uv did not yield a usable uv; falling back to pip"
+    fi
+
+    # Strategy 2: system pip (best-effort). get_pip_args adds
+    # --break-system-packages where pip advertises support.
     local -a pip_args
-    read -ra pip_args <<< "$(py::get_pip_args "" "install")"
-    pip_args+=("-U" "uv")
+    IFS=$' \t\n' read -ra pip_args <<< "$(py::get_pip_args "" "install")"
+    pip_args+=("--break-system-packages" "-U" "uv")
 
     local -a _pip_run=(python3 -m pip "${pip_args[@]}")
     declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _pip_run
     if cmd::run "${_pip_run[@]}"; then
-        pass "uv installed successfully"
+        pass "uv installed via pip"
         return "${PASS}"
     fi
     fail "uv installation failed"
@@ -1032,10 +1055,19 @@ export PY_INSTALLER
 ###############################################################################
 function py::_use_uv() {
     [[ "${PY_INSTALLER:-pip}" == "uv" ]] || return "${FAIL}"
-    if ! cmd::exists uv; then
-        py::install_uv || return "${FAIL}"
+    cmd::exists uv && return "${PASS}"
+
+    # Attempt to bootstrap uv only ONCE per run. If it cannot be installed
+    # (e.g. no network, or PEP 668 with no pipx), remember that and fall back
+    # to pip/pipx quietly for every subsequent call instead of retrying --
+    # and re-printing the failure -- for each package.
+    [[ "${_PY_UV_UNAVAILABLE:-0}" == "1" ]] && return "${FAIL}"
+    if py::install_uv && cmd::exists uv; then
+        return "${PASS}"
     fi
-    return "${PASS}"
+    _PY_UV_UNAVAILABLE=1
+    warn "uv could not be installed; using pip/pipx for the rest of this run"
+    return "${FAIL}"
 }
 
 ###############################################################################

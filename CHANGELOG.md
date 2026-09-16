@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `py::install_uv` now bootstraps uv via **pipx** first (PEP 668-safe, isolated
+  venv), falling back to system pip. It previously ran `python3 -m pip install
+  -U uv` system-wide, which Ubuntu 24 refuses with
+  `externally-managed-environment`, so `PY_INSTALLER=uv` could never install uv.
+- `py::_use_uv` attempts the uv bootstrap at most once per run and caches
+  failure. Previously every `py::pip_install`/`py::pipx_install`/`tools::_pip`
+  call retried the failing install, repeating the PEP 668 error for every
+  package. On failure it now warns once and falls back to pip/pipx quietly.
 - `py::install_python` no longer reduces a bare `major.minor` version to the
   major only. `${version%.*}` turned `3.13` into `3`, so it installed the
   generic `python3` and falsely reported "Python 3.13 installed" while
