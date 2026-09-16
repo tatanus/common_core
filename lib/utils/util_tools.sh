@@ -266,7 +266,17 @@ function tools::_pip() {
     # the active venv via $VIRTUAL_ENV); otherwise "python -m pip <args>".
     # Either way the fetch is prepended with ${PROXY} so proxy-only hosts work.
     local -a run
-    if [[ "${PY_INSTALLER:-pip}" == "uv" ]] && cmd::exists uv; then
+    local use_uv=false
+    if [[ "${PY_INSTALLER:-pip}" == "uv" ]]; then
+        # Ensure uv is usable (py::_use_uv installs it on demand, matching the
+        # py:: helpers); fall back to a bare presence check, then to pip.
+        if declare -F py::_use_uv > /dev/null 2>&1; then
+            py::_use_uv && use_uv=true
+        elif cmd::exists uv; then
+            use_uv=true
+        fi
+    fi
+    if [[ "${use_uv}" == "true" ]]; then
         run=(uv pip "$@")
     else
         run=("${PYTHON:-python3}" -m pip "$@")
