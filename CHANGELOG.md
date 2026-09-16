@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `_apt_run` now reports the real command exit code. An `if cmd; then ...; fi`
+  with no `else` yields 0 when the condition is false, so the code read after
+  `fi` was always 0 -- failures logged as "APT command failed (exit 0)". The
+  status is now captured inline (`|| rc=$?`).
 - `apt::repair` now runs `dpkg --configure -a` (unproxied; dpkg is local)
   before `apt-get -f install`. An interrupted dpkg blocks every apt operation
   with "dpkg was interrupted..."; `apt-get -f install` alone cannot clear it,
