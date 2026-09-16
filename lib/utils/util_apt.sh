@@ -414,6 +414,23 @@ function apt::is_installed() {
 }
 
 ###############################################################################
+# apt::package_available
+#------------------------------------------------------------------------------
+# Purpose  : Public check for whether a package exists in the APT repos and has
+#            an installable candidate. Lets callers distinguish "not in repos"
+#            (a legitimate skip -- e.g. a legacy package name superseded on
+#            newer distros) from a genuine install failure.
+# Usage    : if apt::package_available certbot; then ...
+# Arguments:
+#   $1 : Package name (required)
+# Returns  : PASS if available, FAIL otherwise
+# Globals  : None
+###############################################################################
+function apt::package_available() {
+    _apt_package_exists "${1:-}"
+}
+
+###############################################################################
 # apt::install
 #------------------------------------------------------------------------------
 # Purpose  : Install one or more packages with validation, spinner, and repair

@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `apt::package_available <pkg>` -- public check for whether a package exists
+  in the APT repos (thin wrapper over the local apt-cache lookup). Lets callers
+  distinguish a legitimately-absent package (skip) from a real install failure.
 - `git::` and `py::` helpers now route through `${PROXY}` on hosts that need
   proxychains, via a new shared `net::proxy_prepend`. Previously `git::clone`
   (used by ~24 pentest_setup tool modules), `git::pull`, `py::pipx_install`,
