@@ -17,6 +17,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- APT operations now wait for the dpkg lock on **every** call. `_apt_run`
+  waits before each apt/dpkg invocation and passes
+  `-o DPkg::Lock::Timeout` (inert on apt < 2.0, whose config parser ignores
+  unknown keys) so apt-get blocks instead of exiting 100, retrying up to
+  `APT_LOCK_RETRIES` times on pure lock contention. `apt::_wait_for_lock` was
+  previously called from exactly one place -- `apt::update` -- so on a freshly
+  booted cloud image, where unattended-upgrades holds the lock for minutes,
+  every `apt::install` failed instantly: 9 of 15 packages in one
+  `install_tools.sh` run (tree, unzip, eza, fzf, bat, ncat, duf, btop, dialog)
+  were lost, while the tail of the same list installed fine once the lock
+  cleared.
+- `apt::install` no longer runs the repair cascade on a lock failure. `dpkg
+  --configure -a` and `apt-get -f install` need the very lock they cannot get,
+  so "repairing" produced ~40 lines of identical lock errors per package and
+  buried the real cause; it now fails fast with an actionable message. The
+  duplicated repair-and-reinstall block (one copy gated on `apt.auto_repair`,
+  an identical one unconditionally after it) is collapsed into one, which also
+  makes `apt.auto_repair` meaningful again -- the unconditional copy had been
+  repairing regardless of the setting.
+- `apt::_wait_for_lock` honors `APT_LOCK_TIMEOUT` and no longer returns a false
+  all-clear when `fuser` is missing (it ships in psmisc, absent from minimal
+  images; the loop exited immediately on command-not-found).
+- `install_tools.sh`: `have_command` also looks in `${GOPATH:-~/go}/bin`, so a
+  binary `go install` just placed there (`freeze`) no longer verifies as
+  missing and fails the run. The bootstrap runs before `bash_setup` deploys
+  `bash.path.sh`, and in a non-login shell, so `~/go/bin` is legitimately not
+  on PATH yet; `check_go_path` now says that plainly instead of implying
+  something is misconfigured.
 - `go::install_tool` now pins `GOTOOLCHAIN` to the latest release (resolved via
   new `go::latest_version`) and installs Go if absent. `GOTOOLCHAIN=auto` only
   upgrades when a module's go.mod has a `go >=` directive, so `+incompatible`
