@@ -165,7 +165,13 @@ function dir::exists() {
         if [[ -d "${dir}" ]]; then
             debug "Directory exists: ${dir}"
         else
-            warn "Directory not found: ${dir}"
+            # dir::exists is a boolean predicate (used as `if dir::exists X`),
+            # so a missing directory is a normal negative result, not a
+            # problem worth warning about -- callers routinely check before
+            # creating/cloning. Keep it quiet (debug) to avoid false-alarm
+            # "Directory not found" noise; callers that need a hard error use
+            # dir::require/dir::ensure_exists instead.
+            debug "Directory not found: ${dir}"
             overall_status="${FAIL}"
         fi
     done

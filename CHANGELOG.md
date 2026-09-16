@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `go::install_tool` now pins `GOTOOLCHAIN` to the latest release (resolved via
+  new `go::latest_version`) and installs Go if absent. `GOTOOLCHAIN=auto` only
+  upgrades when a module's go.mod has a `go >=` directive, so `+incompatible`
+  modules (e.g. bettercap) built with a too-old base toolchain and failed
+  (`requires go >= 1.26.0`). Pinning forces a modern toolchain download.
+- `dir::exists` is now a quiet predicate -- a missing directory logs at debug,
+  not `warn`. It is used as `if dir::exists X` before creating/cloning, so the
+  negative case was emitting false-alarm "Directory not found" noise.
+- `tools::install_git_python`'s legacy `setup.py install` fallback is now debug
+  only. Modern setuptools removed `setup.py install` and the pip steps already
+  install the package, so the "setup.py install failed (non-fatal)" WARN was
+  pure noise.
 - `py::install_uv` now bootstraps uv via **pipx** first (PEP 668-safe, isolated
   venv), falling back to system pip. It previously ran `python3 -m pip install
   -U uv` system-wide, which Ubuntu 24 refuses with

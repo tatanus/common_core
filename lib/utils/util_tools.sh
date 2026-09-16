@@ -378,15 +378,19 @@ function tools::install_git_python() {
         done
     fi
 
-    # Run setup.py if present (routed through ${PROXY} when set)
+    # Legacy `setup.py install` fallback (routed through ${PROXY} when set).
+    # Modern setuptools (Python 3.12+) removed the `install` command, and the
+    # `pip install .`/requirements steps above already handle installation, so
+    # a failure here is expected and harmless -- keep the whole attempt at
+    # debug level so it does not surface as scary WARN noise.
     if [[ -f "setup.py" ]]; then
-        info "Running setup.py install..."
+        debug "Attempting legacy setup.py install..."
         local -a _setup=("${PYTHON:-python3}" setup.py install)
         declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _setup
         if "${_setup[@]}" > /dev/null 2>&1; then
-            pass "setup.py install completed"
+            debug "setup.py install completed"
         else
-            warn "setup.py install failed (non-fatal)"
+            debug "setup.py install not used (non-fatal; pip already handled it)"
         fi
     fi
 

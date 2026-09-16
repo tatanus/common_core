@@ -369,13 +369,49 @@ function go::test() {
 # Usage    : go::install_tool "github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
 # Returns  : PASS if successful, FAIL otherwise.
 ###############################################################################
+function go::latest_version() {
+    # Print the latest stable Go toolchain tag (e.g. "go1.26.8"), empty on
+    # failure. Uses ${PROXY} via net::proxy_prepend so proxy-only hosts work.
+    local -a _c=(curl -fsSL "https://go.dev/VERSION?m=text")
+    declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _c
+    local v
+    v="$("${_c[@]}" 2> /dev/null | head -1)"
+    [[ "${v}" == go* ]] && printf '%s\n' "${v}"
+}
+
+###############################################################################
+# go::install_tool
+#------------------------------------------------------------------------------
+# Purpose  : Install a Go-based tool/binary globally.
+# Usage    : go::install_tool "github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
+# Returns  : PASS if successful, FAIL otherwise.
+###############################################################################
 function go::install_tool() {
     local pkg="${1:-}"
     if [[ -z "${pkg}" ]]; then
         error "Usage: go::install_tool <package@version>"
         return "${FAIL}"
     fi
-    info "Installing Go tool: ${pkg}"
+
+    # Ensure a Go toolchain exists at all.
+    if ! go::is_available; then
+        go::install || {
+            fail "Go is not available and could not be installed"
+            return "${FAIL}"
+        }
+    fi
+
+    # Force a modern toolchain. GOTOOLCHAIN=auto only upgrades when a module's
+    # go.mod carries a 'go >= X' directive; `+incompatible` modules with no
+    # such directive (e.g. bettercap) build with the base toolchain and fail if
+    # it is too old. Pin GOTOOLCHAIN to the latest release so `go install`
+    # downloads and uses it regardless. Resolved once per run and cached.
+    if [[ -z "${GOTOOLCHAIN:-}" || "${GOTOOLCHAIN}" == "auto" ]]; then
+        [[ -z "${_GO_LATEST_TOOLCHAIN:-}" ]] && _GO_LATEST_TOOLCHAIN="$(go::latest_version)"
+        [[ -n "${_GO_LATEST_TOOLCHAIN}" ]] && export GOTOOLCHAIN="${_GO_LATEST_TOOLCHAIN}"
+    fi
+
+    info "Installing Go tool: ${pkg} (GOTOOLCHAIN=${GOTOOLCHAIN:-auto})"
     if cmd::run go install "${pkg}"; then
         pass "Installed Go tool: ${pkg}"
         return "${PASS}"
