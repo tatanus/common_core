@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `tools::install_git_python` creates the per-tool venv with `uv venv` when
+  `PY_INSTALLER=uv` (faster; provisions its own interpreter, so it no longer
+  depends on a working `python -m venv`), falling back to `python -m venv`
+  otherwise. The `./venv` layout is unchanged, so `run_tools_command` finds it
+  either way.
+
 ### Fixed
 
 - `go::install_tool` now pins `GOTOOLCHAIN` to the latest release (resolved via

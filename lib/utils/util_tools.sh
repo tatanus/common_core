@@ -329,12 +329,26 @@ function tools::install_git_python() {
         return "${FAIL}"
     }
 
-    # Create virtual environment
+    # Create virtual environment. Prefer `uv venv` when the uv backend is
+    # selected: it is faster and provisions its own interpreter, so it does not
+    # depend on a working `${PYTHON} -m venv`. The resulting ./venv layout is
+    # identical (venv/bin/python), so run_tools_command finds it either way.
+    # Fall back to `python -m venv` when uv is unavailable or fails.
     info "Creating virtual environment..."
-    if ! "${PYTHON}" -m venv ./venv; then
-        fail "Failed to create virtual environment"
-        cd "${orig_dir}" || true
-        return "${FAIL}"
+    local _venv_created=0
+    if [[ "${PY_INSTALLER:-pip}" == "uv" ]] && cmd::exists uv; then
+        if uv venv ./venv > /dev/null 2>&1; then
+            _venv_created=1
+        else
+            warn "uv venv failed; falling back to python -m venv"
+        fi
+    fi
+    if [[ "${_venv_created}" -ne 1 ]]; then
+        if ! "${PYTHON}" -m venv ./venv; then
+            fail "Failed to create virtual environment"
+            cd "${orig_dir}" || true
+            return "${FAIL}"
+        fi
     fi
     pass "Created virtual environment"
 
