@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `apt::repair` now runs `dpkg --configure -a` (unproxied; dpkg is local)
+  before `apt-get -f install`. An interrupted dpkg blocks every apt operation
+  with "dpkg was interrupted..."; `apt-get -f install` alone cannot clear it,
+  so installs and the auto-repair both looped and failed.
 - `_apt_package_exists` no longer prefixes the LOCAL `apt-cache show`/`policy`
   with `${PROXY}`. Under the project-wide `IFS=$'\n\t'` the multi-token
   prefix did not word-split, so `${PROXY} apt-cache ...` tried to exec the

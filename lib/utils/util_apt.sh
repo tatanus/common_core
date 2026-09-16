@@ -377,6 +377,15 @@ function apt::upgrade() {
 ###############################################################################
 function apt::repair() {
     info "Repairing broken dependencies..."
+
+    # An interrupted dpkg (half-configured packages) blocks every apt-get
+    # operation with "dpkg was interrupted, you must manually run
+    # 'dpkg --configure -a'". `apt-get -f install` does NOT clear that state,
+    # so reconfigure dpkg FIRST. dpkg is a local operation -- force PROXY empty
+    # for this call so it is never routed through proxychains.
+    PROXY="" _apt_run "Reconfiguring interrupted dpkg" dpkg --configure -a ||
+        warn "dpkg --configure -a reported errors; continuing with -f install"
+
     if _apt_run "Repairing dependencies" apt-get -y -f install; then
         pass "APT repair successful"
         return "${PASS}"
