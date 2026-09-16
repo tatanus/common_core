@@ -139,12 +139,19 @@ function _brew_package_exists() {
         return "${FAIL}"
     }
 
-    # Quick local search
-    if ${PROXY} brew search --formula "${pkg}" | grep -qx "${pkg}"; then
+    # `brew search` hits the network, so it is routed through ${PROXY} -- but
+    # via net::proxy_prepend so the multi-token prefix ("proxychains4 -q ") is
+    # word-split into argv. A raw `${PROXY} brew ...` fails to split under the
+    # project-wide IFS=$'\n\t' and tries to exec the literal prefix.
+    local -a _bs=(brew search --formula "${pkg}")
+    declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _bs
+    if "${_bs[@]}" | grep -qx "${pkg}"; then
         debug "Formula exists: ${pkg}"
         return "${PASS}"
     fi
-    if ${PROXY} brew search --cask "${pkg}" | grep -qx "${pkg}"; then
+    _bs=(brew search --cask "${pkg}")
+    declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _bs
+    if "${_bs[@]}" | grep -qx "${pkg}"; then
         debug "Cask exists: ${pkg}"
         return "${PASS}"
     fi
@@ -153,7 +160,9 @@ function _brew_package_exists() {
     _brew_run "Refreshing brew metadata" update || return "${FAIL}"
 
     # Re-check after update
-    if ${PROXY} brew search "${pkg}" | grep -q -w "${pkg}"; then
+    _bs=(brew search "${pkg}")
+    declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _bs
+    if "${_bs[@]}" | grep -q -w "${pkg}"; then
         debug "Package '${pkg}' found after metadata refresh"
         return "${PASS}"
     fi
@@ -306,9 +315,12 @@ function brew::install_cask() {
     local -a valid_casks=()
     local -a skipped_casks=()
 
-    # Validate casks
+    # Validate casks (brew search is networked -> proxy via net::proxy_prepend)
+    local -a _cs
     for cask in "$@"; do
-        if ${PROXY} brew search --cask "${cask}" | grep -qx "${cask}"; then
+        _cs=(brew search --cask "${cask}")
+        declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _cs
+        if "${_cs[@]}" | grep -qx "${cask}"; then
             valid_casks+=("${cask}")
         else
             skipped_casks+=("${cask}")

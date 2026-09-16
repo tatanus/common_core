@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `_apt_package_exists` no longer prefixes the LOCAL `apt-cache show`/`policy`
+  with `${PROXY}`. Under the project-wide `IFS=$'\n\t'` the multi-token
+  prefix did not word-split, so `${PROXY} apt-cache ...` tried to exec the
+  literal `proxychains4 -q ` and failed for EVERY package -- marking valid
+  packages "invalid or unavailable". It also ran a full `apt-get update` per
+  missing package (minutes each); the index is now refreshed at most once per
+  run (`_APT_CACHE_REFRESHED`).
+- `_brew_package_exists` / cask validation had the same word-split bug on
+  `${PROXY} brew search`; now routed through `net::proxy_prepend` (brew search
+  is networked, so the proxy is kept but split into argv correctly).
+
 ### Added
 
 - `git::` and `py::` helpers now route through `${PROXY}` on hosts that need

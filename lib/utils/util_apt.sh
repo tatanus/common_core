@@ -178,20 +178,30 @@ function _apt_package_exists() {
         return "${FAIL}"
     fi
 
-    # Try local cache lookup first
-    if ! ${PROXY} apt-cache show "${pkg}" > /dev/null 2>&1; then
-        warn "Package '${pkg}' not found in cache - attempting to refresh..."
-        _apt_run "Refreshing package cache" apt-get update -qq -y || return "${FAIL}"
+    # apt-cache reads the LOCAL package index only -- it never touches the
+    # network, so it must NOT be prefixed with ${PROXY}: a proxy hop is
+    # pointless here, and under the project-wide IFS=$'\n\t' the multi-token
+    # prefix ("proxychains4 -q ") does not word-split, so `${PROXY} apt-cache`
+    # tries to exec that literal string and fails for EVERY package. Network
+    # refresh goes through _apt_run, which handles ${PROXY} correctly.
+    if ! apt-cache show "${pkg}" > /dev/null 2>&1; then
+        # Refresh the index at most ONCE per process, not once per missing
+        # package -- a full `apt-get update` per package costs minutes each.
+        if [[ -z "${_APT_CACHE_REFRESHED:-}" ]]; then
+            warn "Package '${pkg}' not in cache - refreshing package lists once..."
+            _APT_CACHE_REFRESHED=1
+            _apt_run "Refreshing package cache" apt-get update -y || return "${FAIL}"
+        fi
 
-        # Retry lookup after refresh
-        if ! ${PROXY} apt-cache show "${pkg}" > /dev/null 2>&1; then
+        # Retry lookup after refresh (or if a previous package already refreshed)
+        if ! apt-cache show "${pkg}" > /dev/null 2>&1; then
             debug "Package '${pkg}' still not found after refresh."
             return "${FAIL}"
         fi
     fi
 
     local candidate
-    candidate=$(${PROXY} apt-cache policy "${pkg}" | awk '/Candidate:/ {print $2}')
+    candidate=$(apt-cache policy "${pkg}" | awk '/Candidate:/ {print $2}')
     if [[ -z "${candidate}" || "${candidate}" == "(none)" ]]; then
         debug "Package exists but has no installable candidate: ${pkg}"
         return "${FAIL}"
