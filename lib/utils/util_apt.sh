@@ -70,7 +70,23 @@ fi
 #===============================================================================
 # Globals
 #===============================================================================
-# none
+# Seconds apt-get itself will block waiting for the dpkg/frontend lock, passed
+# as -o DPkg::Lock::Timeout. On a freshly booted cloud image, unattended-upgrades
+# and the apt-daily timers hold that lock for minutes; without this apt-get exits
+# 100 immediately ("Could not get lock /var/lib/dpkg/lock-frontend") and every
+# package in the run is reported as a hard failure. apt's config parser accepts
+# unknown keys, so this is inert on apt < 2.0 rather than an error.
+: "${APT_LOCK_TIMEOUT:=300}"
+
+# How many times _apt_run re-runs a command that failed PURELY on lock
+# contention (dpkg has no lock timeout of its own, so it still needs this).
+: "${APT_LOCK_RETRIES:=3}"
+
+# Set by _apt_run on every call: "true" when the last failure was lock
+# contention rather than a genuine package/dependency error. Callers use it to
+# skip a pointless repair cascade -- `dpkg --configure -a` cannot fix a lock it
+# also cannot acquire.
+_APT_LAST_RUN_LOCKED="false"
 
 # NOTE: This library assumes the following helpers exist and are loaded first:
 #   - Logging:  info, pass, fail, warn, error, debug
@@ -122,22 +138,59 @@ function _apt_run() {
     if [[ -n "${PROXY:-}" ]]; then
         IFS=$' \t\n' read -ra cmd <<< "${PROXY}"
     fi
-    cmd+=("$@")
 
-    # Run with spinner, capturing stderr/stdout so we can surface the
-    # underlying apt error on failure (previously redirected to /dev/null,
-    # which made apt-get update failures look like silent breakage).
-    local log rc=0
-    log="$(mktemp -t apt_run.XXXXXX 2> /dev/null)" || log="/tmp/apt_run.$$.log"
-    # Capture the real exit code inline: an `if cmd; then ...; fi` with no
-    # else returns 0 when the condition is false, so `$?` read after `fi`
-    # would always be 0 (reported failures as "exit 0").
-    tui::show_spinner -- "${cmd[@]}" > "${log}" 2>&1 || rc=$?
-    if [[ "${rc}" -eq 0 ]]; then
-        debug "APT command succeeded: ${cmd[*]}"
-        rm -f "${log}"
-        return "${PASS}"
-    fi
+    # Make apt-get WAIT for the dpkg lock instead of failing instantly. The
+    # option is injected right after the apt-get/apt binary so it precedes the
+    # subcommand, and only for apt-get/apt (dpkg has no such option).
+    local -a apt_cmd=("$@")
+    case "${apt_cmd[0]##*/}" in
+        apt-get | apt)
+            apt_cmd=("${apt_cmd[0]}" -o "DPkg::Lock::Timeout=${APT_LOCK_TIMEOUT:-300}" "${apt_cmd[@]:1}")
+            ;;
+        *) : ;; # dpkg and friends: no lock-timeout option to give
+    esac
+    cmd+=("${apt_cmd[@]}")
+
+    _APT_LAST_RUN_LOCKED="false"
+
+    local log rc=0 attempt=1
+    local max_attempts="${APT_LOCK_RETRIES:-3}"
+    ((max_attempts < 1)) && max_attempts=1
+
+    while :; do
+        # Do not even start while something else holds the lock -- this also
+        # covers plain `dpkg`, which cannot be told to wait.
+        apt::_wait_for_lock || warn "Proceeding despite apt lock wait timeout"
+
+        # Run with spinner, capturing stderr/stdout so we can surface the
+        # underlying apt error on failure (previously redirected to /dev/null,
+        # which made apt-get update failures look like silent breakage).
+        rc=0
+        log="$(mktemp -t apt_run.XXXXXX 2> /dev/null)" || log="/tmp/apt_run.$$.log"
+        # Capture the real exit code inline: an `if cmd; then ...; fi` with no
+        # else returns 0 when the condition is false, so `$?` read after `fi`
+        # would always be 0 (reported failures as "exit 0").
+        tui::show_spinner -- "${cmd[@]}" > "${log}" 2>&1 || rc=$?
+        if [[ "${rc}" -eq 0 ]]; then
+            debug "APT command succeeded: ${cmd[*]}"
+            rm -f "${log}"
+            return "${PASS}"
+        fi
+
+        # Lock contention is transient and NOT a package error: retry quietly
+        # rather than reporting a wall of failures the caller cannot act on.
+        if _apt_is_lock_error "${log}" && ((attempt < max_attempts)); then
+            warn "APT lock held by another process; retry ${attempt}/$((max_attempts - 1)) in 5s"
+            rm -f "${log}"
+            sleep 5
+            ((attempt++))
+            continue
+        fi
+
+        break
+    done
+
+    _apt_is_lock_error "${log}" && _APT_LAST_RUN_LOCKED="true"
 
     error "APT command failed (exit ${rc}): ${cmd[*]}"
     if [[ -s "${log}" ]]; then
@@ -151,6 +204,25 @@ function _apt_run() {
         rm -f "${log}"
     fi
     return "${FAIL}"
+}
+
+###############################################################################
+# _apt_is_lock_error
+#------------------------------------------------------------------------------
+# Purpose  : Decide whether a failed apt/dpkg run failed only because another
+#            process held the dpkg lock. Such a failure says nothing about the
+#            packages involved, so the caller should retry -- never "repair".
+# Usage    : _apt_is_lock_error <logfile>
+# Returns  : PASS (0) if the output is a lock-contention failure, FAIL (1) if
+#            not (a missing/unreadable log counts as "not a lock error").
+###############################################################################
+function _apt_is_lock_error() {
+    local log="${1:-}"
+
+    [[ -s "${log}" ]] || return "${FAIL}"
+
+    grep -qE 'Could not get lock|Unable to acquire the dpkg frontend lock|frontend lock was locked by another process|dpkg status database is locked' \
+        "${log}" 2> /dev/null
 }
 
 ###############################################################################
@@ -257,8 +329,17 @@ function apt::is_available() {
 ###############################################################################
 function apt::_wait_for_lock() {
     local lock_file="/var/lib/dpkg/lock-frontend"
-    local timeout=300 # 5 minutes
+    local timeout="${APT_LOCK_TIMEOUT:-300}"
     local elapsed=0
+
+    # fuser ships in psmisc, which minimal images do not always carry. Without
+    # it this loop would exit instantly (command failure == "no lock") and give
+    # a false all-clear; say so and let apt-get's own -o DPkg::Lock::Timeout
+    # do the waiting instead.
+    if ! cmd::exists fuser; then
+        debug "fuser not available; relying on apt-get -o DPkg::Lock::Timeout"
+        return "${PASS}"
+    fi
 
     while fuser "${lock_file}" > /dev/null 2>&1; do
         if [[ ${elapsed} -ge ${timeout} ]]; then
@@ -503,16 +584,29 @@ function apt::install() {
         return "${PASS}"
     fi
 
-    # Auto-repair if configured
-    if config::get_bool "apt.auto_repair"; then
-        warn "APT install failed - attempting auto-repair"
-        if apt::repair && _apt_run "Reinstalling after repair" apt-get install -y "${valid_pkgs[@]}"; then
-            pass "Installation succeeded after repair"
-            return "${PASS}"
-        fi
+    # A lock failure is not a broken-package failure. Repairing cannot help --
+    # `dpkg --configure -a` and `apt-get -f install` need the very lock that is
+    # unavailable -- and running it anyway buries the real cause in three
+    # screens of identical errors. Fail fast with an actionable message.
+    if [[ "${_APT_LAST_RUN_LOCKED}" == "true" ]]; then
+        fail "Installation failed (dpkg lock held by another process): ${valid_pkgs[*]}"
+        info "Another package manager is running (often unattended-upgrades on a"
+        info "freshly booted host). Wait for it to finish, or raise APT_LOCK_TIMEOUT."
+        return "${FAIL}"
     fi
 
-    warn "APT install failed - attempting repair"
+    # Genuine failure: repair once, then retry. (This used to run the identical
+    # repair-and-reinstall block twice -- once gated on apt.auto_repair and then
+    # again unconditionally -- which both doubled the error output on every
+    # failure and made the apt.auto_repair setting meaningless, since the
+    # unconditional block repaired regardless. Now the setting is honored.)
+    if ! config::get_bool "apt.auto_repair"; then
+        fail "Installation failed: ${valid_pkgs[*]}"
+        info "apt.auto_repair is disabled; not attempting 'dpkg --configure -a' / 'apt-get -f install'"
+        return "${FAIL}"
+    fi
+
+    warn "APT install failed - attempting auto-repair"
     if apt::repair && _apt_run "Reinstalling after repair" apt-get install -y "${valid_pkgs[@]}"; then
         pass "Installation succeeded after repair"
         return "${PASS}"

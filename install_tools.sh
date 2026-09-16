@@ -257,7 +257,17 @@ function spec_field() {
 # Returns  : PASS if found, FAIL otherwise
 ###############################################################################
 function have_command() {
-    command -v "${1:-}" > /dev/null 2>&1
+    local cmd="${1:-}"
+
+    command -v "${cmd}" > /dev/null 2>&1 && return "${PASS}"
+
+    # go install drops binaries in ${GOPATH}/bin, which is NOT on PATH during
+    # bootstrap: this script runs before bash_setup has deployed bash.path.sh,
+    # and in a non-login shell besides. Without this, a freshly go-installed
+    # tool verifies as "still missing" and the whole run exits non-zero over a
+    # binary that is sitting right there.
+    local gobin="${GOPATH:-${HOME}/go}/bin"
+    [[ -x "${gobin}/${cmd}" ]]
 }
 
 ###############################################################################
@@ -645,9 +655,12 @@ function check_go_path() {
     gobin="$(go env GOPATH 2> /dev/null)/bin" || return "${PASS}"
 
     if [[ ":${PATH}:" != *":${gobin}:"* ]]; then
-        warn "${gobin} is not on PATH -- go-installed tools will not resolve."
-        warn "Add it in bash_setup's dotfiles/path.env.sh, or export it manually:"
-        warn "    export PATH=\"\${PATH}:${gobin}\""
+        # bash_setup's dotfiles/bash.path.sh already puts ${HOME}/go/bin on PATH
+        # for interactive shells, so this is normally just a bootstrap-order
+        # artifact: say so instead of implying something is unconfigured.
+        info "${gobin} is not on THIS shell's PATH (expected during bootstrap)."
+        info "bash_setup's bash.path.sh adds it for interactive shells; in this"
+        info "session use: export PATH=\"\${PATH}:${gobin}\""
     fi
     return "${PASS}"
 }
