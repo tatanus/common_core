@@ -658,26 +658,36 @@ function py::install_python() {
 
     info "Installing Python ${version}..."
 
+    # Package names use the major.minor pair (e.g. python3.13 / python@3.13).
+    # Only strip a patch component when one is present; a bare "3.13" must NOT
+    # be reduced to "3" (that installs the generic python3 and falsely reports
+    # the requested version as installed).
+    local minor_ver="${version}"
+    [[ "${version}" == *.*.* ]] && minor_ver="${version%.*}"
+
     # Try package manager first
     local pkg_install_failed=0
 
     if os::is_macos && brew::is_available; then
-        local minor_ver="${version%.*}"
-        [[ "${minor_ver}" == "${version}" ]] && minor_ver="${version}"
-
         if cmd::run brew install "python@${minor_ver}"; then
-            pass "Python ${version} installed via Homebrew"
-            return "${PASS}"
+            # Verify the interpreter is actually present before claiming success.
+            if cmd::exists "python${minor_ver}"; then
+                pass "Python ${version} installed via Homebrew"
+                return "${PASS}"
+            fi
+            warn "brew reported success but python${minor_ver} is not on PATH"
         fi
         pkg_install_failed=1
 
     elif os::is_linux && apt::is_available; then
-        local minor_ver="${version%.*}"
-        [[ "${minor_ver}" == "${version}" ]] && minor_ver="${version}"
-
         if cmd::elevate apt-get update && cmd::elevate apt-get install -y "python${minor_ver}"; then
-            pass "Python ${version} installed via apt"
-            return "${PASS}"
+            # apt can report success for a generic meta-package; require the
+            # versioned interpreter to exist before declaring victory.
+            if cmd::exists "python${minor_ver}"; then
+                pass "Python ${version} installed via apt"
+                return "${PASS}"
+            fi
+            warn "apt reported success but python${minor_ver} is not available (not in repos?)"
         fi
         pkg_install_failed=1
     fi

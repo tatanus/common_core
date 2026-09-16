@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `py::install_python` no longer reduces a bare `major.minor` version to the
+  major only. `${version%.*}` turned `3.13` into `3`, so it installed the
+  generic `python3` and falsely reported "Python 3.13 installed" while
+  `python3.13` never existed (downstream pip/lib steps then silently skipped).
+  Now strips only a patch component, and verifies the versioned interpreter is
+  actually present before claiming success (apt/brew can report success for a
+  meta-package).
 - `_apt_run` now reports the real command exit code. An `if cmd; then ...; fi`
   with no `else` yields 0 when the condition is false, so the code read after
   `fi` was always 0 -- failures logged as "APT command failed (exit 0)". The
