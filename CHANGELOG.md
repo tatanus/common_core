@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026.09.16.2] - 2026-09-16
+
+
+### Fixed
+
+- `py::uv_install` is now venv-aware. `uv pip install` needs a target
+  environment and, unlike pip, will not touch the system interpreter
+  implicitly, so a bare `py::pip_install` in uv mode (no active venv) failed
+  with "No virtual environment found". It now adds `--system
+  --break-system-packages` when `VIRTUAL_ENV` is unset, and installs into the
+  active venv otherwise -- so uv works both for per-tool venvs and for
+  system-wide installs (e.g. global PIP_PACKAGES under `PY_INSTALLER=uv`).
+
 ## [2026.09.16.1] - 2026-09-16
 
 

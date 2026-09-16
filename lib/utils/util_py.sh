@@ -894,8 +894,19 @@ function py::uv_install() {
         error "py::uv_install requires at least one package"
         return "${FAIL}"
     fi
+    # `uv pip install` needs a target environment. Inside an active venv
+    # (VIRTUAL_ENV set) uv installs into it automatically. With no venv, uv --
+    # unlike pip, which defaults to system -- refuses to touch the system
+    # interpreter unless told to, so pass --system there, plus
+    # --break-system-packages so PEP 668 hosts (e.g. Ubuntu 24.04) do not
+    # reject it. uv is modern enough to always accept both flags.
+    local -a run=(uv pip install)
+    if [[ -z "${VIRTUAL_ENV:-}" ]]; then
+        run+=(--system --break-system-packages)
+    fi
+    run+=("$@")
+
     info "Installing packages via uv: $*"
-    local -a run=(uv pip install "$@")
     declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend run
     if cmd::run "${run[@]}"; then
         pass "uv package installation complete"
