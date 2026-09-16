@@ -306,8 +306,29 @@ function py::pip_supports_break_system_packages() {
         [[ -n "${cached}" ]] && return "${PASS}" || return "${FAIL}"
     fi
 
-    # Check if pip help mentions --break-system-packages
-    if "${python_cmd}" -m pip help install 2>&1 | grep -q "break-system-packages"; then
+    local supported="false"
+
+    # Primary signal: pip version. `--break-system-packages` was added in
+    # pip 23.0.1, so any pip with major version >= 23 supports it. This is far
+    # more reliable than scraping `pip help install`, whose wording and line
+    # wrapping vary and which returned no match on some hosts (Ubuntu 24.04),
+    # leaving PEP 668 systems unable to install. `pip --version` prints e.g.
+    # "pip 24.0 from /usr/lib/python3/dist-packages/pip (python 3.12)".
+    local pip_ver major
+    pip_ver="$("${python_cmd}" -m pip --version 2> /dev/null | awk '{print $2}')"
+    major="${pip_ver%%.*}"
+    if [[ "${major}" =~ ^[0-9]+$ ]] && ((major >= 23)); then
+        supported="true"
+    fi
+
+    # Secondary signal: a vendored/patched pip that reports an unexpected
+    # version string but still advertises the flag in its help output.
+    if [[ "${supported}" != "true" ]] &&
+        "${python_cmd}" -m pip help install 2>&1 | grep -q -- "--break-system-packages"; then
+        supported="true"
+    fi
+
+    if [[ "${supported}" == "true" ]]; then
         _PY_BREAK_SYSTEM_PACKAGES_CACHE[${cache_key}]="--break-system-packages"
         printf '%s\n' "--break-system-packages"
         return "${PASS}"
@@ -339,6 +360,12 @@ function py::get_pip_args() {
         args+=("${break_flag}")
     fi
 
+    # Space-join on a single line regardless of the file-wide IFS=$'\n\t'.
+    # Without forcing IFS here, "${args[*]}" joins with a newline, so callers'
+    # `read` reads only the first line and silently drops every flag after the
+    # operation (notably --break-system-packages). Callers split this back on
+    # whitespace.
+    local IFS=' '
     printf '%s\n' "${args[*]}"
     return "${PASS}"
 }
@@ -1110,7 +1137,7 @@ function py::pip_install() {
     fi
 
     local -a pip_args
-    read -ra pip_args <<< "$(py::get_pip_args "" "install")"
+    IFS=$' \t\n' read -ra pip_args <<< "$(py::get_pip_args "" "install")"
     pip_args+=("-U" "$@")
 
     info "Installing packages via pip: $*"
@@ -1152,7 +1179,7 @@ function py::pip_install_for_version() {
     fi
 
     local -a pip_args
-    read -ra pip_args <<< "$(py::get_pip_args "${version}" "install")"
+    IFS=$' \t\n' read -ra pip_args <<< "$(py::get_pip_args "${version}" "install")"
     pip_args+=("-U" "$@")
 
     info "Installing packages for Python ${version}: $*"
@@ -1184,7 +1211,7 @@ function py::pip_upgrade() {
     fi
 
     local -a pip_args
-    read -ra pip_args <<< "$(py::get_pip_args "${version}" "install")"
+    IFS=$' \t\n' read -ra pip_args <<< "$(py::get_pip_args "${version}" "install")"
     pip_args+=("--upgrade" "pip")
 
     info "Upgrading pip for ${python_cmd}..."
@@ -1224,7 +1251,7 @@ function py::requirements_install() {
     fi
 
     local -a pip_args
-    read -ra pip_args <<< "$(py::get_pip_args "${version}" "install")"
+    IFS=$' \t\n' read -ra pip_args <<< "$(py::get_pip_args "${version}" "install")"
     pip_args+=("-r" "${file}")
 
     info "Installing dependencies from ${file} using ${python_cmd}"

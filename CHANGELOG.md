@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026.09.16.1] - 2026-09-16
+
+
+### Fixed
+
+- `py::get_pip_args` no longer drops flags after the pip operation. Under the
+  file-wide `IFS=$'\n\t'` its `"${args[*]}"` joined arguments with a newline, so
+  every caller's `read` grabbed only the first line ("install") and silently
+  dropped `--break-system-packages`. It now space-joins on one line, and the
+  four `py::pip_*` callers that used a bare `read` now split on whitespace
+  (`IFS=$' \t\n' read -ra`), matching the two that already did. Net effect: on
+  PEP 668 hosts (Ubuntu 24.04) system-wide `pip install` was failing with
+  "externally-managed-environment" because the override flag never reached pip.
+- `py::pip_supports_break_system_packages` detection is now version-based
+  (pip major >= 23, where `--break-system-packages` landed in 23.0.1) with the
+  previous `pip help install` scrape kept as a secondary signal. The scrape
+  alone returned no match on some hosts, so the flag was reported unsupported
+  even where pip supports it.
+
 ## [2026.09.16.0] - 2026-09-16
 
 
