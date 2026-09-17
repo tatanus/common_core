@@ -993,6 +993,58 @@ function net::full_diagnostic() {
 }
 
 ###############################################################################
+# net::cidr_expand
+#------------------------------------------------------------------------------
+# Purpose  : Expand an IPv4 CIDR (or a bare IP) to one address per line. Uses
+#            `nmap -sL` when available (handles IPv4/IPv6); otherwise falls back
+#            to pure-bash IPv4 arithmetic. A bare IP with no "/" is echoed as-is.
+# Usage    : net::cidr_expand 10.0.0.0/29
+# Returns  : PASS on success (addresses on stdout), FAIL on bad input / no tool.
+###############################################################################
+function net::cidr_expand() {
+    local cidr="${1:-}"
+    if [[ -z "${cidr}" ]]; then
+        error "net::cidr_expand: a CIDR or IP argument is required"
+        return "${FAIL}"
+    fi
+
+    # A bare address (no prefix) is its own single-host expansion.
+    if [[ "${cidr}" != */* ]]; then
+        printf '%s\n' "${cidr}"
+        return "${PASS}"
+    fi
+
+    # Prefer nmap: correct, fast, and handles IPv6 too.
+    if cmd::exists nmap; then
+        nmap -sL -n "${cidr}" 2> /dev/null |
+            awk '/Nmap scan report/ {print $NF}' | sed 's/[()]//g'
+        return "${PASS}"
+    fi
+
+    # Fallback: pure-bash IPv4 expansion (no external tools).
+    local ip="${cidr%/*}" bits="${cidr#*/}"
+    if [[ ! "${ip}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
+        [[ ! "${bits}" =~ ^[0-9]+$ ]] || ((bits > 32)); then
+        error "net::cidr_expand: nmap not found and '${cidr}' is not an IPv4 CIDR"
+        return "${FAIL}"
+    fi
+
+    local a b c d
+    IFS=. read -r a b c d <<< "${ip}"
+    local ipnum=$(((a << 24) | (b << 16) | (c << 8) | d))
+    local mask=$(((0xFFFFFFFF << (32 - bits)) & 0xFFFFFFFF))
+    local network=$((ipnum & mask))
+    local broadcast=$((network | (~mask & 0xFFFFFFFF)))
+
+    local i
+    for ((i = network; i <= broadcast; i++)); do
+        printf '%d.%d.%d.%d\n' \
+            $(((i >> 24) & 255)) $(((i >> 16) & 255)) $(((i >> 8) & 255)) $((i & 255))
+    done
+    return "${PASS}"
+}
+
+###############################################################################
 # net::self_test
 #------------------------------------------------------------------------------
 # Purpose  : Self-test for util_net.sh functionality

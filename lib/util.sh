@@ -254,6 +254,7 @@ declare -a UTIL_LOAD_ORDER=(
     "util_curl.sh"
     "util_git.sh"
     "util_net.sh"
+    "util_dns.sh"
     "util_apt.sh"
     "util_brew.sh"
     "util_py.sh"
