@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026.09.18.1] - 2026-09-18
+
+### Added
+- `py::install_uv` now tries the official standalone installer FIRST
+  (`curl -LsSf https://astral.sh/uv/install.sh | sh`) -- self-contained (no
+  Python/pipx, no PEP 668 fight), with pipx then pip as fallbacks. The whole
+  pipeline runs under ${PROXY} so both the fetch and the installer's own
+  download honor the proxy. New `py::_uv_usable_from` helper puts the install
+  bin dir on PATH (+ hash -r) after each strategy so the fresh uv is usable
+  immediately.
+
+### Fixed
+- `py::pip_install_for_version` now honors `PY_INSTALLER=uv`: it installs into
+  the requested interpreter with `uv pip install --python <cmd> ...` instead of
+  always using `<python> -m pip`. Closes the last per-version path that ignored
+  the uv backend.
+
+
 ## [2026.09.18.0] - 2026-09-18
 
 ### Fixed

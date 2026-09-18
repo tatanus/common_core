@@ -778,6 +778,27 @@ function py::install_pip() {
 }
 
 ###############################################################################
+# py::_uv_usable_from
+#------------------------------------------------------------------------------
+# Purpose  : After an install strategy drops uv in <bindir> (default
+#            ~/.local/bin), put that dir on PATH for THIS process and clear the
+#            command hash, then report whether uv is now runnable. pipx and the
+#            official installer only edit shell rc files, which do NOT affect the
+#            already-running process -- without this the next `cmd::exists uv`
+#            fails and the run wrongly falls back to pip.
+# Usage    : py::_uv_usable_from [bindir]
+# Returns  : PASS if uv is now runnable, FAIL otherwise.
+###############################################################################
+function py::_uv_usable_from() {
+    local bindir="${1:-${HOME}/.local/bin}"
+    if [[ -n "${bindir}" && ":${PATH}:" != *":${bindir}:"* ]]; then
+        export PATH="${bindir}:${PATH}"
+    fi
+    hash -r 2> /dev/null || true # forget stale command lookups
+    cmd::exists uv || [[ -x "${bindir}/uv" ]]
+}
+
+###############################################################################
 # py::install_uv
 #------------------------------------------------------------------------------
 # Purpose  : Install uv package manager for Python.
@@ -792,6 +813,24 @@ function py::install_uv() {
 
     info "Installing uv package manager..."
 
+    # Strategy 0: the official standalone installer. Self-contained -- it fetches
+    # a prebuilt uv binary, so it needs neither Python, pipx, nor a fight with
+    # PEP 668's externally-managed-environment. Installs into
+    # ${UV_INSTALL_DIR:-${XDG_BIN_HOME:-~/.local/bin}}. The whole pipeline runs
+    # under ${PROXY} (net::proxy_prepend) so BOTH the curl fetch and the
+    # installer's own binary download honor the proxy -- proxychains' LD_PRELOAD
+    # is inherited by the child processes the installer spawns.
+    if cmd::exists curl; then
+        local _uv_bindir="${UV_INSTALL_DIR:-${XDG_BIN_HOME:-${HOME}/.local/bin}}"
+        local -a _uvsh=(sh -c 'curl -LsSf https://astral.sh/uv/install.sh | sh')
+        declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _uvsh
+        if cmd::run "${_uvsh[@]}" && py::_uv_usable_from "${_uv_bindir}"; then
+            pass "uv installed via the official installer"
+            return "${PASS}"
+        fi
+        debug "official uv installer did not yield a usable uv; trying pipx"
+    fi
+
     # Strategy 1: pipx -- PEP 668-safe (isolated venv). Avoids the
     # externally-managed-environment refusal that blocks system-wide
     # `pip install` on Ubuntu 24+. pipx places uv in ~/.local/bin.
@@ -800,19 +839,14 @@ function py::install_uv() {
         declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _uvx
         if cmd::run "${_uvx[@]}"; then
             python3 -m pipx ensurepath 2> /dev/null || true
-            # pipx drops uv in its bin dir (~/.local/bin by default) and
-            # `pipx ensurepath` only edits the shell rc -- which does NOT affect
-            # this already-running installer. Put that bin dir on PATH now so the
-            # freshly-installed uv is immediately usable to the caller's
-            # `cmd::exists uv` check (otherwise it wrongly falls back to pipx).
+            # `pipx ensurepath` only edits the shell rc, which does NOT affect
+            # this already-running installer -- so make the just-installed uv
+            # usable here via py::_uv_usable_from (PATH + hash -r), otherwise the
+            # caller's `cmd::exists uv` fails and it wrongly falls back to pipx.
             local _pipx_bin
             _pipx_bin="$(pipx environment --value PIPX_BIN_DIR 2> /dev/null)"
             [[ -n "${_pipx_bin}" ]] || _pipx_bin="${HOME}/.local/bin"
-            if [[ ":${PATH}:" != *":${_pipx_bin}:"* ]]; then
-                export PATH="${_pipx_bin}:${PATH}"
-            fi
-            hash -r 2> /dev/null || true # forget stale command lookups
-            if cmd::exists uv || [[ -x "${_pipx_bin}/uv" ]]; then
+            if py::_uv_usable_from "${_pipx_bin}"; then
                 pass "uv installed via pipx"
                 return "${PASS}"
             fi
@@ -1198,6 +1232,22 @@ function py::pip_install_for_version() {
 
     if [[ -z "${python_cmd}" ]]; then
         error "Python ${version} not found"
+        return "${FAIL}"
+    fi
+
+    # Honor PY_INSTALLER=uv: install into that specific interpreter with uv's
+    # own --python selector (the uv equivalent of "<python> -m pip install").
+    # Mirrors py::pip_install: when uv is selected we do NOT silently fall back
+    # to pip -- return uv's result.
+    if py::_use_uv; then
+        local -a urun=(uv pip install --python "${python_cmd}" --break-system-packages -U "$@")
+        info "Installing packages for Python ${version} via uv: $*"
+        declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend urun
+        if cmd::run "${urun[@]}"; then
+            pass "Package installation complete for Python ${version} (uv)"
+            return "${PASS}"
+        fi
+        fail "Package installation failed for Python ${version} (uv)"
         return "${FAIL}"
     fi
 
