@@ -800,7 +800,19 @@ function py::install_uv() {
         declare -F net::proxy_prepend > /dev/null 2>&1 && net::proxy_prepend _uvx
         if cmd::run "${_uvx[@]}"; then
             python3 -m pipx ensurepath 2> /dev/null || true
-            if cmd::exists uv || [[ -x "${HOME}/.local/bin/uv" ]]; then
+            # pipx drops uv in its bin dir (~/.local/bin by default) and
+            # `pipx ensurepath` only edits the shell rc -- which does NOT affect
+            # this already-running installer. Put that bin dir on PATH now so the
+            # freshly-installed uv is immediately usable to the caller's
+            # `cmd::exists uv` check (otherwise it wrongly falls back to pipx).
+            local _pipx_bin
+            _pipx_bin="$(pipx environment --value PIPX_BIN_DIR 2> /dev/null)"
+            [[ -n "${_pipx_bin}" ]] || _pipx_bin="${HOME}/.local/bin"
+            if [[ ":${PATH}:" != *":${_pipx_bin}:"* ]]; then
+                export PATH="${_pipx_bin}:${PATH}"
+            fi
+            hash -r 2> /dev/null || true # forget stale command lookups
+            if cmd::exists uv || [[ -x "${_pipx_bin}/uv" ]]; then
                 pass "uv installed via pipx"
                 return "${PASS}"
             fi

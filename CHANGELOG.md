@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2026.09.18.0] - 2026-09-18
+
+### Fixed
+- `py::install_uv`: after `pipx install uv` (which drops uv in ~/.local/bin),
+  add pipx's bin dir to PATH in-process and `hash -r`, so the just-installed uv
+  is immediately found. Previously `pipx ensurepath` only edited the shell rc
+  (no effect on the running installer), so the caller's `cmd::exists uv` failed
+  and the whole run wrongly fell back to pip/pipx despite PY_INSTALLER=uv.
+
+
 ## [2026.09.17.0] - 2026-09-17
 
 
