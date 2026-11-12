@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `util_ruby.sh` shipped two complete concatenated copies of the library. The
+  first copy set the `UTIL_RUBY_SH_LOADED` guard, so the second copy's guard
+  check hit `return 0` and never defined its functions -- and the
+  version/proxy-aware gem helpers (incl. `ruby::gem_install_batch`) exist only
+  in that second copy, so callers got `ruby::gem_install_batch: command not
+  found`. Removed the stale first copy; the surviving copy now loads all 30
+  `ruby::` functions.
+
 ## [2026.09.18.1] - 2026-09-18
 
 ### Added
